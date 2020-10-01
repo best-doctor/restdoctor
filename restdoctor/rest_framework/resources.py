@@ -1,0 +1,200 @@
+from __future__ import annotations
+
+import collections
+import functools
+import inspect
+import logging
+import typing
+
+from django.conf import settings
+from django.core.exceptions import ImproperlyConfigured
+from django.db.models import QuerySet, Manager
+from django.http import Http404
+
+from restdoctor.rest_framework.generics import GenericAPIView
+from restdoctor.rest_framework.pagination import PageNumberPagination
+from restdoctor.rest_framework.schema import ResourceSchema
+from restdoctor.rest_framework.viewsets import GenericViewSet
+
+if typing.TYPE_CHECKING:
+    from django.core.handlers.wsgi import WSGIRequest
+    from rest_framework.pagination import BasePagination
+    from rest_framework.response import Response
+
+    from restdoctor.rest_framework.custom_types import (
+        Handler, ActionMap, ResourceExtraAction, ResourceViewsMap, ResourceActionsMap,
+        ResourceHandlersMap, ResourceModelsMap,
+    )
+
+logger = logging.getLogger(__name__)
+
+
+def _is_extra_action(attr: typing.Any) -> bool:
+    return hasattr(attr, 'mapping')
+
+
+def get_queryset_model_map(resource_views_map: ResourceViewsMap) -> ResourceModelsMap:
+    models_map: ResourceModelsMap = {}
+
+    for resource, viewset_class in resource_views_map.items():
+        queryset = getattr(viewset_class, 'queryset', None)
+        if isinstance(queryset, (Manager, QuerySet)):
+            models_map[resource] = queryset.model
+        else:
+            models_map[resource] = None
+
+    return models_map
+
+
+def merge_actions(handlers_actions: typing.Sequence[ActionMap]) -> ActionMap:
+    actions = {}
+    for handler_actions in handlers_actions:
+        actions.update(handler_actions)
+    return actions
+
+
+class ResourceBase:
+    schema_class = ResourceSchema
+
+    default_discriminative_value = getattr(settings, 'API_RESOURCE_DEFAULT', 'common')
+    resource_discriminative_param = getattr(settings, 'API_RESOURCE_DISCRIMINATIVE_PARAM', 'view_type')
+    resource_views_map: ResourceViewsMap = {}
+    resource_actions_map: ResourceActionsMap = {}
+    resource_handlers_map: ResourceHandlersMap = {}
+
+    resource_discriminate_methods = ['GET']
+
+    @classmethod
+    def get_resource_handlers(cls, **initkwargs: typing.Any) -> ResourceHandlersMap:
+        return {
+            resource: viewset.as_view(**initkwargs)
+            for resource, viewset in cls.resource_views_map.items()
+        }
+
+    @classmethod
+    def as_view(cls, **initkwargs: typing.Any) -> typing.Any:
+        cls.check_queryset_models()
+        resource_handlers_map = cls.get_resource_handlers(**initkwargs)
+        view = super().as_view(resource_handlers_map=resource_handlers_map, **initkwargs)  # type: ignore
+        return view
+
+    @classmethod
+    @functools.lru_cache
+    def check_queryset_models(cls) -> bool:
+        warnings: typing.List[str] = []
+        errors: typing.List[str] = []
+        models_map = get_queryset_model_map(cls.resource_views_map)
+        current_model = None
+        for resource, model in models_map.items():
+            if model is None:
+                warnings.append(f'Resource {resource} for {cls.__name__} has no queryset.')
+            elif current_model is None:
+                current_model = model
+            elif current_model != model:
+                errors.append((
+                    f'Resource {resource} for {cls.__name__} has wrong queryset model '
+                    f'{model} instead of {current_model}.'
+                ))
+        for warning in warnings:
+            logger.warning(warning)
+        if errors:
+            raise ImproperlyConfigured(','.join(errors))
+        return True
+
+    def get_discriminant(self, request: WSGIRequest) -> str:
+        return request.GET.get(
+            self.resource_discriminative_param, self.default_discriminative_value)
+
+    def dispatch(self, request: WSGIRequest, *args: typing.Any, **kwargs: typing.Any) -> Response:
+        if request.method in self.resource_discriminate_methods:
+            discriminant = self.get_discriminant(request)
+
+            if (
+                getattr(settings, 'API_RESOURCE_SET_PARAM', False)
+                and (
+                    discriminant != self.default_discriminative_value
+                    or getattr(settings, 'API_RESOURCE_SET_PARAM_FOR_DEFAULT', False)
+                )
+            ):
+                request.resource_args = {
+                    self.resource_discriminative_param: discriminant,
+                }
+        else:
+            discriminant = self.default_discriminative_value
+
+        resource_dispatch = self.resource_handlers_map.get(discriminant)
+        if resource_dispatch:
+            return resource_dispatch(request, *args, **kwargs)
+        raise Http404()
+
+
+class ResourceViewSet(ResourceBase, GenericViewSet):
+    pagination_class: typing.Optional[BasePagination] = PageNumberPagination
+
+    def __init__(
+        self, resource_handlers_map: typing.Dict[str, Handler] = None,
+        *args: typing.Any, **kwargs: typing.Any,
+    ) -> None:
+        super().__init__(*args, **kwargs)
+        self.resource_handlers_map = resource_handlers_map or {}
+        for method in self.get_action_methods():
+            if not hasattr(self, method):
+                setattr(self, method, lambda a: None)
+
+    @classmethod
+    def as_view(cls, actions: ActionMap = None, **initkwargs: typing.Any) -> typing.Any:
+        initkwargs['actions'] = actions
+        return super().as_view(**initkwargs)
+
+    @classmethod
+    def get_action_methods(cls) -> typing.List[str]:
+        resource_actions_map = collections.defaultdict(set)
+        crud_methods_set = {'list', 'retrieve', 'create', 'update', 'partial_update', 'destroy'}
+        available_methods_set = set()
+        for resource, viewset_class in cls.resource_views_map.items():
+            for crud_method in crud_methods_set:
+                if hasattr(viewset_class, crud_method):
+                    available_methods_set.add(crud_method)
+                    resource_actions_map[resource].add(crud_method)
+        for resource, name, _ in cls.resources_extra_actions():
+            available_methods_set.add(name)
+            resource_actions_map[resource].add(name)
+        cls.resource_actions_map = resource_actions_map
+        return list(available_methods_set)
+
+    @classmethod
+    def gen_resources_extra_actions(cls) -> typing.Iterator[ResourceExtraAction]:
+        for resource, viewset_class in cls.resource_views_map.items():
+            for name, handler in inspect.getmembers(viewset_class, _is_extra_action):
+                yield resource, name, handler
+
+    @classmethod
+    @functools.lru_cache
+    def resources_extra_actions(cls) -> typing.List[ResourceExtraAction]:
+        return list(cls.gen_resources_extra_actions())
+
+    @classmethod
+    def get_extra_actions(cls) -> typing.List[Handler]:
+        return [handler for _, _, handler in cls.resources_extra_actions()]
+
+    def dispatch(self, request: WSGIRequest, *args: typing.Any, **kwargs: typing.Any) -> Response:
+        discriminator = self.get_discriminant(request)
+
+        method = request.method.lower()
+        action = self.action_map.get(method)
+        if action in self.resource_actions_map.get(discriminator, {}):
+            return super().dispatch(request, *args, **kwargs)
+        raise Http404()
+
+
+class ResourceView(ResourceBase, GenericAPIView):
+
+    @classmethod
+    def as_view(cls, **initkwargs: typing.Any) -> typing.Any:
+        view = super().as_view(**initkwargs)
+        resource_handlers_map = view.initkwargs.get('resource_handlers_map', {})
+        actions = merge_actions([
+            getattr(handler, 'actions', None) for handler in resource_handlers_map.values()])
+        if actions:
+            view.actions = actions
+        return view
