@@ -24,8 +24,8 @@ setup(
     classifiers=[
         'Environment :: Web Environment',
         'Framework :: Django',
-        'Framework:: Django:: 3.0',
-        'Framework:: Django:: 3.1',
+        'Framework :: Django :: 3.0',
+        'Framework :: Django :: 3.1',
         'Operating System :: OS Independent',
         'Topic :: Internet :: WWW/HTTP',
         'Programming Language :: Python',
