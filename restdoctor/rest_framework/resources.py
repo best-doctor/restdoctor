@@ -56,13 +56,18 @@ def merge_actions(handlers_actions: typing.Sequence[ActionMap]) -> ActionMap:
 class ResourceBase:
     schema_class = ResourceSchema
 
-    default_discriminative_value = getattr(settings, 'API_RESOURCE_DEFAULT', 'common')
-    resource_discriminative_param = getattr(settings, 'API_RESOURCE_DISCRIMINATIVE_PARAM', 'view_type')
+    default_discriminative_value = settings.API_RESOURCE_DEFAULT
+    resource_discriminative_param = settings.API_RESOURCE_DISCRIMINATIVE_PARAM
     resource_views_map: ResourceViewsMap = {}
     resource_actions_map: ResourceActionsMap = {}
     resource_handlers_map: ResourceHandlersMap = {}
 
     resource_discriminate_methods = ['GET']
+
+    @property
+    def schema_tags(self) -> typing.List[str]:
+        default_view = self.resource_views_map.get(self.default_discriminative_value)
+        return getattr(default_view, 'schema_tags', [])
 
     @classmethod
     def get_resource_handlers(cls, **initkwargs: typing.Any) -> ResourceHandlersMap:
@@ -110,10 +115,10 @@ class ResourceBase:
             discriminant = self.get_discriminant(request)
 
             if (
-                getattr(settings, 'API_RESOURCE_SET_PARAM', False)
+                settings.API_RESOURCE_SET_PARAM
                 and (
                     discriminant != self.default_discriminative_value
-                    or getattr(settings, 'API_RESOURCE_SET_PARAM_FOR_DEFAULT', False)
+                    or settings.API_RESOURCE_SET_PARAM_FOR_DEFAULT
                 )
             ):
                 request.resource_args = {

@@ -9,15 +9,11 @@ if TYPE_CHECKING:
 
 
 def get_api_prefix(default: Optional[Prefix] = '/') -> Optional[Prefix]:
-    try:
-        api_prefix = settings.API_PREFIX
-        return f'/{api_prefix.strip("/")}'
-    except (KeyError, AttributeError):
-        return default
+    return get_api_prefixes(default)[0]
 
 
 def get_api_prefixes(default: Optional[SequenceOrT[Prefix]] = '/') -> Prefixes:
-    prefixes = getattr(settings, 'API_PREFIXES', default) or default
+    prefixes = settings.API_PREFIXES or default
     if prefixes is None:
         prefixes = ()
     elif not isinstance(prefixes, tuple):
@@ -28,15 +24,11 @@ def get_api_prefixes(default: Optional[SequenceOrT[Prefix]] = '/') -> Prefixes:
 
 
 def get_api_path_prefix(default: Optional[Prefix] = '/') -> Optional[Prefix]:
-    try:
-        api_prefix = settings.API_PREFIX
-        return f'{api_prefix.strip("/")}/'
-    except (KeyError, AttributeError):
-        return default
+    return get_api_path_prefixes(default)[0]
 
 
 def get_api_path_prefixes(default: Optional[SequenceOrT[Prefix]] = '/') -> Prefixes:
-    prefixes = getattr(settings, 'API_PREFIXES', default) or default
+    prefixes = settings.API_PREFIXES or default
     if prefixes is None:
         prefixes = ()
     elif not isinstance(prefixes, tuple):

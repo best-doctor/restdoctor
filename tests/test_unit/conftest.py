@@ -55,14 +55,27 @@ def api_prefix() -> str:
 
 
 @pytest.fixture()
-def resource_viewset_dispatch(mocker):
-    def with_args(resource_discriminator, resource_viewset, actions=None):
+def resource_class(settings):
+    def with_args(resource_discriminator, resource, base=None):
+
+        class Base(base or ResourceViewSet):
+            default_discriminative_value = settings.API_RESOURCE_DEFAULT
+            resource_discriminative_param = settings.API_RESOURCE_DISCRIMINATIVE_PARAM
+
         resource_class = type(
-            'TestResource', (ResourceViewSet,),
-            {'resource_views_map': {resource_discriminator: resource_viewset}},
+            'TestResource', (Base,),
+            {'resource_views_map': {resource_discriminator: resource}},
         )
+        return resource_class
+    return with_args
+
+
+@pytest.fixture()
+def resource_viewset_dispatch(mocker, resource_class):
+    def with_args(resource_discriminator, resource_viewset, actions=None):
+        viewset_class = resource_class(resource_discriminator, resource_viewset, base=ResourceViewSet)
         mocked_dispatch = mocker.patch.object(resource_viewset, 'dispatch')
-        view_func = resource_class.as_view(actions=actions)
+        view_func = viewset_class.as_view(actions=actions)
 
         return view_func, mocked_dispatch
 
@@ -70,14 +83,11 @@ def resource_viewset_dispatch(mocker):
 
 
 @pytest.fixture()
-def resource_view_dispatch(mocker):
-    def with_args(resource_discriminator, resource_view, actions=None):
-        resource_class = type(
-            'TestResource', (ResourceView,),
-            {'resource_views_map': {resource_discriminator: resource_view}},
-        )
+def resource_view_dispatch(mocker, resource_class):
+    def with_args(resource_discriminator, resource_view):
+        view_class = resource_class(resource_discriminator, resource_view, base=ResourceView)
         mocked_dispatch = mocker.patch.object(resource_view, 'dispatch')
-        view_func = resource_class.as_view()
+        view_func = view_class.as_view()
 
         return view_func, mocked_dispatch
 

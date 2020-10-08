@@ -7,8 +7,6 @@ from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.http import Http404
 
-from rest_framework.request import Request
-
 from restdoctor.rest_framework.generics import GenericAPIView
 from restdoctor.rest_framework.mixins import ListModelMixin, RetrieveModelMixin
 from restdoctor.rest_framework.signals import bind_extra_request_view_initial_metadata
@@ -20,8 +18,10 @@ from restdoctor.utils.structlog import get_logger
 
 if typing.TYPE_CHECKING:
     from django.http import HttpRequest
+    from django.core.handlers.wsgi import WSGIRequest
     from rest_framework.permissions import BasePermission
     from rest_framework.response import Response
+    from rest_framework.request import Request
     from rest_framework.serializers import BaseSerializer
     from restdoctor.utils.serializers import SerializerType
     from restdoctor.rest_framework.sensitive_data import SerializerData
@@ -47,7 +47,7 @@ class SerializerClassMapApiView(GenericAPIView):
             view.actions = cls.action_map
         return view
 
-    def dispatch(self, request: Request, *args: Any, **kwargs: Any) -> Response:
+    def dispatch(self, request: WSGIRequest, *args: Any, **kwargs: Any) -> Response:
         response = super().dispatch(request, *args, **kwargs)
         response.serializer = self.get_response_serializer_class()
         return response
@@ -60,7 +60,7 @@ class SerializerClassMapApiView(GenericAPIView):
         return None
 
     def initial(self, request: Request, *args: typing.Any, **kwargs: typing.Any) -> None:
-        if settings.ENABLE_STRUCTLOG:
+        if settings.API_ENABLE_STRUCTLOG:
             bind_extra_request_view_initial_metadata.send(sender=self.__class__, request=request, logger=logger)
             try:
                 request_data = self.clear_request_data(request)
