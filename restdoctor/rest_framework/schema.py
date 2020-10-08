@@ -18,7 +18,7 @@ from restdoctor.rest_framework.views import SerializerClassMapApiView
 
 if typing.TYPE_CHECKING:
     from restdoctor.rest_framework.custom_types import (
-        ActionCodesMap, LocalRefs, OpenAPISchema, Handler, CodesTuple,
+        ActionCodesMap, LocalRefs, OpenAPISchema, Handler, CodesTuple, ResourceHandlersMap,
     )
 
 
@@ -490,29 +490,47 @@ class ResourceSchema(RestDoctorSchema):
         return self._get_object_name_by_view_class_name(
             clean_suffixes=['View', 'APIView', 'ViewSet'])
 
+    def _get_resources(self, method: str) -> ResourceHandlersMap:
+        return {
+            resource: handler for resource, handler in self.view.resource_handlers_map.items()
+            if (
+                method in self.view.resource_discriminate_methods
+                or resource == self.view.default_discriminative_value
+            )
+        }
+
     def __get_item_schema(self, path: str, method: str, api_format: str = None) -> typing.Optional[OpenAPISchema]:
         schemas = {}
         if self.generator:
-            for resource, handler in self.view.resource_handlers_map.items():
+            for resource, handler in self._get_resources(method).items():
                 view = self.generator.create_view(handler, method, request=self.view.request)
                 schemas[resource] = view.schema._get_item_schema(path, method, api_format=api_format)
 
-        return {'oneOf': list(schemas.values())}
+        list_schemas = list(schemas.values())
+        if len(list_schemas) == 1:
+            return list_schemas[0]
+        return {'oneOf': list_schemas}
 
     def _get_request_body_schema(self, path: str, method: str) -> OpenAPISchema:
         schemas = {}
         if self.generator:
-            for resource, handler in self.view.resource_handlers_map.items():
+            for resource, handler in self._get_resources(method).items():
                 view = self.generator.create_view(handler, method, request=self.view.request)
                 schemas[resource] = view.schema._get_request_body_schema(path, method)
 
-        return {'oneOf': list(schemas.values())}
+        list_schemas = list(schemas.values())
+        if len(list_schemas) == 1:
+            return list_schemas[0]
+        return {'oneOf': list_schemas}
 
     def _get_response_schema(self, path: str, method: str, api_format: str = None) -> OpenAPISchema:
         schemas = {}
         if self.generator:
-            for resource, handler in self.view.resource_handlers_map.items():
+            for resource, handler in self._get_resources(method).items():
                 view = self.generator.create_view(handler, method, request=self.view.request)
                 schemas[resource] = view.schema._get_response_schema(path, method, api_format=api_format)
 
-        return {'oneOf': list(schemas.values())}
+        list_schemas = list(schemas.values())
+        if len(list_schemas) == 1:
+            return list_schemas[0]
+        return {'oneOf': list_schemas}

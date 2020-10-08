@@ -47,6 +47,7 @@ class ViewSetWithTags(ModelViewSet):
 
 
 class DefaultAnotherResourceViewSet(ResourceViewSet):
+    default_discriminative_value = 'default'
     resource_views_map = {
         'default': DefaultViewSet,
         'another': AnotherViewSet,
