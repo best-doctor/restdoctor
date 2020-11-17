@@ -8,6 +8,9 @@ test:
 check:
 	make test style types
 
+install-dev:
+	pip-sync requirements.txt requirements-dev.txt
+
 lock:
 	pip-compile --generate-hashes
 	pip-compile --generate-hashes requirements-dev.in
