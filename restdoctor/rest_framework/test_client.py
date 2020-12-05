@@ -1,4 +1,6 @@
 from __future__ import annotations
+
+import json
 from typing import Any, List, TYPE_CHECKING
 
 from rest_framework.test import APIClient
@@ -54,6 +56,10 @@ class DRFClient(APIClient):
         accept = kwargs.get('accept') or kwargs.get('HTTP_ACCEPT') or self.accept
         authorization = kwargs.get('authorization') or kwargs.get('HTTP_AUTHORIZATION') or self.authorization
         content_type = kwargs.get('content_type') or self.content_type
+
+        json_data = kwargs.pop('json')
+        if json_data:
+            kwargs['data'] = json.dumps(json_data)
 
         kwargs['HTTP_ACCEPT'] = accept
         kwargs['HTTP_AUTHORIZATION'] = authorization
