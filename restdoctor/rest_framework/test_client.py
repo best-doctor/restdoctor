@@ -18,6 +18,7 @@ class DRFClient(APIClient):
     ) -> None:
         super().__init__(*args, **kwargs)
 
+        self.user = user
         self.content_type = content_type
         self.accept = accept
         self.authorization = authorization
