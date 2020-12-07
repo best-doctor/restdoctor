@@ -57,9 +57,8 @@ class DRFClient(APIClient):
         authorization = kwargs.get('authorization') or kwargs.get('HTTP_AUTHORIZATION') or self.authorization
         content_type = kwargs.get('content_type') or self.content_type
 
-        json_data = kwargs.pop('json')
-        if json_data:
-            kwargs['data'] = json.dumps(json_data)
+        if 'json' in kwargs:
+            kwargs['data'] = json.dumps(kwargs.pop('json'))
 
         kwargs['HTTP_ACCEPT'] = accept
         kwargs['HTTP_AUTHORIZATION'] = authorization
