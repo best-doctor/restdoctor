@@ -13,7 +13,7 @@ class APIParams:
     vendor: str
     prefix: typing.Optional[str] = None
     version: str = settings.API_FALLBACK_VERSION
-    resource_discriminator: str = None
+    resource_discriminator: typing.Optional[str] = None
     format: str = settings.API_DEFAULT_FORMAT  # noqa: A003, VNE003
 
     @property
@@ -46,14 +46,14 @@ def parse_accept(header: str = None, vendor: str = None) -> typing.Optional[APIP
     parts = api_options_string.split('.')
     version = parse_version(parts)
     resource_discriminator = parse_resource_discriminator(parts)
-    format = parse_format(parts)
+    api_format = parse_api_format(parts)
 
     if version:
         api_params.version = version
     if resource_discriminator:
         api_params.resource_discriminator = resource_discriminator
-    if format:
-        api_params.format = format
+    if api_format:
+        api_params.format = api_format
     return api_params
 
 
@@ -76,14 +76,14 @@ def parse_resource_discriminator(api_options_parts: typing.List[str]) -> typing.
         pass
 
 
-def parse_format(api_options_parts: typing.List[str]) -> typing.Optional[str]:
+def parse_api_format(api_options_parts: typing.List[str]) -> typing.Optional[str]:
     try:
-        format = api_options_parts[3]
+        api_format = api_options_parts[3]
     except IndexError:
         pass
     else:
-        if format in settings.API_FORMATS:
-            return format
+        if api_format in settings.API_FORMATS:
+            return api_format
 
 
 def get_api_header(params: APIParams) -> str:
