@@ -22,7 +22,7 @@ def test_serializer_class_map_schema(
     schema.generator = None
     result = view.schema.get_operation(path, method)
     code, _ = view.schema._get_action_code_description(path, method)
-    responses_schema = result['responses'][code]['content']['application/vnd.bestdoctor']['schema']
+    responses_schema = result['responses'][code]['content']['application/vnd.vendor']['schema']
     responses_properties = responses_schema['properties']['data']
     if 'items' in responses_properties:
         responses_properties = responses_properties['items']

@@ -41,26 +41,26 @@ class DRFClient(APIClient):
     def delete_json(self, *args: Any, **kwargs: Any) -> Any:
         expected_status_codes = kwargs.pop(
             'expected_status_codes', [HTTP_200_OK, HTTP_202_ACCEPTED, HTTP_204_NO_CONTENT])
-        return self._json_api_call('delete',  *args, expected_status_codes=expected_status_codes, **kwargs)
+        return self._json_api_call('delete', *args, expected_status_codes=expected_status_codes, **kwargs)
 
     def get_json(self, *args: Any, **kwargs: Any) -> Any:
         expected_status_codes = kwargs.pop('expected_status_codes', [HTTP_200_OK])
-        return self._json_api_call('get',  *args, expected_status_codes=expected_status_codes, **kwargs)
+        return self._json_api_call('get', *args, expected_status_codes=expected_status_codes, **kwargs)
 
     def post_json(self, *args: Any, **kwargs: Any) -> Any:
         expected_status_codes = kwargs.pop('expected_status_codes', [HTTP_200_OK, HTTP_201_CREATED])
-        return self._json_api_call('post',  *args, expected_status_codes=expected_status_codes, **kwargs)
+        return self._json_api_call('post', *args, expected_status_codes=expected_status_codes, **kwargs)
 
     def put_json(self, *args: Any, **kwargs: Any) -> Any:
         expected_status_codes = kwargs.pop('expected_status_codes', [HTTP_200_OK])
-        return self._json_api_call('put',  *args, expected_status_codes=expected_status_codes, **kwargs)
+        return self._json_api_call('put', *args, expected_status_codes=expected_status_codes, **kwargs)
 
     def patch_json(self, *args: Any, **kwargs: Any) -> Any:
         expected_status_codes = kwargs.pop('expected_status_codes', [HTTP_200_OK])
-        return self._json_api_call('patch',  *args, expected_status_codes=expected_status_codes, **kwargs)
+        return self._json_api_call('patch', *args, expected_status_codes=expected_status_codes, **kwargs)
 
     def _api_call(
-        self, method: str, *args: Any, expected_status_codes: List[int] = None,  **kwargs: Any,
+        self, method: str, *args: Any, expected_status_codes: List[int] = None, **kwargs: Any,
     ) -> Response:
         accept = kwargs.get('accept') or kwargs.get('HTTP_ACCEPT') or self.accept
         authorization = kwargs.get('authorization') or kwargs.get('HTTP_AUTHORIZATION') or self.authorization

@@ -107,13 +107,14 @@ class ResourceBase:
         return True
 
     def get_discriminant(self, request: WSGIRequest) -> str:
-        return request.GET.get(
-            self.resource_discriminative_param, self.default_discriminative_value)
+        try:
+            if request.api_params.resource_discriminator:
+                return request.api_params.resource_discriminator
+        except AttributeError:
+            pass
 
-    def dispatch(self, request: WSGIRequest, *args: typing.Any, **kwargs: typing.Any) -> Response:
         if request.method in self.resource_discriminate_methods:
-            discriminant = self.get_discriminant(request)
-
+            discriminant = request.GET.get(self.resource_discriminative_param) or self.default_discriminative_value
             if (
                 settings.API_RESOURCE_SET_PARAM
                 and (
@@ -124,8 +125,11 @@ class ResourceBase:
                 request.resource_args = {
                     self.resource_discriminative_param: discriminant,
                 }
-        else:
-            discriminant = self.default_discriminative_value
+            return discriminant
+        return self.default_discriminative_value
+
+    def dispatch(self, request: WSGIRequest, *args: typing.Any, **kwargs: typing.Any) -> Response:
+        discriminant = self.get_discriminant(request)
 
         resource_dispatch = self.resource_handlers_map.get(discriminant)
         if resource_dispatch:

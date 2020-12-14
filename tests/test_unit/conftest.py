@@ -5,7 +5,7 @@ from restdoctor.rest_framework.pagination import (
     PageNumberPagination, PageNumberUncountedPagination,
     CursorUUIDPagination, CursorUUIDUncountedPagination,
 )
-from restdoctor.rest_framework.resources import ResourceViewSet, ResourceView
+from restdoctor.rest_framework.resources import ResourceViewSet, ResourceView, ResourceBase
 from restdoctor.utils.api_prefix import get_api_path_prefixes
 from tests.factories import MyModelFactory
 from tests.stubs.models import MyModel
@@ -92,3 +92,8 @@ def resource_view_dispatch(mocker, resource_class):
         return view_func, mocked_dispatch
 
     return with_args
+
+
+@pytest.fixture()
+def get_discriminant_spy(mocker):
+    return mocker.spy(ResourceBase, 'get_discriminant')

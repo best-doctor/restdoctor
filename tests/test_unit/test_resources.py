@@ -139,3 +139,47 @@ def test_resource_view_dispatch_success_case(resource_view_dispatch):
     view_func(request)
 
     assert mocked_dispatch.called_once()
+
+
+@pytest.mark.parametrize(
+    ('accept', 'view_type', 'expected_discriminant'),
+    [
+        ('application/vnd.vendor.v1', '', 'common'),
+        ('application/vnd.vendor.v1', 'extended', 'extended'),
+        ('application/vnd.vendor.v1-extended', '', 'extended'),
+        ('application/vnd.vendor.v1-extended', 'common', 'extended'),
+        ('application/vnd.vendor.v2', '', 'common'),
+    ]
+)
+@pytest.mark.django_db
+def test_get_discriminant_for_get_method(
+    accept, view_type, expected_discriminant,
+    settings, client, api_prefix, get_discriminant_spy,
+):
+    settings.API_VERSIONS = {'v1': 'tests.stubs.api.v1_urls'}
+    settings.API_RESOURCE_DEFAULT = 'common'
+
+    client.get(f'/{api_prefix}mymodel/', HTTP_ACCEPT=accept, data={'view_type': view_type})
+
+    assert get_discriminant_spy.spy_return == expected_discriminant
+
+
+@pytest.mark.parametrize(
+    ('accept', 'expected_discriminant'),
+    [
+        ('application/vnd.vendor.v1', 'common'),
+        ('application/vnd.vendor.v1-common', 'common'),
+        ('application/vnd.vendor.v1-extended', 'extended'),
+    ]
+)
+@pytest.mark.django_db
+def test_get_discriminant_for_post_method(
+    accept, expected_discriminant,
+    settings, client, api_prefix, get_discriminant_spy,
+):
+    settings.API_VERSIONS = {'v1': 'tests.stubs.api.v1_urls'}
+    settings.API_RESOURCE_DEFAULT = 'common'
+
+    client.post(f'/{api_prefix}mymodel/', HTTP_ACCEPT=accept)
+
+    assert get_discriminant_spy.spy_return == expected_discriminant
