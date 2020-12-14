@@ -184,7 +184,8 @@ class RestDoctorSchema(AutoSchema):
         self.generator = generator
 
     def map_renderers(self, *args: typing.Any, **kwargs: typing.Any) -> typing.Any:
-        media_types = ['application/vnd.bestdoctor']
+        vendor = getattr(settings, 'API_VENDOR_STRING', 'vendor')
+        media_types = [f'application/vnd.{vendor}']
         return media_types
 
     def get_operation(self, path: str, method: str) -> OpenAPISchema:

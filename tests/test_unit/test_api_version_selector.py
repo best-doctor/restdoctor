@@ -103,7 +103,7 @@ def test_post_without_accept_header_success_case(client, api_prefix, endpoint, c
 
     response = client.post(
         f'/{api_prefix}{endpoint}', data='{}',
-        content_type='application/json', HTTP_ACCEPT='application/vnd.vendor',
+        content_type='application/json', HTTP_ACCEPT='application/vnd.restdoctor',
     )
 
     assert response.status_code == 200
