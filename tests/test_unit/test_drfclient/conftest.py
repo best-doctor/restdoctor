@@ -1,5 +1,12 @@
 import pytest
 
+from restdoctor.rest_framework.test_client import DRFClient
+
+
+@pytest.fixture()
+def drf_client():
+    return DRFClient()
+
 
 @pytest.fixture()
 def mock_api_call_factory(mocker):
