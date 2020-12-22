@@ -11,20 +11,6 @@ import pytest
         'put',
     ]
 )
-def test_call_api_with_content_type(drf_client, method):
-    drf_client._api_call(method, path='test/path', content_type='another_type')
-
-
-@pytest.mark.parametrize(
-    'method',
-    [
-        'delete',
-        'get',
-        'patch',
-        'post',
-        'put',
-    ]
-)
 def test_call_api(method, drf_client, mock_api_call_factory):
     api_call = mock_api_call_factory(method)
     called_method = getattr(drf_client, method)
