@@ -6,9 +6,11 @@ from urllib.parse import urljoin
 
 from django.conf import settings
 from django.core.exceptions import FieldDoesNotExist
+from django.core.validators import RegexValidator
 from django.utils.encoding import force_str
 from rest_framework.fields import Field, empty, HiddenField, SerializerMethodField
 from rest_framework.generics import GenericAPIView
+from rest_framework.pagination import BasePagination
 from rest_framework.request import Request
 from rest_framework.schemas.openapi import AutoSchema, SchemaGenerator
 from rest_framework.schemas.utils import is_list_view
@@ -189,16 +191,12 @@ class RestDoctorSchema(AutoSchema):
         return media_types
 
     def get_operation(self, path: str, method: str) -> OpenAPISchema:
-        view = self.view
-
         operation = super().get_operation(path, method)
+        operation['tags'] = self.get_tags(path, method)
 
-        schema_tags = getattr(view, 'schema_tags', [])
-        if schema_tags:
-            operation['tags'] = view.schema_tags
         return operation
 
-    def _get_action_name(self, path: str, method: str) -> str:
+    def get_action_name(self, path: str, method: str) -> str:
         action = get_action(path, method, self.view)
         if is_list_view(path, method, self.view):
             return 'list'
@@ -207,7 +205,10 @@ class RestDoctorSchema(AutoSchema):
         else:
             return self.method_mapping[method.lower()]
 
-    def _get_object_name_by_view_class_name(self, clean_suffixes: typing.Sequence[str] = None) -> str:
+    def _get_action_name(self, path: str, method: str) -> str:
+        return self.get_action_name(path, method)
+
+    def get_object_name_by_view_class_name(self, clean_suffixes: typing.Sequence[str] = None) -> str:
         clean_suffixes = clean_suffixes or []
         object_name = self.view.__class__.__name__
         for suffix in sorted(clean_suffixes, key=len, reverse=True):
@@ -216,7 +217,10 @@ class RestDoctorSchema(AutoSchema):
                 break
         return object_name
 
-    def _get_object_name(self, path: str, method: str, action_name: str) -> str:
+    def _get_object_name_by_view_class_name(self, clean_suffixes: typing.Sequence[str] = None) -> str:
+        return self.get_object_name_by_view_class_name(clean_suffixes=clean_suffixes)
+
+    def get_object_name(self, path: str, method: str, action_name: str) -> str:
         action = get_action(path, method, self.view)
 
         # Try to deduce the ID from the view's model
@@ -233,7 +237,7 @@ class RestDoctorSchema(AutoSchema):
                     object_name = object_name[:-10]
                 return object_name
 
-        object_name = self._get_object_name_by_view_class_name(
+        object_name = self.get_object_name_by_view_class_name(
             clean_suffixes=['APIView', 'View', 'ViewSet'])
 
         # Due to camel-casing of classes and `action` being lowercase, apply title in order to find if action truly
@@ -243,29 +247,38 @@ class RestDoctorSchema(AutoSchema):
 
         return object_name
 
-    def _get_operation_id(self, path: str, method: str) -> str:
-        action_name = self._get_action_name(path, method)
-        object_name = self._get_object_name(path, method, action_name)
+    def _get_object_name(self, path: str, method: str, action_name: str) -> str:
+        return self.get_object_name(path, method, action_name)
+
+    def get_operation_id(self, path: str, method: str) -> str:
+        action_name = self.get_action_name(path, method)
+        object_name = self.get_object_name(path, method, action_name)
 
         if action_name == 'list' and not object_name.endswith('s'):  # listThings instead of listThing
             object_name += 's'
 
         return action_name + object_name
 
-    def _get_pagination_parameters(self, path: str, method: str) -> typing.List[OpenAPISchema]:
+    def _get_operation_id(self, path: str, method: str) -> str:
+        return self.get_operation_id(path, method)
+
+    def get_pagination_parameters(self, path: str, method: str) -> typing.List[OpenAPISchema]:
         if not is_list_view(path, method, self.view):
             return []
 
-        paginator = self._get_paginator()
+        paginator = self.get_paginator()
         if not paginator:
             return []
 
         serializer_class = getattr(paginator, 'serializer_class', None)
         if serializer_class:
-            return self._map_query_serializer(serializer_class())
+            return self.map_query_serializer(serializer_class())
         return paginator.get_schema_operation_parameters(self.view)
 
-    def _get_serializer(
+    def _get_pagination_parameters(self, path: str, method: str) -> typing.List[OpenAPISchema]:
+        return self.get_pagination_parameters(path, method)
+
+    def get_serializer(
         self, path: str, method: str, stage: str, api_format: str = None,
     ) -> typing.Optional[BaseSerializer]:
         view = self.view
@@ -282,7 +295,12 @@ class RestDoctorSchema(AutoSchema):
 
         return serializer
 
-    def _get_request_body_schema(self, path: str, method: str) -> OpenAPISchema:
+    def _get_serializer(
+        self, path: str, method: str, stage: str, api_format: str = None,
+    ) -> typing.Optional[BaseSerializer]:
+        return self.get_serializer(path, method, stage, api_format=api_format)
+
+    def get_request_body_schema(self, path: str, method: str) -> OpenAPISchema:
         serializer = self._get_serializer(path, method, 'request')
 
         if serializer is None:
@@ -290,7 +308,10 @@ class RestDoctorSchema(AutoSchema):
 
         return self._map_serializer(serializer, read_only=False, required=(method != 'PATCH'))
 
-    def _get_request_body(self, path: str, method: str) -> OpenAPISchema:
+    def _get_request_body_schema(self, path: str, method: str) -> OpenAPISchema:
+        return self.get_request_body_schema(path, method)
+
+    def get_request_body(self, path: str, method: str) -> OpenAPISchema:
         if method not in ('PUT', 'PATCH', 'POST'):
             return {}
 
@@ -304,7 +325,10 @@ class RestDoctorSchema(AutoSchema):
             },
         }
 
-    def _get_item_schema(self, path: str, method: str, api_format: str = None) -> typing.Optional[OpenAPISchema]:
+    def _get_request_body(self, path: str, method: str) -> OpenAPISchema:
+        return self.get_request_body(path, method)
+
+    def get_item_schema(self, path: str, method: str, api_format: str = None) -> typing.Optional[OpenAPISchema]:
         serializer = self._get_serializer(path, method, 'response', api_format=api_format)
 
         if serializer is None:
@@ -312,7 +336,10 @@ class RestDoctorSchema(AutoSchema):
 
         return self._map_serializer(serializer, write_only=False)
 
-    def _get_content_schema(self, response_schema: OpenAPISchema, description: str = '') -> OpenAPISchema:
+    def _get_item_schema(self, path: str, method: str, api_format: str = None) -> typing.Optional[OpenAPISchema]:
+        return self.get_item_schema(path, method, api_format=api_format)
+
+    def get_content_schema(self, response_schema: OpenAPISchema, description: str = '') -> OpenAPISchema:
         return {
             'content': {
                 content_type: {'schema': response_schema}
@@ -321,20 +348,23 @@ class RestDoctorSchema(AutoSchema):
             'description': description,
         }
 
-    def _get_response_schema(self, path: str, method: str, api_format: str = None) -> OpenAPISchema:
+    def _get_content_schema(self, response_schema: OpenAPISchema, description: str = '') -> OpenAPISchema:
+        return self.get_content_schema(response_schema, description=description)
+
+    def get_response_schema(self, path: str, method: str, api_format: str = None) -> OpenAPISchema:
         response_schema: OpenAPISchema = {
             'type': 'object',
             'properties': {},
         }
 
-        item_schema = self._get_item_schema(path, method, api_format)
+        item_schema = self.get_item_schema(path, method, api_format)
 
         if is_list_view(path, method, self.view):
             response_schema['properties']['data'] = {
                 'type': 'array',
                 'items': item_schema,
             }
-            paginator = self._get_paginator()
+            paginator = self.get_paginator()
             if paginator:
                 response_schema = paginator.get_paginated_response_schema(response_schema)
         else:
@@ -342,7 +372,16 @@ class RestDoctorSchema(AutoSchema):
 
         return response_schema
 
-    def _get_action_code_description(self, path: str, method: str) -> CodesTuple:
+    def _get_response_schema(self, path: str, method: str, api_format: str = None) -> OpenAPISchema:
+        return self.get_response_schema(path, method, api_format=api_format)
+
+    def get_paginator(self) -> typing.Optional[BasePagination]:
+        try:
+            return super().get_paginator()
+        except AttributeError:
+            return super()._get_paginator()
+
+    def get_action_code_description(self, path: str, method: str) -> CodesTuple:
         action = get_action(path, method, self.view)
         schema_action_codes_map: ActionCodesMap = getattr(self.view, 'schema_action_codes_map', None)
         code = ''
@@ -352,8 +391,11 @@ class RestDoctorSchema(AutoSchema):
             code, description = ACTION_CODES_MAP.get(action, ('200', 'Успешный запрос.'))
         return code, description
 
-    def _get_responses(self, path: str, method: str) -> OpenAPISchema:
-        code, description = self._get_action_code_description(path, method)
+    def _get_action_code_description(self, path: str, method: str) -> CodesTuple:
+        return self.get_action_code_description(path, method)
+
+    def get_responses(self, path: str, method: str) -> OpenAPISchema:
+        code, description = self.get_action_code_description(path, method)
 
         if method == 'DELETE':
             return {code: {'description': description}}
@@ -362,33 +404,42 @@ class RestDoctorSchema(AutoSchema):
 
         schema: OpenAPISchema = {code: {}}
 
-        default_response_schema = self._get_response_schema(path, method)
-        schema[code].update(self._get_content_schema(default_response_schema, description=description))
+        default_response_schema = self.get_response_schema(path, method)
+        schema[code].update(self.get_content_schema(default_response_schema, description=description))
 
         if self.generator:
             default_content_type = self.response_media_types[0]
 
             for api_format in self.generator.api_formats:
                 if api_format != self.generator.api_default_format:
-                    response_schema = self._get_response_schema(path, method, api_format)
+                    response_schema = self.get_response_schema(path, method, api_format)
                     if response_schema != default_response_schema:
                         content_type = f'{default_content_type}.{api_format}'
                         schema[code]['content'][content_type] = {'schema': response_schema}
 
             for code, error_schema, description in ERROR_CODES:
-                schema[code] = self._get_content_schema(error_schema, description=description)
+                schema[code] = self.get_content_schema(error_schema, description=description)
 
         return schema
 
-    def _map_field(self, field: Field) -> OpenAPISchema:
+    def _get_responses(self, path: str, method: str) -> OpenAPISchema:
+        return self.get_responses(path, method)
+
+    def map_field(self, field: Field) -> OpenAPISchema:
         # Field.__deepcopy__ сбрасывает кастомные атрибуты, поэтому схему ищем через класс сериализатора
         if isinstance(field, SerializerMethodField):
             parent_field = field.parent.__class__._declared_fields[field.field_name]
             field = getattr(parent_field, 'schema_type', field)
 
-        return super()._map_field(field)
+        try:
+            return super().map_field(field)
+        except AttributeError:
+            return super()._map_field(field)
 
-    def _get_field_description(self, field: Field) -> typing.Optional[str]:
+    def _map_field(self, field: Field) -> OpenAPISchema:
+        return self.map_field(field)
+
+    def get_field_description(self, field: Field) -> typing.Optional[str]:
         if field.help_text:
             return str(field.help_text)
         elif isinstance(field.parent, ModelSerializer):
@@ -400,8 +451,11 @@ class RestDoctorSchema(AutoSchema):
                 except (AttributeError, LookupError, FieldDoesNotExist):
                     pass
 
-    def _get_field_schema(self, field: Field) -> OpenAPISchema:
-        schema = self._map_field(field)
+    def _get_field_description(self, field: Field) -> typing.Optional[str]:
+        return self._get_field_description(field)
+
+    def get_field_schema(self, field: Field) -> OpenAPISchema:
+        schema = self.map_field(field)
         if field.read_only:
             schema['readOnly'] = True
         if field.write_only:
@@ -410,15 +464,30 @@ class RestDoctorSchema(AutoSchema):
             schema['nullable'] = True
         if field.default and field.default != empty and not callable(field.default):
             schema['default'] = field.default
-        description = self._get_field_description(field)
+        description = self.get_field_description(field)
         if description:
             schema['description'] = description
 
-        self._map_field_validators(field, schema)
+        self.map_field_validators(field, schema)
 
         return schema
 
-    def _get_serializer_schema(
+    def map_field_validators(self, field: Field, schema: OpenAPISchema) -> None:
+        try:
+            super().map_field_validators(field, schema)
+        except AttributeError:
+            super()._map_field_validators(field, schema)
+
+        # Backported from django-rest-framework
+        # https://github.com/encode/django-rest-framework/commit/5ce237e00471d885f05e6d979ec777552809b3b1
+        for v in field.validators:
+            if isinstance(v, RegexValidator):
+                schema['pattern'] = v.regex.pattern.replace('\\Z', '\\z')
+
+    def _get_field_schema(self, field: Field) -> OpenAPISchema:
+        return self.get_field_schema(field)
+
+    def get_serializer_schema(
         self, serializer: BaseSerializer,
         write_only: bool = True, read_only: bool = True, required: bool = True,
     ) -> OpenAPISchema:
@@ -435,7 +504,7 @@ class RestDoctorSchema(AutoSchema):
             if field.required:
                 required_list.append(field.field_name)
 
-            properties[field.field_name] = self._get_field_schema(field)
+            properties[field.field_name] = self.get_field_schema(field)
 
         schema: OpenAPISchema = {
             'type': 'object',
@@ -447,7 +516,16 @@ class RestDoctorSchema(AutoSchema):
             schema['required'] = required_list
         return schema
 
-    def _map_serializer(
+    def _get_serializer_schema(
+        self, serializer: BaseSerializer,
+        write_only: bool = True, read_only: bool = True, required: bool = True,
+    ) -> OpenAPISchema:
+        return self.get_serializer_schema(
+            serializer,
+            write_only=write_only, read_only=read_only, required=required,
+        )
+
+    def map_serializer(
         self, serializer: BaseSerializer,
         write_only: bool = True, read_only: bool = True, required: bool = True,
     ) -> OpenAPISchema:
@@ -464,7 +542,16 @@ class RestDoctorSchema(AutoSchema):
 
         return schema
 
-    def _map_query_serializer(self, serializer: BaseSerializer) -> typing.List[OpenAPISchema]:
+    def _map_serializer(
+        self, serializer: BaseSerializer,
+        write_only: bool = True, read_only: bool = True, required: bool = True,
+    ) -> OpenAPISchema:
+        return self.map_serializer(
+            serializer,
+            write_only=write_only, read_only=read_only, required=required,
+        )
+
+    def map_query_serializer(self, serializer: BaseSerializer) -> typing.List[OpenAPISchema]:
         props = []
 
         for field in serializer.fields.values():
@@ -485,13 +572,35 @@ class RestDoctorSchema(AutoSchema):
 
         return props
 
+    def _map_query_serializer(self, serializer: BaseSerializer) -> typing.List[OpenAPISchema]:
+        return self.map_query_serializer(serializer)
+
+    def get_tags(self, path: str, method: str) -> typing.List[str]:
+        view = self.view
+
+        schema_tags = getattr(view, 'schema_tags', [])
+        if schema_tags:
+            return view.schema_tags
+
+        schema_tags = getattr(self, '_tags', [])
+        if schema_tags:
+            return view.schema_tags
+
+        # First element of a specific path could be valid tag. This is a fallback solution.
+        # PUT, PATCH, GET(Retrieve), DELETE:        /user_profile/{id}/       tags = [user-profile]
+        # POST, GET(List):                          /user_profile/            tags = [user-profile]
+        if path.startswith('/'):
+            path = path[1:]
+
+        return [path.split('/')[0].replace('_', '-')]
+
 
 class ResourceSchema(RestDoctorSchema):
-    def _get_object_name(self, path: str, method: str, action_name: str) -> str:
+    def get_object_name(self, path: str, method: str, action_name: str) -> str:
         return self._get_object_name_by_view_class_name(
             clean_suffixes=['View', 'APIView', 'ViewSet'])
 
-    def _get_resources(self, method: str) -> ResourceHandlersMap:
+    def get_resources(self, method: str) -> ResourceHandlersMap:
         return {
             resource: handler for resource, handler in self.view.resource_handlers_map.items()
             if (
@@ -499,6 +608,9 @@ class ResourceSchema(RestDoctorSchema):
                 or resource == self.view.default_discriminative_value
             )
         }
+
+    def _get_resources(self, method: str) -> ResourceHandlersMap:
+        return self.get_resources(method)
 
     def __get_item_schema(self, path: str, method: str, api_format: str = None) -> typing.Optional[OpenAPISchema]:
         schemas = {}
@@ -512,24 +624,24 @@ class ResourceSchema(RestDoctorSchema):
             return list_schemas[0]
         return {'oneOf': list_schemas}
 
-    def _get_request_body_schema(self, path: str, method: str) -> OpenAPISchema:
+    def get_request_body_schema(self, path: str, method: str) -> OpenAPISchema:
         schemas = {}
         if self.generator:
-            for resource, handler in self._get_resources(method).items():
+            for resource, handler in self.get_resources(method).items():
                 view = self.generator.create_view(handler, method, request=self.view.request)
-                schemas[resource] = view.schema._get_request_body_schema(path, method)
+                schemas[resource] = view.schema.get_request_body_schema(path, method)
 
         list_schemas = list(schemas.values())
         if len(list_schemas) == 1:
             return list_schemas[0]
         return {'oneOf': list_schemas}
 
-    def _get_response_schema(self, path: str, method: str, api_format: str = None) -> OpenAPISchema:
+    def get_response_schema(self, path: str, method: str, api_format: str = None) -> OpenAPISchema:
         schemas = {}
         if self.generator:
-            for resource, handler in self._get_resources(method).items():
+            for resource, handler in self.get_resources(method).items():
                 view = self.generator.create_view(handler, method, request=self.view.request)
-                schemas[resource] = view.schema._get_response_schema(path, method, api_format=api_format)
+                schemas[resource] = view.schema.get_response_schema(path, method, api_format=api_format)
 
         list_schemas = list(schemas.values())
         if len(list_schemas) == 1:

@@ -8,6 +8,8 @@ from rest_framework.fields import (
 from restdoctor.rest_framework.schema import RestDoctorSchema
 
 
+url_pattern = URLValidator.regex.pattern.replace('\\Z', '\\z')
+
 @pytest.mark.parametrize(
     'field,expected_schema',
     (
@@ -35,7 +37,7 @@ def test_basic_fields_schema(field, expected_schema):
         (CharField(min_length=5, max_length=10), {'type': 'string', 'minLength': 5, 'maxLength': 10}),
         (EmailField(), {'type': 'string', 'format': 'email'}),
         (RegexField('pattern'), {'type': 'string', 'pattern': 'pattern'}),
-        (URLField(), {'type': 'string', 'format': 'uri', 'pattern': URLValidator.regex.pattern}),
+        (URLField(), {'type': 'string', 'format': 'uri', 'pattern': url_pattern}),
         (UUIDField(), {'type': 'string', 'format': 'uuid'}),
     ),
 )
