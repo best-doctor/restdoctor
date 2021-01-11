@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import typing
-from typing import Any
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
@@ -47,7 +46,7 @@ class SerializerClassMapApiView(GenericAPIView):
             view.actions = cls.action_map
         return view
 
-    def dispatch(self, request: WSGIRequest, *args: Any, **kwargs: Any) -> Response:
+    def dispatch(self, request: WSGIRequest, *args: typing.Any, **kwargs: typing.Any) -> Response:
         response = super().dispatch(request, *args, **kwargs)
         response.serializer = self.get_response_serializer_class()
         return response

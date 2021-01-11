@@ -3,10 +3,11 @@ import typing
 
 from django.core.exceptions import PermissionDenied
 from django.http import Http404
-from ratelimit.exceptions import Ratelimited
 from rest_framework import exceptions
 from rest_framework.response import Response
 from rest_framework.views import set_rollback
+
+from restdoctor.utils.helpers import get_full_class_name
 
 if typing.TYPE_CHECKING:
     from restdoctor.utils.custom_types import ImmutableContext, GenericContext
@@ -42,7 +43,7 @@ def _get_errors_data(exc: exceptions.APIException) -> GenericContext:
 def _override_exception(exc: Exception) -> Exception:
     if isinstance(exc, Http404):
         exc = exceptions.NotFound(exc)
-    elif isinstance(exc, Ratelimited):
+    elif get_full_class_name(exc) == 'ratelimit.exceptions.Ratelimited':
         exc = exceptions.PermissionDenied(
             detail={
                 'message': 'Вы превысили лимит попыток. Попробуйте позже или обратитесь в поддержку.',

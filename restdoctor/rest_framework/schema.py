@@ -186,7 +186,7 @@ class RestDoctorSchema(AutoSchema):
         self.generator = generator
 
     def map_renderers(self, *args: typing.Any, **kwargs: typing.Any) -> typing.Any:
-        vendor = getattr(settings, 'API_VENDOR_STRING', 'vendor')
+        vendor = getattr(settings, 'API_VENDOR_STRING', 'vendor').lower()
         media_types = [f'application/vnd.{vendor}']
         return media_types
 
@@ -205,9 +205,6 @@ class RestDoctorSchema(AutoSchema):
         else:
             return self.method_mapping[method.lower()]
 
-    def _get_action_name(self, path: str, method: str) -> str:
-        return self.get_action_name(path, method)
-
     def get_object_name_by_view_class_name(self, clean_suffixes: typing.Sequence[str] = None) -> str:
         clean_suffixes = clean_suffixes or []
         object_name = self.view.__class__.__name__
@@ -216,9 +213,6 @@ class RestDoctorSchema(AutoSchema):
                 object_name = object_name[:-len(suffix)]
                 break
         return object_name
-
-    def _get_object_name_by_view_class_name(self, clean_suffixes: typing.Sequence[str] = None) -> str:
-        return self.get_object_name_by_view_class_name(clean_suffixes=clean_suffixes)
 
     def get_object_name(self, path: str, method: str, action_name: str) -> str:
         action = get_action(path, method, self.view)
@@ -247,9 +241,6 @@ class RestDoctorSchema(AutoSchema):
 
         return object_name
 
-    def _get_object_name(self, path: str, method: str, action_name: str) -> str:
-        return self.get_object_name(path, method, action_name)
-
     def get_operation_id(self, path: str, method: str) -> str:
         action_name = self.get_action_name(path, method)
         object_name = self.get_object_name(path, method, action_name)
@@ -258,9 +249,6 @@ class RestDoctorSchema(AutoSchema):
             object_name += 's'
 
         return action_name + object_name
-
-    def _get_operation_id(self, path: str, method: str) -> str:
-        return self.get_operation_id(path, method)
 
     def get_pagination_parameters(self, path: str, method: str) -> typing.List[OpenAPISchema]:
         if not is_list_view(path, method, self.view):
@@ -274,9 +262,6 @@ class RestDoctorSchema(AutoSchema):
         if serializer_class:
             return self.map_query_serializer(serializer_class())
         return paginator.get_schema_operation_parameters(self.view)
-
-    def _get_pagination_parameters(self, path: str, method: str) -> typing.List[OpenAPISchema]:
-        return self.get_pagination_parameters(path, method)
 
     def get_serializer(
         self, path: str, method: str, stage: str, api_format: str = None,
@@ -295,28 +280,20 @@ class RestDoctorSchema(AutoSchema):
 
         return serializer
 
-    def _get_serializer(
-        self, path: str, method: str, stage: str, api_format: str = None,
-    ) -> typing.Optional[BaseSerializer]:
-        return self.get_serializer(path, method, stage, api_format=api_format)
-
-    def get_request_body_schema(self, path: str, method: str) -> OpenAPISchema:
-        serializer = self._get_serializer(path, method, 'request')
+    def get_request_body_schema(self, path: str, method: str, api_format: str = None) -> OpenAPISchema:
+        serializer = self.get_serializer(path, method, 'request', api_format=api_format)
 
         if serializer is None:
             return {}
 
-        return self._map_serializer(serializer, read_only=False, required=(method != 'PATCH'))
-
-    def _get_request_body_schema(self, path: str, method: str) -> OpenAPISchema:
-        return self.get_request_body_schema(path, method)
+        return self.map_serializer(serializer, read_only=False, required=(method != 'PATCH'))
 
     def get_request_body(self, path: str, method: str) -> OpenAPISchema:
         if method not in ('PUT', 'PATCH', 'POST'):
             return {}
 
         self.request_media_types = self.map_parsers(path, method)
-        schema = self._get_request_body_schema(path, method)
+        schema = self.get_request_body_schema(path, method)
 
         return {
             'content': {
@@ -325,19 +302,13 @@ class RestDoctorSchema(AutoSchema):
             },
         }
 
-    def _get_request_body(self, path: str, method: str) -> OpenAPISchema:
-        return self.get_request_body(path, method)
-
     def get_item_schema(self, path: str, method: str, api_format: str = None) -> typing.Optional[OpenAPISchema]:
-        serializer = self._get_serializer(path, method, 'response', api_format=api_format)
+        serializer = self.get_serializer(path, method, 'response', api_format=api_format)
 
         if serializer is None:
             return None
 
         return self._map_serializer(serializer, write_only=False)
-
-    def _get_item_schema(self, path: str, method: str, api_format: str = None) -> typing.Optional[OpenAPISchema]:
-        return self.get_item_schema(path, method, api_format=api_format)
 
     def get_content_schema(self, response_schema: OpenAPISchema, description: str = '') -> OpenAPISchema:
         return {
@@ -347,9 +318,6 @@ class RestDoctorSchema(AutoSchema):
             },
             'description': description,
         }
-
-    def _get_content_schema(self, response_schema: OpenAPISchema, description: str = '') -> OpenAPISchema:
-        return self.get_content_schema(response_schema, description=description)
 
     def get_response_schema(self, path: str, method: str, api_format: str = None) -> OpenAPISchema:
         response_schema: OpenAPISchema = {
@@ -372,9 +340,6 @@ class RestDoctorSchema(AutoSchema):
 
         return response_schema
 
-    def _get_response_schema(self, path: str, method: str, api_format: str = None) -> OpenAPISchema:
-        return self.get_response_schema(path, method, api_format=api_format)
-
     def get_paginator(self) -> typing.Optional[BasePagination]:
         try:
             return super().get_paginator()
@@ -390,9 +355,6 @@ class RestDoctorSchema(AutoSchema):
         if not code:
             code, description = ACTION_CODES_MAP.get(action, ('200', 'Успешный запрос.'))
         return code, description
-
-    def _get_action_code_description(self, path: str, method: str) -> CodesTuple:
-        return self.get_action_code_description(path, method)
 
     def get_responses(self, path: str, method: str) -> OpenAPISchema:
         code, description = self.get_action_code_description(path, method)
@@ -422,9 +384,6 @@ class RestDoctorSchema(AutoSchema):
 
         return schema
 
-    def _get_responses(self, path: str, method: str) -> OpenAPISchema:
-        return self.get_responses(path, method)
-
     def map_field(self, field: Field) -> OpenAPISchema:
         # Field.__deepcopy__ сбрасывает кастомные атрибуты, поэтому схему ищем через класс сериализатора
         if isinstance(field, SerializerMethodField):
@@ -435,9 +394,6 @@ class RestDoctorSchema(AutoSchema):
             return super().map_field(field)
         except AttributeError:
             return super()._map_field(field)
-
-    def _map_field(self, field: Field) -> OpenAPISchema:
-        return self.map_field(field)
 
     def get_field_description(self, field: Field) -> typing.Optional[str]:
         if field.help_text:
@@ -450,9 +406,6 @@ class RestDoctorSchema(AutoSchema):
                     return str(field.parent.Meta.model._meta.get_field(field.source).verbose_name)
                 except (AttributeError, LookupError, FieldDoesNotExist):
                     pass
-
-    def _get_field_description(self, field: Field) -> typing.Optional[str]:
-        return self._get_field_description(field)
 
     def get_field_schema(self, field: Field) -> OpenAPISchema:
         schema = self.map_field(field)
@@ -480,12 +433,9 @@ class RestDoctorSchema(AutoSchema):
 
         # Backported from django-rest-framework
         # https://github.com/encode/django-rest-framework/commit/5ce237e00471d885f05e6d979ec777552809b3b1
-        for v in field.validators:
-            if isinstance(v, RegexValidator):
-                schema['pattern'] = v.regex.pattern.replace('\\Z', '\\z')
-
-    def _get_field_schema(self, field: Field) -> OpenAPISchema:
-        return self.get_field_schema(field)
+        for validator in field.validators:
+            if isinstance(validator, RegexValidator):
+                schema['pattern'] = validator.regex.pattern.replace('\\Z', '\\z')
 
     def get_serializer_schema(
         self, serializer: BaseSerializer,
@@ -516,15 +466,6 @@ class RestDoctorSchema(AutoSchema):
             schema['required'] = required_list
         return schema
 
-    def _get_serializer_schema(
-        self, serializer: BaseSerializer,
-        write_only: bool = True, read_only: bool = True, required: bool = True,
-    ) -> OpenAPISchema:
-        return self.get_serializer_schema(
-            serializer,
-            write_only=write_only, read_only=read_only, required=required,
-        )
-
     def map_serializer(
         self, serializer: BaseSerializer,
         write_only: bool = True, read_only: bool = True, required: bool = True,
@@ -541,15 +482,6 @@ class RestDoctorSchema(AutoSchema):
             schema = {'$ref': ref}
 
         return schema
-
-    def _map_serializer(
-        self, serializer: BaseSerializer,
-        write_only: bool = True, read_only: bool = True, required: bool = True,
-    ) -> OpenAPISchema:
-        return self.map_serializer(
-            serializer,
-            write_only=write_only, read_only=read_only, required=required,
-        )
 
     def map_query_serializer(self, serializer: BaseSerializer) -> typing.List[OpenAPISchema]:
         props = []
@@ -572,9 +504,6 @@ class RestDoctorSchema(AutoSchema):
 
         return props
 
-    def _map_query_serializer(self, serializer: BaseSerializer) -> typing.List[OpenAPISchema]:
-        return self.map_query_serializer(serializer)
-
     def get_tags(self, path: str, method: str) -> typing.List[str]:
         view = self.view
 
@@ -594,10 +523,81 @@ class RestDoctorSchema(AutoSchema):
 
         return [path.split('/')[0].replace('_', '-')]
 
+    def _get_action_name(self, path: str, method: str) -> str:
+        return self.get_action_name(path, method)
+
+    def _get_object_name_by_view_class_name(self, clean_suffixes: typing.Sequence[str] = None) -> str:
+        return self.get_object_name_by_view_class_name(clean_suffixes=clean_suffixes)
+
+    def _get_object_name(self, path: str, method: str, action_name: str) -> str:
+        return self.get_object_name(path, method, action_name)
+
+    def _get_operation_id(self, path: str, method: str) -> str:
+        return self.get_operation_id(path, method)
+
+    def _get_pagination_parameters(self, path: str, method: str) -> typing.List[OpenAPISchema]:
+        return self.get_pagination_parameters(path, method)
+
+    def _get_serializer(
+        self, path: str, method: str, stage: str, api_format: str = None,
+    ) -> typing.Optional[BaseSerializer]:
+        return self.get_serializer(path, method, stage, api_format=api_format)
+
+    def _get_request_body_schema(self, path: str, method: str, api_format: str = None) -> OpenAPISchema:
+        return self.get_request_body_schema(path, method, api_format=api_format)
+
+    def _get_request_body(self, path: str, method: str) -> OpenAPISchema:
+        return self.get_request_body(path, method)
+
+    def _get_item_schema(self, path: str, method: str, api_format: str = None) -> typing.Optional[OpenAPISchema]:
+        return self.get_item_schema(path, method, api_format=api_format)
+
+    def _get_content_schema(self, response_schema: OpenAPISchema, description: str = '') -> OpenAPISchema:
+        return self.get_content_schema(response_schema, description=description)
+
+    def _get_response_schema(self, path: str, method: str, api_format: str = None) -> OpenAPISchema:
+        return self.get_response_schema(path, method, api_format=api_format)
+
+    def _get_action_code_description(self, path: str, method: str) -> CodesTuple:
+        return self.get_action_code_description(path, method)
+
+    def _get_responses(self, path: str, method: str) -> OpenAPISchema:
+        return self.get_responses(path, method)
+
+    def _map_field(self, field: Field) -> OpenAPISchema:
+        return self.map_field(field)
+
+    def _get_field_description(self, field: Field) -> typing.Optional[str]:
+        return self._get_field_description(field)
+
+    def _get_field_schema(self, field: Field) -> OpenAPISchema:
+        return self.get_field_schema(field)
+
+    def _get_serializer_schema(
+        self, serializer: BaseSerializer,
+        write_only: bool = True, read_only: bool = True, required: bool = True,
+    ) -> OpenAPISchema:
+        return self.get_serializer_schema(
+            serializer,
+            write_only=write_only, read_only=read_only, required=required,
+        )
+
+    def _map_serializer(
+        self, serializer: BaseSerializer,
+        write_only: bool = True, read_only: bool = True, required: bool = True,
+    ) -> OpenAPISchema:
+        return self.map_serializer(
+            serializer,
+            write_only=write_only, read_only=read_only, required=required,
+        )
+
+    def _map_query_serializer(self, serializer: BaseSerializer) -> typing.List[OpenAPISchema]:
+        return self.map_query_serializer(serializer)
+
 
 class ResourceSchema(RestDoctorSchema):
     def get_object_name(self, path: str, method: str, action_name: str) -> str:
-        return self._get_object_name_by_view_class_name(
+        return self.get_object_name_by_view_class_name(
             clean_suffixes=['View', 'APIView', 'ViewSet'])
 
     def get_resources(self, method: str) -> ResourceHandlersMap:
@@ -609,22 +609,7 @@ class ResourceSchema(RestDoctorSchema):
             )
         }
 
-    def _get_resources(self, method: str) -> ResourceHandlersMap:
-        return self.get_resources(method)
-
-    def __get_item_schema(self, path: str, method: str, api_format: str = None) -> typing.Optional[OpenAPISchema]:
-        schemas = {}
-        if self.generator:
-            for resource, handler in self._get_resources(method).items():
-                view = self.generator.create_view(handler, method, request=self.view.request)
-                schemas[resource] = view.schema._get_item_schema(path, method, api_format=api_format)
-
-        list_schemas = list(schemas.values())
-        if len(list_schemas) == 1:
-            return list_schemas[0]
-        return {'oneOf': list_schemas}
-
-    def get_request_body_schema(self, path: str, method: str) -> OpenAPISchema:
+    def get_resources_request_body_schema(self, path: str, method: str) -> OpenAPISchema:
         schemas = {}
         if self.generator:
             for resource, handler in self.get_resources(method).items():
@@ -636,12 +621,89 @@ class ResourceSchema(RestDoctorSchema):
             return list_schemas[0]
         return {'oneOf': list_schemas}
 
-    def get_response_schema(self, path: str, method: str, api_format: str = None) -> OpenAPISchema:
+    def get_resources_response_schema(self, path: str, method: str, api_format: str = None) -> OpenAPISchema:
         schemas = {}
         if self.generator:
             for resource, handler in self.get_resources(method).items():
                 view = self.generator.create_view(handler, method, request=self.view.request)
                 schemas[resource] = view.schema.get_response_schema(path, method, api_format=api_format)
+
+        list_schemas = list(schemas.values())
+        if len(list_schemas) == 1:
+            return list_schemas[0]
+        return {'oneOf': list_schemas}
+
+    def get_resources_content_schema(self, path: str, method: str, schema_type: str) -> OpenAPISchema:
+        content_schema = {}
+
+        if schema_type == 'responses':
+            resources_schema_method_name = 'get_resources_response_schema'
+            schema_method_name = 'get_response_schema'
+        else:
+            resources_schema_method_name = 'get_resources_request_body_schema'
+            schema_method_name = 'get_request_body_schema'
+
+        vendor = getattr(settings, 'API_VENDOR_STRING', 'vendor').lower()
+        default_content_type = f'application/vnd.{vendor}'
+
+        resources_schema_method = getattr(self, resources_schema_method_name)
+        content_schema[default_content_type] = {'schema': resources_schema_method(path, method)}
+
+        if not self.generator:
+            return content_schema
+
+        version_content_type = f'{default_content_type}.{self.generator.api_version}'
+
+        for resource, handler in self.view.resource_handlers_map.items():
+            view = self.generator.create_view(handler, method, request=self.view.request)
+            schema_method = getattr(view.schema, schema_method_name)
+            default_resource_schema = schema_method(path, method)
+
+            resource_content_type = f'{version_content_type}-{resource}'
+
+            content_schema[resource_content_type] = {'schema': default_resource_schema}
+
+            for api_format in self.generator.api_formats:
+                if api_format != self.generator.api_default_format:
+                    resource_schema = schema_method(path, method, api_format=api_format)
+                    if resource_schema != default_resource_schema:
+                        content_type = f'{resource_content_type}.{api_format}'
+                        content_schema[content_type] = {'schema': resource_schema}
+
+        return content_schema
+
+    def get_responses(self, path: str, method: str) -> OpenAPISchema:
+        code, description = self.get_action_code_description(path, method)
+
+        schema: OpenAPISchema = {code: {'description': description}}
+
+        self.response_media_types = self.map_renderers(path, method)
+
+        if method == 'DELETE':
+            return schema
+
+        schema[code]['content'] = self.get_resources_content_schema(path, method, 'responses')
+
+        for code, error_schema, description in ERROR_CODES:
+            schema[code] = self.get_content_schema(error_schema, description=description)
+
+        return schema
+
+    def get_request_body(self, path: str, method: str) -> OpenAPISchema:
+        if method not in ('PUT', 'PATCH', 'POST'):
+            return {}
+
+        return {'content': self.get_resources_content_schema(path, method, 'request_body')}
+
+    def _get_resources(self, method: str) -> ResourceHandlersMap:
+        return self.get_resources(method)
+
+    def __get_item_schema(self, path: str, method: str, api_format: str = None) -> typing.Optional[OpenAPISchema]:
+        schemas = {}
+        if self.generator:
+            for resource, handler in self._get_resources(method).items():
+                view = self.generator.create_view(handler, method, request=self.view.request)
+                schemas[resource] = view.schema._get_item_schema(path, method, api_format=api_format)
 
         list_schemas = list(schemas.values())
         if len(list_schemas) == 1:
