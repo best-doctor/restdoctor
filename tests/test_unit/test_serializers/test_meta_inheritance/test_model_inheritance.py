@@ -1,4 +1,6 @@
-from .stubs import MyModel, ParentModelSerializer, SerializerMixinA, SerializerMixinB
+from tests.test_unit.test_serializers.test_meta_inheritance.stubs import (
+    MyModel, ParentModelSerializer, SerializerMixinA, SerializerMixinB,
+)
 
 
 def test_no_meta_in_child():

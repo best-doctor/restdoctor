@@ -16,8 +16,9 @@ def test_errors_handlers_sc(
 ):
     create_view = get_create_view_func('test', DefaultViewSet, 'test')
 
-    view = create_view('/test/', 'GET')
+    view = create_view('/test/123/', 'GET')
     view.schema.generator = generator
-    operation = view.schema.get_operation('/test/', 'GET')
+    operation = view.schema.get_operation('/test/123/', 'GET')
 
+    print(generator, operation)
     assert list(operation['responses'].keys()) == expected_codes

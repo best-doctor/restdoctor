@@ -8,13 +8,9 @@ from rest_framework.response import Response
 from rest_framework.routers import DynamicRoute, Route
 from rest_framework.viewsets import ViewSet
 
-OpenAPISchema = t.Dict[str, 'OpenAPISchema']  # type: ignore
-LocalRefs = t.Dict[t.Tuple[str, ...], t.Any]
+Action = str
 
-CodesTuple = t.Tuple[str, str]
-ActionCodesMap = t.Dict[str, CodesTuple]
-
-ActionMap = t.Dict[str, str]
+ActionMap = t.Dict[Action, str]
 Handler = t.Callable[..., Response]
 ResourceExtraAction = t.Tuple[str, str, Handler]
 

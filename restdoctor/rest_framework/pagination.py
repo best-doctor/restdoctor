@@ -20,7 +20,7 @@ if typing.TYPE_CHECKING:
     from rest_framework.request import Request
     from rest_framework.views import APIView
 
-    from restdoctor.rest_framework.custom_types import OpenAPISchema
+    from restdoctor.rest_framework.schema.custom_types import OpenAPISchema
 
     OptionalList = typing.Optional[typing.List[typing.Any]]
     Lookup = typing.Dict[str, typing.Any]

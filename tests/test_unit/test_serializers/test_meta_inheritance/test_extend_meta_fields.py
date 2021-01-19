@@ -3,7 +3,9 @@ from rest_framework.fields import CharField
 
 from restdoctor.rest_framework.serializers import extend_meta_fields
 
-from .stubs import ParentModelSerializer, ParentSerializer, SerializerMixinA, SerializerMixinB
+from tests.test_unit.test_serializers.test_meta_inheritance.stubs import (
+    ParentModelSerializer, ParentSerializer, SerializerMixinA, SerializerMixinB,
+)
 
 
 @pytest.mark.parametrize(

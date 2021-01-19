@@ -1,0 +1,110 @@
+from __future__ import annotations
+
+import typing
+
+from django.conf import settings
+
+from restdoctor.rest_framework.schema.openapi import RestDoctorSchema
+
+if typing.TYPE_CHECKING:
+    from restdoctor.rest_framework.custom_types import ResourceHandlersMap
+    from restdoctor.rest_framework.schema.custom_types import OpenAPISchema
+
+
+class ResourceSchema(RestDoctorSchema):
+    def get_object_name(self, path: str, method: str, action_name: str) -> str:
+        return self.get_object_name_by_view_class_name(
+            clean_suffixes=['View', 'APIView', 'ViewSet'])
+
+    def get_resources(self, method: str) -> ResourceHandlersMap:
+        return {
+            resource: handler for resource, handler in self.view.resource_handlers_map.items()
+            if (
+                method in self.view.resource_discriminate_methods
+                or resource == self.view.default_discriminative_value
+            )
+        }
+
+    def get_resources_request_body_schema(self, path: str, method: str) -> OpenAPISchema:
+        schemas = {}
+        if self.generator:
+            for resource, handler in self.get_resources(method).items():
+                view = self.generator.create_view(handler, method, request=self.view.request)
+                schemas[resource] = view.schema.get_request_body_schema(path, method)
+
+        list_schemas = list(schemas.values())
+        if len(list_schemas) == 1:
+            return list_schemas[0]
+        return {'oneOf': list_schemas}
+
+    def get_resources_response_schema(self, path: str, method: str, api_format: str = None) -> OpenAPISchema:
+        schemas = {}
+        if self.generator:
+            for resource, handler in self.get_resources(method).items():
+                view = self.generator.create_view(handler, method, request=self.view.request)
+                schemas[resource] = view.schema.get_response_schema(path, method, api_format=api_format)
+
+        list_schemas = list(schemas.values())
+        if len(list_schemas) == 1:
+            return list_schemas[0]
+        return {'oneOf': list_schemas}
+
+    def get_content_schema_by_type(self, path: str, method: str, schema_type: str) -> OpenAPISchema:
+        content_schema = {}
+
+        if schema_type == 'responses':
+            resources_schema_method_name = 'get_resources_response_schema'
+            schema_method_name = 'get_response_schema'
+        else:
+            resources_schema_method_name = 'get_resources_request_body_schema'
+            schema_method_name = 'get_request_body_schema'
+
+        vendor = getattr(settings, 'API_VENDOR_STRING', 'vendor').lower()
+        default_content_type = f'application/vnd.{vendor}'
+
+        resources_schema_method = getattr(self, resources_schema_method_name)
+        content_schema[default_content_type] = {'schema': resources_schema_method(path, method)}
+
+        if not self.generator:
+            return content_schema
+
+        version_content_type = f'{default_content_type}.{self.generator.api_version}'
+
+        for resource, handler in self.view.resource_handlers_map.items():
+            view = self.generator.create_view(handler, method, request=self.view.request)
+            schema_method = getattr(view.schema, schema_method_name)
+            default_resource_schema = schema_method(path, method)
+
+            resource_content_type = f'{version_content_type}-{resource}'
+
+            content_schema[resource_content_type] = {'schema': default_resource_schema}
+
+            for api_format in self.generator.api_formats:
+                if api_format != self.generator.api_default_format:
+                    resource_schema = schema_method(path, method, api_format=api_format)
+                    if resource_schema != default_resource_schema:
+                        content_type = f'{resource_content_type}.{api_format}'
+                        content_schema[content_type] = {'schema': resource_schema}
+
+        return content_schema
+
+    def get_request_body(self, path: str, method: str) -> OpenAPISchema:
+        if method not in ('PUT', 'PATCH', 'POST'):
+            return {}
+
+        return {'content': self.get_content_schema_by_type(path, method, 'request_body')}
+
+    def _get_resources(self, method: str) -> ResourceHandlersMap:
+        return self.get_resources(method)
+
+    def __get_item_schema(self, path: str, method: str, api_format: str = None) -> typing.Optional[OpenAPISchema]:
+        schemas = {}
+        if self.generator:
+            for resource, handler in self._get_resources(method).items():
+                view = self.generator.create_view(handler, method, request=self.view.request)
+                schemas[resource] = view.schema._get_item_schema(path, method, api_format=api_format)
+
+        list_schemas = list(schemas.values())
+        if len(list_schemas) == 1:
+            return list_schemas[0]
+        return {'oneOf': list_schemas}
