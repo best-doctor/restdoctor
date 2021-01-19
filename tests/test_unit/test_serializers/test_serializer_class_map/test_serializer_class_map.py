@@ -1,7 +1,8 @@
 import pytest
 
 from restdoctor.utils.serializers import get_serializer_class_from_map
-from tests.test_unit.stubs import (
+
+from .stubs import (
     SerializerA, SerializerB, SerializerC, SerializerD, SerializerE,
     serializer_class_map_with_default, serializer_class_map_no_default,
     serializer_class_map_with_format,

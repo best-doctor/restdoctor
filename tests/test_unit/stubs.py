@@ -1,7 +1,7 @@
 from django.db import models
 from rest_framework.fields import SerializerMethodField, CharField
 from rest_framework.permissions import BasePermission
-from rest_framework.serializers import BaseSerializer, Serializer
+from rest_framework.serializers import Serializer
 
 from restdoctor.rest_framework.schema import SchemaWrapper
 from restdoctor.rest_framework.serializers import ModelSerializer
@@ -39,26 +39,6 @@ class ParentSensitiveDataModel(models.Model):
     field_fk = models.ForeignKey(ChildSensitiveDataModel, on_delete=models.PROTECT, blank=True, null=True)
     field_m2m = models.ManyToManyField(ChildSensitiveDataModel, blank=True)
     field_o2o = models.OneToOneField(ChildSensitiveDataModel, on_delete=models.PROTECT, blank=True, null=True)
-
-
-class SerializerA(BaseSerializer):
-    pass
-
-
-class SerializerB(BaseSerializer):
-    pass
-
-
-class SerializerC(BaseSerializer):
-    pass
-
-
-class SerializerD(BaseSerializer):
-    pass
-
-
-class SerializerE(BaseSerializer):
-    pass
 
 
 class SerializerWithSensitiveData(Serializer):
@@ -103,49 +83,6 @@ class PermissionB(BasePermission):
 
 class PermissionC(BasePermission):
     pass
-
-
-serializer_class_map_with_default = {
-    'default': SerializerA,
-    'retrieve': {
-        'request': SerializerB,
-    },
-    'list': {
-        'request': SerializerB,
-        'response': SerializerB,
-    },
-    'create': {
-        'request': SerializerC,
-        'response': SerializerB,
-    },
-}
-
-serializer_class_map_no_default = {
-    'retrieve': {
-        'request': SerializerB,
-    },
-    'list': {
-        'request': SerializerB,
-        'response': SerializerB,
-    },
-    'create': {
-        'request': SerializerC,
-        'response': SerializerB,
-    },
-}
-
-
-serializer_class_map_with_format = {
-    'default': SerializerA,
-    'default.compact': SerializerB,
-    'retrieve': {
-        'response': SerializerB,
-        'response.compact': SerializerC,
-    },
-    'list': {
-        'response.full': SerializerE,
-    },
-}
 
 
 permission_classes_map_with_default = {
