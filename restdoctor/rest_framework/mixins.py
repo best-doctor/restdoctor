@@ -51,8 +51,7 @@ class ListModelMixin(BaseListModelMixin):
 
     def list(self, request: Request, *args: typing.Any, **kwargs: typing.Any) -> Response:  # noqa: A003
         request_serializer = self.get_request_serializer(data=request.query_params, use_default=False)
-        if request_serializer:
-            request_serializer.is_valid(raise_exception=True)
+        request_serializer.is_valid(raise_exception=True)
         queryset = self.get_collection(request_serializer)
 
         page = self.paginate_queryset(queryset)
