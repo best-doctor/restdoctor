@@ -134,7 +134,7 @@ class SerializerClassMapApiView(GenericAPIView):
 
     def get_response_serializer(self, *args: typing.Any, **kwargs: typing.Any) -> BaseSerializer:
         stage = 'response'
-        serializer_class: SerializerType = self.get_serializer_class(stage)
+        serializer_class = self.get_serializer_class(stage)
         return self.get_serializer_instance(serializer_class, stage=stage, *args, **kwargs)
 
 
