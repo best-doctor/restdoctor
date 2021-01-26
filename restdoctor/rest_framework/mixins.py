@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 import typing
 
 from rest_framework import status
@@ -19,6 +20,7 @@ if typing.TYPE_CHECKING:
     from django.db.models import QuerySet
     from rest_framework.pagination import BasePagination
     from rest_framework.serializers import BaseSerializer
+    from restdoctor.utils.serializers import SerializerType
 
 
 class NegotiatedMixin:
@@ -48,7 +50,10 @@ class ListModelMixin(BaseListModelMixin):
         return self.get_response_serializer(*args, **kwargs)
 
     def list(self, request: Request, *args: typing.Any, **kwargs: typing.Any) -> Response:  # noqa: A003
-        queryset = self.get_collection()
+        request_serializer = self.get_request_serializer(data=request.query_params, use_default=False)
+        if request_serializer:
+            request_serializer.is_valid(raise_exception=True)
+        queryset = self.get_collection(request_serializer)
 
         page = self.paginate_queryset(queryset)
         if page is not None:
@@ -58,7 +63,9 @@ class ListModelMixin(BaseListModelMixin):
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
-    def get_collection(self) -> typing.Union[typing.List, QuerySet]:
+    def get_collection(
+            self, request_serializer: typing.Optional[SerializerType] = None,
+    ) -> typing.Union[typing.List, QuerySet]:
         return self.filter_queryset(self.get_queryset())
 
 

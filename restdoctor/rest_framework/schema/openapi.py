@@ -36,9 +36,27 @@ class RestDoctorSchema(AutoSchema):
 
     def get_operation(self, path: str, method: str) -> OpenAPISchema:
         operation = super().get_operation(path, method)
+        operation['parameters'] += self.get_request_serializer_filter_parameters(path, method)
         operation['tags'] = self.get_tags(path, method)
 
         return operation
+
+    def get_request_serializer_filter_parameters(self, path: str, method: str) -> typing.List[OpenAPISchema]:
+        if not is_list_view(path, method, self.view):
+            return []
+
+        parameters = []
+        request_serializer = self.view.get_request_serializer(use_default=False)
+        if request_serializer:
+            for field in request_serializer.fields.values():
+                field_schema = self.get_field_schema(field)
+                parameters.append({
+                    'name': field.field_name,
+                    'required': field.required,
+                    'in': 'query',
+                    'schema': field_schema,
+                })
+        return parameters
 
     def get_action_name(self, path: str, method: str) -> str:
         action = get_action(path, method, self.view)

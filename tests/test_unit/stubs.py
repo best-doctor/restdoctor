@@ -1,12 +1,12 @@
 from django.db import models
 from rest_framework.fields import SerializerMethodField, CharField
 from rest_framework.permissions import BasePermission
-from rest_framework.serializers import Serializer
+from rest_framework.serializers import Serializer, BaseSerializer
 
 from restdoctor.rest_framework.schema import SchemaWrapper
 from restdoctor.rest_framework.serializers import ModelSerializer
 from restdoctor.rest_framework.views import RetrieveAPIView
-from restdoctor.rest_framework.viewsets import ModelViewSet
+from restdoctor.rest_framework.viewsets import ModelViewSet, ListModelViewSet
 
 
 class ModelWithoutSensitiveData(models.Model):
@@ -136,3 +136,26 @@ class ModelBWithMixinViewSet(ModelBMixin, ModelViewSet):
 
 class NoneViewSet(ModelViewSet):
     pass
+
+
+class SerializerA(BaseSerializer):
+    pass
+
+
+class SerializerB(BaseSerializer):
+    pass
+
+
+class ListViewSetWithRequestSerializer(ListModelViewSet):
+    serializer_class_map = {
+        'default': SerializerA,
+        'list': {
+            'request': SerializerB,
+        }
+    }
+
+
+class ListViewSetWithoutRequestSerializer(ListModelViewSet):
+    serializer_class_map = {
+        'default': SerializerA,
+    }
