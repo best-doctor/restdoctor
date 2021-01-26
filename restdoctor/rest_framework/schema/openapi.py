@@ -15,6 +15,7 @@ from rest_framework.serializers import BaseSerializer, ModelSerializer, ModelFie
 from restdoctor.rest_framework.schema.utils import (
     get_action, get_action_map_kwargs, get_action_code_schemas_from_map, normalize_action_schema,
 )
+from restdoctor.rest_framework.serializers import EmptySerializer
 from restdoctor.rest_framework.views import SerializerClassMapApiView
 
 
@@ -36,9 +37,27 @@ class RestDoctorSchema(AutoSchema):
 
     def get_operation(self, path: str, method: str) -> OpenAPISchema:
         operation = super().get_operation(path, method)
+        operation['parameters'] += self.get_request_serializer_filter_parameters(path, method)
         operation['tags'] = self.get_tags(path, method)
 
         return operation
+
+    def get_request_serializer_filter_parameters(self, path: str, method: str) -> typing.List[OpenAPISchema]:
+        if not is_list_view(path, method, self.view):
+            return []
+
+        parameters = []
+        request_serializer = self.view.get_request_serializer(use_default=False)
+        if not isinstance(request_serializer, EmptySerializer):
+            for field in request_serializer.fields.values():
+                field_schema = self.get_field_schema(field)
+                parameters.append({
+                    'name': field.field_name,
+                    'required': field.required,
+                    'in': 'query',
+                    'schema': field_schema,
+                })
+        return parameters
 
     def get_action_name(self, path: str, method: str) -> str:
         action = get_action(path, method, self.view)

@@ -3,6 +3,8 @@ import typing
 
 from django.conf import settings
 
+from restdoctor.rest_framework.serializers import EmptySerializer
+
 if typing.TYPE_CHECKING:
     from rest_framework.serializers import BaseSerializer
     from utils.common_types import GenericContext
@@ -64,12 +66,16 @@ def get_serializer_class_from_map(
     action: str,
     stage: str,
     serializer_class_map: SerializerClassMap,
-    default_class: SerializerType,
+    default_class: SerializerType = EmptySerializer,
+    use_default: bool = True,
     api_format: str = None,
 ) -> BaseSerializer:
     api_format = api_format or settings.API_DEFAULT_FORMAT
-    serializer_class = serializer_class_map.get('default', default_class)
-    serializer_class = serializer_class_map.get(f'default.{api_format}', serializer_class)
+    if use_default:
+        serializer_class = serializer_class_map.get('default', default_class)
+        serializer_class = serializer_class_map.get(f'default.{api_format}', serializer_class)
+    else:
+        serializer_class = EmptySerializer
 
     action_class_map = serializer_class_map.get(action)
     if isinstance(action_class_map, dict):

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
 import inspect
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
 
 if TYPE_CHECKING:
     from django.db.models import Model
@@ -87,6 +87,10 @@ class ModelSerializerMetaclass(SerializerMetaclass):
 
 
 class Serializer(BaseSerializer, metaclass=SerializerMetaclass):
+    pass
+
+
+class EmptySerializer(Serializer):
     pass
 
 

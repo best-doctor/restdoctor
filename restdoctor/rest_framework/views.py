@@ -8,8 +8,8 @@ from django.http import Http404
 
 from restdoctor.rest_framework.generics import GenericAPIView
 from restdoctor.rest_framework.mixins import ListModelMixin, RetrieveModelMixin
-from restdoctor.rest_framework.signals import bind_extra_request_view_initial_metadata
 from restdoctor.rest_framework.sensitive_data import clear_sensitive_data
+from restdoctor.rest_framework.signals import bind_extra_request_view_initial_metadata
 from restdoctor.utils.permissions import get_permission_classes_from_map
 from restdoctor.utils.sentry import capture_exception
 from restdoctor.utils.serializers import get_serializer_class_from_map
@@ -95,7 +95,7 @@ class SerializerClassMapApiView(GenericAPIView):
         return [permission() for permission in permission_classes]
 
     def get_serializer_class(
-        self, stage: str = 'response', action: str = None, api_format: str = None,
+        self, stage: str = 'response', action: str = None, api_format: str = None, use_default: bool = True,
     ) -> SerializerType:
         action = action or self.get_action()
         serializer_class_map = getattr(self, 'serializer_class_map', {})
@@ -104,8 +104,9 @@ class SerializerClassMapApiView(GenericAPIView):
             api_format = settings.API_DEFAULT_FORMAT
             if self.request and self.request.api_params:
                 api_format = self.request.api_params.format or api_format
+
         return get_serializer_class_from_map(
-            action, stage, serializer_class_map, self.serializer_class, api_format=api_format)
+            action, stage, serializer_class_map, self.serializer_class, use_default=use_default, api_format=api_format)
 
     def get_serializer_context(self, stage: str = 'response') -> typing.Dict[str, typing.Any]:
         return super().get_serializer_context()
@@ -118,15 +119,17 @@ class SerializerClassMapApiView(GenericAPIView):
         kwargs['context'] = self.get_serializer_context(stage)
         return serializer_class(*args, **kwargs)
 
-    def get_request_serializer_class(self) -> SerializerType:
-        return self.get_serializer_class('request')
+    def get_request_serializer_class(self, use_default: bool = True) -> SerializerType:
+        return self.get_serializer_class('request', use_default=use_default)
 
     def get_response_serializer_class(self) -> SerializerType:
         return self.get_serializer_class('response')
 
-    def get_request_serializer(self, *args: typing.Any, **kwargs: typing.Any) -> BaseSerializer:
+    def get_request_serializer(
+            self, *args: typing.Any, use_default: bool = True, **kwargs: typing.Any,
+    ) -> BaseSerializer:
         stage = 'request'
-        serializer_class = self.get_serializer_class(stage)
+        serializer_class = self.get_serializer_class(stage, use_default=use_default)
         return self.get_serializer_instance(serializer_class, stage=stage, *args, **kwargs)
 
     def get_response_serializer(self, *args: typing.Any, **kwargs: typing.Any) -> BaseSerializer:

@@ -1,8 +1,8 @@
-from rest_framework.fields import CharField
+from rest_framework.fields import CharField, UUIDField
 from rest_framework.serializers import Serializer
 
 from restdoctor.rest_framework.resources import ResourceViewSet
-from restdoctor.rest_framework.viewsets import ModelViewSet
+from restdoctor.rest_framework.viewsets import ModelViewSet, ListModelViewSet
 
 
 class DefaultSerializer(Serializer):
@@ -20,6 +20,9 @@ class CreateSerializer(Serializer):
 class ListSerializer(Serializer):
     list_field = CharField()
 
+class ListFilterSerialiser(Serializer):
+    filter_uuid_field = UUIDField(required=False)
+    filter_field = CharField(allow_null=True, help_text='Help text')
 
 class SerializerClassMapViewSet(ModelViewSet):
     serializer_class_map = {
@@ -44,6 +47,24 @@ class AnotherViewSet(ModelViewSet):
 class ViewSetWithTags(ModelViewSet):
     schema_tags = ['tag1', 'tag2']
     serializer_class = DefaultSerializer
+
+
+class ListViewSetWithRequestSerializer(ListModelViewSet):
+    pagination_class = None
+    schema_tags = ['tag']
+    serializer_class_map = {
+        'default': DefaultSerializer,
+        'list': {
+            'request': ListFilterSerialiser,
+        }
+    }
+
+
+class ListViewSetWithoutRequestSerializer(ListModelViewSet):
+    pagination_class = None
+    serializer_class_map = {
+        'default': DefaultSerializer,
+    }
 
 
 class DefaultAnotherResourceViewSet(ResourceViewSet):
