@@ -60,6 +60,13 @@ class ListViewSetWithRequestSerializer(ListModelViewSet):
     }
 
 
+class ListViewSetWithoutRequestSerializer(ListModelViewSet):
+    pagination_class = None
+    serializer_class_map = {
+        'default': DefaultSerializer,
+    }
+
+
 class DefaultAnotherResourceViewSet(ResourceViewSet):
     default_discriminative_value = 'default'
     resource_views_map = {

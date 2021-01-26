@@ -15,6 +15,7 @@ from rest_framework.serializers import BaseSerializer, ModelSerializer, ModelFie
 from restdoctor.rest_framework.schema.utils import (
     get_action, get_action_map_kwargs, get_action_code_schemas_from_map, normalize_action_schema,
 )
+from restdoctor.rest_framework.serializers import EmptySerializer
 from restdoctor.rest_framework.views import SerializerClassMapApiView
 
 
@@ -47,7 +48,7 @@ class RestDoctorSchema(AutoSchema):
 
         parameters = []
         request_serializer = self.view.get_request_serializer(use_default=False)
-        if request_serializer:
+        if not isinstance(request_serializer, EmptySerializer):
             for field in request_serializer.fields.values():
                 field_schema = self.get_field_schema(field)
                 parameters.append({

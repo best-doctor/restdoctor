@@ -1,5 +1,6 @@
 import pytest
 
+from restdoctor.rest_framework.serializers import EmptySerializer
 from tests.test_unit.stubs import (
     ListViewSetWithRequestSerializer, SerializerB, ListViewSetWithoutRequestSerializer,
     SerializerA,
@@ -12,7 +13,7 @@ from tests.test_unit.stubs import (
             (ListViewSetWithRequestSerializer, True, SerializerB),
             (ListViewSetWithRequestSerializer, False, SerializerB),
             (ListViewSetWithoutRequestSerializer, True, SerializerA),
-            (ListViewSetWithoutRequestSerializer, False, None),
+            (ListViewSetWithoutRequestSerializer, False, EmptySerializer),
     ),
 )
 def test_get_request_serializer_class(viewset, use_default, expected):
@@ -29,6 +30,7 @@ def test_get_request_serializer_class(viewset, use_default, expected):
             (ListViewSetWithRequestSerializer, True, SerializerB),
             (ListViewSetWithRequestSerializer, False, SerializerB),
             (ListViewSetWithoutRequestSerializer, True, SerializerA),
+            (ListViewSetWithoutRequestSerializer, False, EmptySerializer),
     ),
 )
 def test_get_request_serializer(viewset, use_default, expected):
@@ -37,11 +39,3 @@ def test_get_request_serializer(viewset, use_default, expected):
     request_serializer = list_view.get_request_serializer(use_default=use_default)
 
     assert isinstance(request_serializer, expected)
-
-
-def test_get_request_serializer_none():
-    list_view = ListViewSetWithoutRequestSerializer(request=None, action='list', format_kwarg=None)
-
-    request_serializer = list_view.get_request_serializer(use_default=False)
-
-    assert request_serializer is None
