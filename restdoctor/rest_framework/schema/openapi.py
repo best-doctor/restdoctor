@@ -47,7 +47,8 @@ class RestDoctorSchema(AutoSchema):
             return []
 
         parameters = []
-        request_serializer = self.view.get_request_serializer(use_default=False)
+        request_serializer_class = self.view.get_request_serializer_class(use_default=False)
+        request_serializer = request_serializer_class()
         if not isinstance(request_serializer, EmptySerializer):
             for field in request_serializer.fields.values():
                 field_schema = self.get_field_schema(field)
