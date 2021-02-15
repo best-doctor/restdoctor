@@ -16,6 +16,16 @@ ACTION_CODES_MAP: ActionCodesMap = {
         '400': ('Ошибка валидации запроса.', {'$ref': '#/components/schemas/ErrorResponseSchema'}),
         '404': ('Ресурс не найден.', {'$ref': '#/components/schemas/NotFoundResponseSchema'}),
     },
+    'get': {
+        '200': 'Успешный запрос.'},
+    'post': {
+        '200': 'Успешный запрос.'},
+    'patch': {
+        '200': 'Успешный запрос.'},
+    'put': {
+        '200': 'Успешный запрос.'},
+    'delete': {
+        '204': 'Успешный запрос.'},
     'list': {
         '200': 'Успешный запрос коллекции.',
         '400': None,

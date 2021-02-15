@@ -3,6 +3,7 @@ from rest_framework.fields import CharField, UUIDField
 from rest_framework.serializers import Serializer
 
 from restdoctor.rest_framework.resources import ResourceViewSet
+from restdoctor.rest_framework.views import SerializerClassMapApiView
 from restdoctor.rest_framework.viewsets import ModelViewSet, ListModelViewSet
 
 
@@ -37,6 +38,24 @@ class SerializerClassMapViewSet(ModelViewSet):
             'response': CreateSerializer,
         },
     }
+
+
+class SerializerClassMapView(SerializerClassMapApiView):
+    serializer_class_map = {
+        'default': DefaultSerializer,
+        'get': {
+            'response': ListSerializer,
+        },
+        'post': {
+            'response': CreateSerializer,
+        },
+    }
+
+    def get(self, request, *args, **kwargs):
+        pass
+
+    def post(self, request, *args, **kwargs):
+        pass
 
 
 class DefaultViewSet(ModelViewSet):
