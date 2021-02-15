@@ -5,16 +5,27 @@ import typing
 from django.conf import settings
 
 from restdoctor.rest_framework.schema.openapi import RestDoctorSchema
+from restdoctor.rest_framework.schema.utils import get_action
 
 if typing.TYPE_CHECKING:
     from restdoctor.rest_framework.custom_types import ResourceHandlersMap
-    from restdoctor.rest_framework.schema.custom_types import OpenAPISchema
+    from restdoctor.rest_framework.schema.custom_types import OpenAPISchema, CodeActionSchemaTuple
 
 
 class ResourceSchema(RestDoctorSchema):
     def get_object_name(self, path: str, method: str, action_name: str) -> str:
         return self.get_object_name_by_view_class_name(
             clean_suffixes=['View', 'APIView', 'ViewSet'])
+
+    def get_action_code_schemas(self, path: str, method: str) -> typing.Iterator[CodeActionSchemaTuple]:
+        codes_seen: typing.Set[str] = set()
+
+        if self.generator:
+            for _, handler in self.get_resources(method).items():
+                view = self.generator.create_view(handler, method, request=self.view.request)
+                for code, serializer, schema in view.schema.get_action_code_schemas(path, method):
+                    if code not in codes_seen:
+                        yield code, serializer, schema
 
     def get_resources(self, method: str) -> ResourceHandlersMap:
         return {
@@ -30,9 +41,13 @@ class ResourceSchema(RestDoctorSchema):
         if self.generator:
             for resource, handler in self.get_resources(method).items():
                 view = self.generator.create_view(handler, method, request=self.view.request)
-                schemas[resource] = view.schema.get_request_body_schema(path, method)
+                if hasattr(view, get_action(path, method, view)):
+                    schemas[resource] = view.schema.get_request_body_schema(path, method)
 
-        list_schemas = list(schemas.values())
+        list_schemas = []
+        for schema in schemas.values():
+            if schema not in list_schemas:
+                list_schemas.append(schema)
         if len(list_schemas) == 1:
             return list_schemas[0]
         return {'oneOf': list_schemas}
@@ -42,9 +57,13 @@ class ResourceSchema(RestDoctorSchema):
         if self.generator:
             for resource, handler in self.get_resources(method).items():
                 view = self.generator.create_view(handler, method, request=self.view.request)
-                schemas[resource] = view.schema.get_response_schema(path, method, api_format=api_format)
+                if hasattr(view, get_action(path, method, view)):
+                    schemas[resource] = view.schema.get_response_schema(path, method, api_format=api_format)
 
-        list_schemas = list(schemas.values())
+        list_schemas = []
+        for schema in schemas.values():
+            if schema not in list_schemas:
+                list_schemas.append(schema)
         if len(list_schemas) == 1:
             return list_schemas[0]
         return {'oneOf': list_schemas}
@@ -72,6 +91,8 @@ class ResourceSchema(RestDoctorSchema):
 
         for resource, handler in self.view.resource_handlers_map.items():
             view = self.generator.create_view(handler, method, request=self.view.request)
+            if not hasattr(view, get_action(path, method, view)):
+                continue
             schema_method = getattr(view.schema, schema_method_name)
             default_resource_schema = schema_method(path, method)
 

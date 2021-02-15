@@ -175,13 +175,13 @@ class RestDoctorSchema(AutoSchema):
         return self._map_serializer(serializer, write_only=False)
 
     def get_content_schema(self, response_schema: OpenAPISchema, description: str = '') -> OpenAPISchema:
-        return {
-            'content': {
+        content_schema: OpenAPISchema = {'description': description}
+        if response_schema:
+            content_schema['content'] = {
                 content_type: {'schema': response_schema}
                 for content_type in self.response_media_types
-            },
-            'description': description,
-        }
+            }
+        return content_schema
 
     def get_response_schema(self, path: str, method: str, api_format: str = None) -> OpenAPISchema:
         response_schema: OpenAPISchema = {

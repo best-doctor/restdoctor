@@ -1,3 +1,4 @@
+from rest_framework.decorators import action as drf_action
 from rest_framework.fields import CharField, UUIDField
 from rest_framework.serializers import Serializer
 
@@ -20,9 +21,11 @@ class CreateSerializer(Serializer):
 class ListSerializer(Serializer):
     list_field = CharField()
 
+
 class ListFilterSerialiser(Serializer):
     filter_uuid_field = UUIDField(required=False)
     filter_field = CharField(allow_null=True, help_text='Help text')
+
 
 class SerializerClassMapViewSet(ModelViewSet):
     serializer_class_map = {
@@ -42,6 +45,21 @@ class DefaultViewSet(ModelViewSet):
 
 class AnotherViewSet(ModelViewSet):
     serializer_class = AnotherSerializer
+
+
+class ActionsViewSet(ModelViewSet):
+    serializer_class = DefaultSerializer
+
+    schema_action_codes_map = {
+        'custom_action': {
+            '200': None,
+            '201': 'Description for 201 code.',
+        },
+    }
+
+    @drf_action(detail=True, methods=['put'])
+    def custom_action(self, *args, **kwargs):
+        return {}
 
 
 class ViewSetWithTags(ModelViewSet):
@@ -72,4 +90,5 @@ class DefaultAnotherResourceViewSet(ResourceViewSet):
     resource_views_map = {
         'default': DefaultViewSet,
         'another': AnotherViewSet,
+        'actions': ActionsViewSet,
     }
