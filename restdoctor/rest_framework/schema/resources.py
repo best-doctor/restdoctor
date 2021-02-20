@@ -129,3 +129,24 @@ class ResourceSchema(RestDoctorSchema):
         if len(list_schemas) == 1:
             return list_schemas[0]
         return {'oneOf': list_schemas}
+
+    def get_pagination_parameters(self, path: str, method: str) -> typing.Optional[OpenAPISchema]:
+        handler = self.view.resource_handlers_map.get(self.view.default_discriminative_value)
+
+        if handler:
+            view = self.generator.create_view(handler, method, request=self.view.request)
+            return view.schema.get_pagination_parameters(path, method)
+
+    def get_filter_parameters(self, path: str, method: str) -> typing.Optional[OpenAPISchema]:
+        handler = self.view.resource_handlers_map.get(self.view.default_discriminative_value)
+
+        if handler:
+            view = self.generator.create_view(handler, method, request=self.view.request)
+            return view.schema.get_filter_parameters(path, method)
+
+    def get_request_serializer_filter_parameters(self, path: str, method: str) -> typing.Optional[OpenAPISchema]:
+        handler = self.view.resource_handlers_map.get(self.view.default_discriminative_value)
+
+        if handler:
+            view = self.generator.create_view(handler, method, request=self.view.request)
+            return view.schema.get_request_serializer_filter_parameters(path, method)

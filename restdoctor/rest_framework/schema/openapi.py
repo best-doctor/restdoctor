@@ -172,7 +172,7 @@ class RestDoctorSchema(AutoSchema):
         if serializer is None:
             return None
 
-        return self._map_serializer(serializer, write_only=False)
+        return self.map_serializer(serializer, write_only=False)
 
     def get_content_schema(self, response_schema: OpenAPISchema, description: str = '') -> OpenAPISchema:
         content_schema: OpenAPISchema = {'description': description}

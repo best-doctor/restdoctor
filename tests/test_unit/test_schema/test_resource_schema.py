@@ -102,3 +102,15 @@ def test_resource_schema_get_action_responses_success_case(
     assert 'application/vnd.vendor.v1-default' not in content
     assert 'application/vnd.vendor.v1-another' not in content
     assert content['application/vnd.vendor.v1-actions']['schema'] == resource_default_schema
+
+
+def test_resource_schema_query_params_from_default_view_success_case(get_create_view_func):
+    create_view = get_create_view_func(
+        'test', DefaultAnotherResourceViewSet, 'test', router=ResourceRouter())
+
+    view = create_view('/test/', 'GET')
+    view.pagination_class = None
+    operation = view.schema.get_operation('/test/', 'GET')
+    parameters = operation.get('parameters', [])
+
+    assert parameters != []
