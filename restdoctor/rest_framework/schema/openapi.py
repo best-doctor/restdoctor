@@ -3,7 +3,7 @@ from __future__ import annotations
 import typing
 
 from django.conf import settings
-from django.core.exceptions import FieldDoesNotExist
+from django.core.exceptions import FieldDoesNotExist, ImproperlyConfigured
 from django.core.validators import RegexValidator
 from django.utils.encoding import force_str
 from rest_framework.fields import Field, empty, HiddenField, SerializerMethodField
@@ -293,16 +293,26 @@ class RestDoctorSchema(AutoSchema):
             return super()._map_field(field)
 
     def get_field_description(self, field: Field) -> typing.Optional[str]:
+        field_description = None
         if field.help_text:
-            return str(field.help_text)
+            field_description = str(field.help_text)
         elif isinstance(field.parent, ModelSerializer):
             if isinstance(field, ModelField):
-                return field.model_field.verbose_name
+                field_description = field.model_field.verbose_name
             elif field.source != '*':
                 try:
-                    return str(field.parent.Meta.model._meta.get_field(field.source).verbose_name)
+                    field_description = str(
+                        field.parent.Meta.model._meta.get_field(field.source).verbose_name)
                 except (AttributeError, LookupError, FieldDoesNotExist):
                     pass
+
+        if settings.API_STRICT_SCHEMA_VALIDATION and not field_description:
+            raise ImproperlyConfigured(
+                f'field {field.field_name} in serializer {field.parent.__class__.__name__} '
+                f'should have help_text argument or verbose_name in source model field'
+            )
+
+        return field_description
 
     def get_field_schema(self, field: Field) -> OpenAPISchema:
         schema = self.map_field(field)

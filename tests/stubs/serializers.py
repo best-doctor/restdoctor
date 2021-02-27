@@ -1,3 +1,4 @@
+from rest_framework.fields import CharField
 from rest_framework.serializers import Serializer, BaseSerializer, ListSerializer
 
 from restdoctor.rest_framework.serializers import ModelSerializer
@@ -25,3 +26,11 @@ class MyModelExtendedSerializer(ModelSerializer):
     class Meta:
         model = MyModel
         fields = ['uuid', 'id']
+
+
+class MyModelWithoutHelpTextsSerializer(ModelSerializer):
+    class Meta:
+        model = MyModel
+        fields = ['timestamp', 'abstract_field']
+
+    abstract_field = CharField()
