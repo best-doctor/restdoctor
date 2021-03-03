@@ -54,7 +54,5 @@ def test_serializer_class_map_view_schema(
     if 'items' in responses_properties:
         responses_properties = responses_properties['items']
 
-    print(responses_schema)
-
     assert result['operationId'] == expected_operation_id
     assert responses_properties['required'] == expected_responses_required
