@@ -65,9 +65,9 @@ class RestDoctorSchema(AutoSchema):
         if is_list_view(path, method, self.view):
             return 'list'
         elif action not in self.method_mapping:
-            return action
+            return action.lower()
         else:
-            return self.method_mapping[method.lower()]
+            return self.method_mapping[method.lower()].lower()
 
     def get_object_name_by_view_class_name(self, clean_suffixes: typing.Sequence[str] = None) -> str:
         clean_suffixes = clean_suffixes or []
