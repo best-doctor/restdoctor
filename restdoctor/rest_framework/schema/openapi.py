@@ -309,7 +309,7 @@ class RestDoctorSchema(AutoSchema):
         if settings.API_STRICT_SCHEMA_VALIDATION and not field_description:
             raise ImproperlyConfigured(
                 f'field {field.field_name} in serializer {field.parent.__class__.__name__} '
-                f'should have help_text argument or verbose_name in source model field'
+                f'should have help_text argument or verbose_name in source model field',
             )
 
         return field_description

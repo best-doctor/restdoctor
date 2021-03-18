@@ -162,8 +162,8 @@ class PageNumberUncountedPagination(PageNumberPagination):
 
 
 class CursorUUIDSerializer(PerPageSerializerBase):
-    after = UUIDField(required=False, allow_null=True)
-    before = UUIDField(required=False, allow_null=True)
+    after = UUIDField(required=False, allow_null=True, help_text=_('After UUID'))
+    before = UUIDField(required=False, allow_null=True, help_text=_('Before UUID'))
 
 
 def get_order(default_order: str, serializer_keys: typing.Sequence[str]) -> str:
