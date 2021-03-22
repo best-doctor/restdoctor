@@ -54,7 +54,7 @@ def test_resource_schema_get_request_body_schema_success_case(get_create_view_fu
 
 
 def test_resource_schema_get_responses_success_case(
-    get_create_view_func, resource_default_schema, resource_another_schema,
+    get_create_view_func, resource_default_rq_schema, resource_another_rq_schema,
 ):
     create_view = get_create_view_func(
         'test', DefaultAnotherResourceViewSet, 'test', router=ResourceRouter())
@@ -64,10 +64,10 @@ def test_resource_schema_get_responses_success_case(
     responses = view.schema.get_responses('/test/', 'POST')
     content = responses['201']['content']
 
-    assert content['application/vnd.vendor']['schema']['oneOf'] == [resource_default_schema, resource_another_schema]
-    assert content['application/vnd.vendor.v1-default']['schema'] == resource_default_schema
-    assert content['application/vnd.vendor.v1-another']['schema'] == resource_another_schema
-    assert content['application/vnd.vendor.v1-actions']['schema'] == resource_default_schema
+    assert content['application/vnd.vendor']['schema']['oneOf'] == [resource_default_rq_schema, resource_another_rq_schema]
+    assert content['application/vnd.vendor.v1-default']['schema'] == resource_default_rq_schema
+    assert content['application/vnd.vendor.v1-another']['schema'] == resource_another_rq_schema
+    assert content['application/vnd.vendor.v1-actions']['schema'] == resource_default_rq_schema
 
 
 def test_resource_schema_get_request_body_success_case(
@@ -75,20 +75,22 @@ def test_resource_schema_get_request_body_success_case(
 ):
     create_view = get_create_view_func(
         'test', DefaultAnotherResourceViewSet, 'test', router=ResourceRouter())
+    resource_default_wq_ref = resource_default_ref('WQ')
+    resource_another_wq_ref = resource_another_ref('WQ')
 
     view = create_view('/test/', 'POST')
     view.resource_discriminate_methods = ['POST']
     request_body = view.schema.get_request_body('/test/', 'POST')
     content = request_body['content']
 
-    assert content['application/vnd.vendor']['schema']['oneOf'] == [resource_default_ref, resource_another_ref]
-    assert content['application/vnd.vendor.v1-default']['schema'] == resource_default_ref
-    assert content['application/vnd.vendor.v1-another']['schema'] == resource_another_ref
-    assert content['application/vnd.vendor.v1-actions']['schema'] == resource_default_ref
+    assert content['application/vnd.vendor']['schema']['oneOf'] == [resource_default_wq_ref, resource_another_wq_ref]
+    assert content['application/vnd.vendor.v1-default']['schema'] == resource_default_wq_ref
+    assert content['application/vnd.vendor.v1-another']['schema'] == resource_another_wq_ref
+    assert content['application/vnd.vendor.v1-actions']['schema'] == resource_default_wq_ref
 
 
 def test_resource_schema_get_action_responses_success_case(
-    get_create_view_func, resource_default_schema, resource_another_schema,
+    get_create_view_func, resource_default_rq_schema, resource_another_rq_schema,
 ):
     create_view = get_create_view_func(
         'test', DefaultAnotherResourceViewSet, 'test', router=ResourceRouter())
@@ -98,10 +100,10 @@ def test_resource_schema_get_action_responses_success_case(
     responses = view.schema.get_responses('/test/123/custom_action/', 'PUT')
     content = responses['201']['content']
 
-    assert content['application/vnd.vendor']['schema'] == resource_default_schema
+    assert content['application/vnd.vendor']['schema'] == resource_default_rq_schema
     assert 'application/vnd.vendor.v1-default' not in content
     assert 'application/vnd.vendor.v1-another' not in content
-    assert content['application/vnd.vendor.v1-actions']['schema'] == resource_default_schema
+    assert content['application/vnd.vendor.v1-actions']['schema'] == resource_default_rq_schema
 
 
 def test_resource_schema_query_params_from_default_view_success_case(get_create_view_func):

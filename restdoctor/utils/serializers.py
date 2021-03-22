@@ -7,10 +7,11 @@ from restdoctor.rest_framework.serializers import EmptySerializer
 
 if typing.TYPE_CHECKING:
     from rest_framework.serializers import BaseSerializer
-    from utils.common_types import GenericContext
+    from restdoctor.utils.custom_types import GenericContext
 
-    SerializerClassMap = typing.Dict[str, typing.Any]
     SerializerType = typing.Type[BaseSerializer]
+    SerializerClassMapItem = typing.Dict[str, SerializerType]
+    SerializerClassMap = typing.Dict[str, typing.Union[SerializerType, SerializerClassMapItem]]
 
 
 def get_from_serializer(

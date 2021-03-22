@@ -30,19 +30,23 @@ def get_create_view_func():
 
 @pytest.fixture()
 def get_resource_ref():
-    def with_attrs(name):
-        return {'$ref': f'#/components/schemas/{name}'}
+    def with_attrs(name, suffix):
+        return {'$ref': f'#/components/schemas/{name}{suffix}'}
     return with_attrs
 
 
 @pytest.fixture()
 def resource_default_ref(get_resource_ref):
-    return get_resource_ref('Default')
+    def with_attrs(suffix):
+        return get_resource_ref('tests_Default', suffix)
+    return with_attrs
 
 
 @pytest.fixture()
 def resource_another_ref(get_resource_ref):
-    return get_resource_ref('Another')
+    def with_attrs(suffix):
+        return get_resource_ref('tests_Another', suffix)
+    return with_attrs
 
 
 @pytest.fixture()
@@ -53,10 +57,20 @@ def get_object_schema():
 
 
 @pytest.fixture()
-def resource_default_schema(get_object_schema, resource_default_ref):
-    return get_object_schema(resource_default_ref)
+def resource_default_rq_schema(get_object_schema, resource_default_ref):
+    return get_object_schema(resource_default_ref('RQ'))
 
 
 @pytest.fixture()
-def resource_another_schema(get_object_schema, resource_another_ref):
-    return get_object_schema(resource_another_ref)
+def resource_default_wq_schema(get_object_schema, resource_default_ref):
+    return get_object_schema(resource_default_ref('WQ'))
+
+
+@pytest.fixture()
+def resource_another_rq_schema(get_object_schema, resource_another_ref):
+    return get_object_schema(resource_another_ref('RQ'))
+
+
+@pytest.fixture()
+def resource_another_wq_schema(get_object_schema, resource_another_ref):
+    return get_object_schema(resource_another_ref('WQ'))

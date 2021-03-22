@@ -3,21 +3,21 @@ from __future__ import annotations
 import typing
 
 from django.conf import settings
-from django.core.exceptions import FieldDoesNotExist, ImproperlyConfigured
-from django.core.validators import RegexValidator
 from django.utils.encoding import force_str
-from rest_framework.fields import Field, empty, HiddenField, SerializerMethodField
+from rest_framework.fields import Field, HiddenField, SerializerMethodField
 from rest_framework.pagination import BasePagination
 from rest_framework.schemas.openapi import AutoSchema, SchemaGenerator
 from rest_framework.schemas.utils import is_list_view
-from rest_framework.serializers import BaseSerializer, ModelSerializer, ModelField
+from rest_framework.serializers import BaseSerializer
 
+from restdoctor.rest_framework.pagination.mixins import SerializerClassPaginationMixin
+from restdoctor.rest_framework.schema.serializers import SerializerSchema
 from restdoctor.rest_framework.schema.utils import (
     get_action, get_action_map_kwargs, get_action_code_schemas_from_map, normalize_action_schema,
 )
 from restdoctor.rest_framework.serializers import EmptySerializer
 from restdoctor.rest_framework.views import SerializerClassMapApiView
-
+from restdoctor.rest_framework.schema.custom_types import ViewSchemaProtocol
 
 if typing.TYPE_CHECKING:
     from restdoctor.rest_framework.schema.custom_types import (
@@ -25,10 +25,11 @@ if typing.TYPE_CHECKING:
     )
 
 
-class RestDoctorSchema(AutoSchema):
+class RestDoctorSchema(AutoSchema, ViewSchemaProtocol):
     def __init__(self, generator: SchemaGenerator = None, *args: typing.Any, **kwargs: typing.Any) -> None:
         super().__init__(*args, **kwargs)
         self.generator = generator
+        self.serializer_schema = SerializerSchema(self)
 
     def map_renderers(self, *args: typing.Any, **kwargs: typing.Any) -> typing.Any:
         vendor = getattr(settings, 'API_VENDOR_STRING', 'vendor').lower()
@@ -51,7 +52,7 @@ class RestDoctorSchema(AutoSchema):
         request_serializer = request_serializer_class()
         if not isinstance(request_serializer, EmptySerializer):
             for field in request_serializer.fields.values():
-                field_schema = self.get_field_schema(field)
+                field_schema = self.serializer_schema.get_field_schema(field)
                 parameters.append({
                     'name': field.field_name,
                     'required': field.required,
@@ -118,11 +119,14 @@ class RestDoctorSchema(AutoSchema):
         if not is_list_view(path, method, self.view):
             return []
 
-        paginator = self.get_paginator()
+        paginator: BasePagination = self.get_paginator()
         if not paginator:
             return []
 
-        serializer_class = getattr(paginator, 'serializer_class', None)
+        if isinstance(paginator, SerializerClassPaginationMixin):
+            serializer_class = paginator.get_request_serializer_class()
+        else:
+            serializer_class = getattr(paginator, 'serializer_class', None)
         if serializer_class:
             return self.map_query_serializer(serializer_class())
         return paginator.get_schema_operation_parameters(self.view)
@@ -205,10 +209,10 @@ class RestDoctorSchema(AutoSchema):
         return response_schema
 
     def get_paginator(self) -> typing.Optional[BasePagination]:
-        try:
-            return super().get_paginator()
-        except AttributeError:
-            return super()._get_paginator()
+        pagination_class = getattr(self.view, 'pagination_class', None)
+        if pagination_class:
+            return pagination_class(view_schema=self)
+        return None
 
     def get_action_code_description(self, path: str, method: str) -> CodeDescriptionTuple:
         for code, description, _ in self.get_action_code_schemas(path, method):
@@ -293,98 +297,41 @@ class RestDoctorSchema(AutoSchema):
             return super()._map_field(field)
 
     def get_field_description(self, field: Field) -> typing.Optional[str]:
-        field_description = None
-        if field.help_text:
-            field_description = str(field.help_text)
-        elif isinstance(field.parent, ModelSerializer):
-            if isinstance(field, ModelField):
-                field_description = field.model_field.verbose_name
-            elif field.source != '*':
-                try:
-                    field_description = str(
-                        field.parent.Meta.model._meta.get_field(field.source).verbose_name)
-                except (AttributeError, LookupError, FieldDoesNotExist):
-                    pass
+        return self.serializer_schema.get_field_description(field)
 
-        if settings.API_STRICT_SCHEMA_VALIDATION and not field_description:
-            raise ImproperlyConfigured(
-                f'field {field.field_name} in serializer {field.parent.__class__.__name__} '
-                f'should have help_text argument or verbose_name in source model field',
-            )
-
-        return field_description
-
-    def get_field_schema(self, field: Field) -> OpenAPISchema:
-        schema = self.map_field(field)
-        if field.read_only:
-            schema['readOnly'] = True
-        if field.write_only:
-            schema['writeOnly'] = True
-        if field.allow_null:
-            schema['nullable'] = True
-        if field.default and field.default != empty and not callable(field.default):
-            schema['default'] = field.default
-        description = self.get_field_description(field)
-        if description:
-            schema['description'] = description
-
-        self.map_field_validators(field, schema)
-
-        return schema
-
-    def map_field_validators(self, field: Field, schema: OpenAPISchema) -> None:
-        try:
-            super().map_field_validators(field, schema)
-        except AttributeError:
-            super()._map_field_validators(field, schema)
-
-        # Backported from django-rest-framework
-        # https://github.com/encode/django-rest-framework/commit/5ce237e00471d885f05e6d979ec777552809b3b1
-        for validator in field.validators:
-            if isinstance(validator, RegexValidator):
-                schema['pattern'] = validator.regex.pattern.replace('\\Z', '\\z')
-
-    def get_serializer_schema(
+    def get_ref_name(
         self, serializer: BaseSerializer,
         write_only: bool = True, read_only: bool = True, required: bool = True,
-    ) -> OpenAPISchema:
-        required_list = []
-        properties = {}
+    ) -> str:
+        serializer_module_name = serializer.__module__.split('.')[0]
+        serializer_class_name = serializer.__class__.__name__
 
-        for field in serializer.fields.values():
-            if (
-                isinstance(field, HiddenField)
-                or (field.write_only and not write_only)
-                or (field.read_only and not read_only)
-            ):
-                continue
-            if field.required:
-                required_list.append(field.field_name)
+        suffixes = []
+        if write_only:
+            suffixes.append('W')
+        if read_only:
+            suffixes.append('R')
+        if required:
+            suffixes.append('Q')
 
-            properties[field.field_name] = self.get_field_schema(field)
+        suffix = ''.join(suffixes)
 
-        schema: OpenAPISchema = {
-            'type': 'object',
-            'properties': properties,
-        }
-        if serializer.__doc__:
-            schema['description'] = serializer.__doc__
-        if required and required_list:
-            schema['required'] = required_list
-        return schema
+        if serializer_class_name.endswith('Serializer'):
+            serializer_class_name = serializer_class_name[:-10]
+        return f'#/components/schemas/{serializer_module_name}_{serializer_class_name}{suffix}'
+
+    def map_field_validators(self, field: Field, schema: OpenAPISchema) -> None:
+        return self.serializer_schema.map_field_validators(field, schema)
 
     def map_serializer(
         self, serializer: BaseSerializer,
         write_only: bool = True, read_only: bool = True, required: bool = True,
     ) -> OpenAPISchema:
-        schema = self._get_serializer_schema(
+        schema = self.serializer_schema.get_serializer_schema(
             serializer, write_only=write_only, read_only=read_only, required=required)
 
-        if self.generator:
-            serializer_class_name = serializer.__class__.__name__
-            if serializer_class_name.endswith('Serializer'):
-                serializer_class_name = serializer_class_name[:-10]
-            ref = f'#/components/schemas/{serializer_class_name}'
+        if schema and self.generator:
+            ref = self.get_ref_name(serializer, write_only=write_only, read_only=read_only, required=required)
             self.generator.local_refs_registry.put_local_ref(ref, schema)
             schema = {'$ref': ref}
 
@@ -401,7 +348,7 @@ class RestDoctorSchema(AutoSchema):
                 'name': field.field_name,
                 'in': 'query',
                 'required': field.required,
-                'schema': self._get_field_schema(field),
+                'schema': self.serializer_schema.get_field_schema(field),
             }
 
             if field.help_text:
@@ -475,16 +422,16 @@ class RestDoctorSchema(AutoSchema):
         return self.map_field(field)
 
     def _get_field_description(self, field: Field) -> typing.Optional[str]:
-        return self._get_field_description(field)
+        return self.serializer_schema.get_field_description(field)
 
     def _get_field_schema(self, field: Field) -> OpenAPISchema:
-        return self.get_field_schema(field)
+        return self.serializer_schema.get_field_schema(field)
 
     def _get_serializer_schema(
         self, serializer: BaseSerializer,
         write_only: bool = True, read_only: bool = True, required: bool = True,
     ) -> OpenAPISchema:
-        return self.get_serializer_schema(
+        return self.serializer_schema.get_serializer_schema(
             serializer,
             write_only=write_only, read_only=read_only, required=required,
         )

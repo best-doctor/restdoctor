@@ -2,8 +2,7 @@ import pytest
 from rest_framework.exceptions import NotFound
 from rest_framework.request import Request
 
-from restdoctor.constants import DEFAULT_MAX_PAGE_SIZE
-from restdoctor.rest_framework.pagination import DEFAULT_PAGE_SIZE
+from restdoctor.constants import DEFAULT_MAX_PAGE_SIZE, DEFAULT_PAGE_SIZE
 
 
 @pytest.mark.parametrize(

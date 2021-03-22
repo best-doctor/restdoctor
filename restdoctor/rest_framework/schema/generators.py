@@ -71,7 +71,7 @@ class RefsSchemaGenerator(SchemaGenerator):
         if detailed:
             schema['properties']['errors'] = {
                 'type': 'array',
-                'item': {
+                'items': {
                     'type': 'object',
                 },
             }
