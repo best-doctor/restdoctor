@@ -290,6 +290,17 @@ class RestDoctorSchema(AutoSchema, ViewSchemaProtocol):
         if isinstance(field, SerializerMethodField):
             parent_field = field.parent.__class__._declared_fields[field.field_name]
             field = getattr(parent_field, 'schema_type', field)
+        if hasattr(field, 'type_name') and field.type_name == 'GeometryField':
+            return {
+                "type": {"type": "Point"},
+                "coordinates": {
+                    "type": "array",
+                    "items": {"type": "number", "format": "float"},
+                    "example": [12.9721, 77.5933],
+                    "minItems": 2,
+                    "maxItems": 3,
+                }
+            }
 
         try:
             return super().map_field(field)
