@@ -19,8 +19,10 @@ class PerPageSerializerBase(Serializer):
         super().__init__(*args, **kwargs)
         self.max_per_page = max_per_page
 
-    def validate_per_page(self, value: typing.Optional[int]) -> typing.Optional[int]:
-        if value and value > self.max_per_page:
+    def validate_per_page(self, value: typing.Optional[int]) -> int:
+        if value is None:
+            return DEFAULT_PAGE_SIZE
+        if value > self.max_per_page:
             return self.max_per_page
         return value
 

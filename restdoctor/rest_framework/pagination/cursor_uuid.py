@@ -8,7 +8,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from rest_framework.pagination import BasePagination
 from rest_framework.utils.urls import replace_query_param, remove_query_param
 
-from restdoctor.constants import DEFAULT_MAX_PAGE_SIZE
+from restdoctor.constants import DEFAULT_MAX_PAGE_SIZE, DEFAULT_PAGE_SIZE
 from restdoctor.rest_framework.pagination.mixins import SerializerClassPaginationMixin
 from restdoctor.rest_framework.pagination.serializers import (
     CursorUUIDRequestSerializer, CursorUUIDResponseSerializer, CursorUUIDUncountedResponseSerializer,
@@ -70,6 +70,7 @@ class CursorUUIDPagination(SerializerClassPaginationMixin, BasePagination):
     }
 
     max_page_size = DEFAULT_MAX_PAGE_SIZE
+    default_page_size = DEFAULT_PAGE_SIZE
 
     def get_lookup(self) -> OptionalLookup:
         if self.cursor_obj:
@@ -84,10 +85,7 @@ class CursorUUIDPagination(SerializerClassPaginationMixin, BasePagination):
         serializer = serializer_class(data=request.query_params, max_per_page=self.max_page_size)
         serializer.is_valid(raise_exception=True)
 
-        self.per_page = serializer.validated_data.get(self.page_size_query_param)
-
-        if not self.per_page:
-            return None
+        self.per_page = serializer.validated_data.get(self.page_size_query_param, self.default_page_size)
 
         after_uuid = serializer.validated_data.get(self.after_query_param)
         before_uuid = serializer.validated_data.get(self.before_query_param)

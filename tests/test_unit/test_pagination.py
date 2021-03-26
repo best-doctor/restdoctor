@@ -8,6 +8,7 @@ from restdoctor.constants import DEFAULT_MAX_PAGE_SIZE, DEFAULT_PAGE_SIZE
 @pytest.mark.parametrize(
     'page,per_page,expected_size,expected_has_next,expected_has_prev',
     (
+        (1, 0, 0, True, False),
         (1, 10, 10, True, False),
         (2, 10, 5, False, True),
         (2, 5, 5, True, True),
@@ -102,7 +103,7 @@ def test_null_per_page(rf, page_number_pagination, my_models_queryset, per_page)
 
     _ = page_number_pagination.paginate_queryset(my_models_queryset, request)
 
-    assert page_number_pagination.per_page is None
+    assert page_number_pagination.per_page == DEFAULT_PAGE_SIZE
 
 
 @pytest.mark.parametrize(
@@ -161,6 +162,7 @@ def test_null_page(rf, page_number_pagination, my_models_queryset, page):
 @pytest.mark.parametrize(
     'per_page,expected_size,expected_has_next',
     (
+        (0, 0, True),
         (10, 10, True),
         (5, 5, True),
         (200, 15, False),

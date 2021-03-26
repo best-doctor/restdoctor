@@ -7,7 +7,7 @@ from rest_framework.pagination import BasePagination
 from rest_framework.utils.urls import replace_query_param
 from rest_framework.exceptions import NotFound
 
-from restdoctor.constants import DEFAULT_MAX_PAGE_SIZE
+from restdoctor.constants import DEFAULT_MAX_PAGE_SIZE, DEFAULT_PAGE_SIZE
 from restdoctor.rest_framework.pagination.mixins import SerializerClassPaginationMixin
 from restdoctor.rest_framework.pagination.serializers import (
     PageNumberRequestSerializer, PageNumberResponseSerializer, PageNumberUncountedResponseSerializer,
@@ -34,6 +34,7 @@ class PageNumberPagination(SerializerClassPaginationMixin, BasePagination):
     }
 
     max_page_size = DEFAULT_MAX_PAGE_SIZE
+    default_page_size = DEFAULT_PAGE_SIZE
 
     invalid_page_message = _('Invalid page.')
 
@@ -44,11 +45,8 @@ class PageNumberPagination(SerializerClassPaginationMixin, BasePagination):
         serializer = serializer_class(data=request.query_params, max_per_page=self.max_page_size)
         serializer.is_valid(raise_exception=False)
 
-        self.per_page = serializer.validated_data.get('per_page')
-        self.page = serializer.validated_data.get('page', 1)
-
-        if not self.per_page:
-            return None
+        self.per_page = serializer.validated_data.get(self.page_size_query_param, self.default_page_size)
+        self.page = serializer.validated_data.get(self.page_query_param, 1)
 
         self.has_next = False
         self.has_prev = (self.page > 1)
@@ -62,7 +60,7 @@ class PageNumberPagination(SerializerClassPaginationMixin, BasePagination):
 
         if self.use_count:
             self.total = len(queryset) if isinstance(queryset, list) else queryset.count()
-            if self.total:
+            if self.total and self.per_page:
                 self.pages, rem = divmod(self.total, self.per_page)
                 if rem:
                     self.pages += 1
