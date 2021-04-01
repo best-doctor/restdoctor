@@ -1,0 +1,69 @@
+default_stages:
+- commit
+
+repos:
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: v3.2.0
+  hooks:
+    - id: trailing-whitespace
+    - id: double-quote-string-fixer
+    - id: end-of-file-fixer
+      exclude: \.svg$
+
+- repo: https://github.com/pre-commit/pygrep-hooks
+  rev: v1.7.0
+  hooks:
+    - id: python-check-blanket-noqa
+
+- repo: https://gitlab.com/pycqa/flake8
+  rev: '3.8.2'
+  hooks:
+    - id: flake8
+      additional_dependencies:
+      - flake8-bugbear==20.1.4
+      - flake8-builtins==1.5.2
+      - flake8-commas==2.0.0
+      - flake8-comprehensions==3.2.2
+      - flake8-debugger==3.2.1
+      - flake8-docstrings==1.5.0
+      - flake8-functions==0.0.4
+      - flake8-polyfill==1.0.2
+      - flake8-pytest-style==1.2.3
+      - flake8-print==3.1.4
+      - flake8-quotes==3.0.0
+      - flake8-string-format==0.3.0
+      - flake8-todo==0.7
+      - flake8-annotations-complexity==0.0.4
+      - flake8-variables-names==0.0.3
+      - flake8-class-attributes-order==0.1.0
+      - flake8-broken-line==0.2.0
+      - flake8-cognitive-complexity==0.0.2
+      - cognitive-complexity==0.0.4
+      - flake8-fine-pytest==1.0.0
+
+- repo: https://github.com/pre-commit/mirrors-mypy
+  rev: v0.790
+  hooks:
+    - id: mypy
+      entry: mypy .
+      pass_filenames: false
+
+- repo: https://github.com/best-doctor/pre-commit-hooks
+  rev: 'v1.0.0'
+  hooks:
+    - id: mccabe-complexity
+    - id: expr-complexity
+    - id: no-asserts
+      exclude: /tests/
+    - id: forbidden-imports
+
+- repo: https://github.com/psf/black
+  rev: aebd3c3
+  hooks:
+    - id: black
+      language_version: python
+
+- repo: https://github.com/PyCQA/isort
+  rev: '5.7.0'
+  hooks:
+    - id: isort

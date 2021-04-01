@@ -52,40 +52,34 @@ class RefsSchemaGenerator(SchemaGenerator):
 
         return result
 
-    def create_view(self, callback: Handler, method: str, request: Request = None) -> GenericAPIView:
+    def create_view(
+        self, callback: Handler, method: str, request: Request = None
+    ) -> GenericAPIView:
         view = super().create_view(callback, method, request)
-        view_class = getattr(view, 'schema_class', RestDoctorSchema)
-        view.schema = view_class(generator=self)
+        schema_class = getattr(view, 'schema_class', RestDoctorSchema)
+        view.schema = schema_class(generator=self)
         return view
 
-    def get_error_schema(self, description: str = 'Описание ошибки', detailed: bool = False) -> OpenAPISchema:
+    def get_error_schema(
+        self, description: str = 'Описание ошибки', detailed: bool = False
+    ) -> OpenAPISchema:
         schema: OpenAPISchema = {
             'type': 'object',
-            'properties': {
-                'message': {
-                    'type': 'string',
-                    'description': description,
-                },
-            },
+            'properties': {'message': {'type': 'string', 'description': description}},
         }
         if detailed:
-            schema['properties']['errors'] = {
-                'type': 'array',
-                'items': {
-                    'type': 'object',
-                },
-            }
+            schema['properties']['errors'] = {'type': 'array', 'items': {'type': 'object'}}
         return schema
 
-    def get_schema(self, request: Request = None, public: bool = False) -> typing.Optional[OpenAPISchema]:
+    def get_schema(
+        self, request: Request = None, public: bool = False
+    ) -> typing.Optional[OpenAPISchema]:
         self._initialise_endpoints()
         self.local_refs_registry.put_local_ref(
-            '#/components/schemas/ErrorResponseSchemaDetailed',
-            self.get_error_schema(detailed=True),
+            '#/components/schemas/ErrorResponseSchemaDetailed', self.get_error_schema(detailed=True)
         )
         self.local_refs_registry.put_local_ref(
-            '#/components/schemas/ErrorResponseSchema',
-            self.get_error_schema(),
+            '#/components/schemas/ErrorResponseSchema', self.get_error_schema()
         )
         self.local_refs_registry.put_local_ref(
             '#/components/schemas/NotFoundResponseSchema',
@@ -96,11 +90,7 @@ class RefsSchemaGenerator(SchemaGenerator):
         if not paths:
             return None
 
-        schema = {
-            'openapi': '3.0.2',
-            'info': self.get_info(),
-            'paths': paths,
-        }
+        schema = {'openapi': '3.0.2', 'info': self.get_info(), 'paths': paths}
         components = self.local_refs_registry.get_components()
         if components:
             schema['components'] = components
