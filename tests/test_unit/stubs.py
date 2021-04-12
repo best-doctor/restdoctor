@@ -1,12 +1,17 @@
-from django.db import models
-from rest_framework.fields import SerializerMethodField, CharField
-from rest_framework.permissions import BasePermission
-from rest_framework.serializers import Serializer, BaseSerializer
+from __future__ import annotations
 
+from django.db import models
+from rest_framework.fields import CharField, SerializerMethodField
+from rest_framework.permissions import BasePermission
+from rest_framework.response import Response
+from rest_framework.serializers import BaseSerializer, Serializer
+
+from restdoctor.rest_framework.generics import GenericAPIView
+from restdoctor.rest_framework.resources import ResourceViewSet
 from restdoctor.rest_framework.schema import SchemaWrapper
 from restdoctor.rest_framework.serializers import ModelSerializer
 from restdoctor.rest_framework.views import RetrieveAPIView
-from restdoctor.rest_framework.viewsets import ModelViewSet, ListModelViewSet
+from restdoctor.rest_framework.viewsets import ListModelViewSet, ModelViewSet, ReadOnlyModelViewSet
 
 
 class ModelWithoutSensitiveData(models.Model):
@@ -24,7 +29,9 @@ class ChildSensitiveDataModel(models.Model):
         include = ['title']
 
     title = models.CharField(max_length=100, blank=True)
-    field_fk = models.ForeignKey(ModelWithoutSensitiveData, on_delete=models.PROTECT, blank=True, null=True)
+    field_fk = models.ForeignKey(
+        ModelWithoutSensitiveData, on_delete=models.PROTECT, blank=True, null=True
+    )
 
 
 class ParentSensitiveDataModel(models.Model):
@@ -36,9 +43,13 @@ class ParentSensitiveDataModel(models.Model):
 
     title = models.CharField(max_length=100, blank=True)
     last_name = models.CharField(max_length=100, blank=True)
-    field_fk = models.ForeignKey(ChildSensitiveDataModel, on_delete=models.PROTECT, blank=True, null=True)
+    field_fk = models.ForeignKey(
+        ChildSensitiveDataModel, on_delete=models.PROTECT, blank=True, null=True
+    )
     field_m2m = models.ManyToManyField(ChildSensitiveDataModel, blank=True)
-    field_o2o = models.OneToOneField(ChildSensitiveDataModel, on_delete=models.PROTECT, blank=True, null=True)
+    field_o2o = models.OneToOneField(
+        ChildSensitiveDataModel, on_delete=models.PROTECT, blank=True, null=True
+    )
 
 
 class SerializerWithSensitiveData(Serializer):
@@ -57,8 +68,15 @@ class ModelSerializerWithSensitiveData(ModelSerializer):
     class Meta:
         model = ParentSensitiveDataModel
         fields = [
-            'first_name', 'last_name', 'title', 'field_fk', 'field_m2m', 'field_o2o', 'field1',
-            'field2', 'field3',
+            'first_name',
+            'last_name',
+            'title',
+            'field_fk',
+            'field_m2m',
+            'field_o2o',
+            'field1',
+            'field2',
+            'field3',
         ]
 
     class SensitiveData:
@@ -66,10 +84,7 @@ class ModelSerializerWithSensitiveData(ModelSerializer):
 
     first_name = CharField()
     field1 = SerializerWithSensitiveData()
-    field2 = SchemaWrapper(
-        SerializerMethodField(),
-        schema_type=SerializerWithSensitiveData,
-    )
+    field2 = SchemaWrapper(SerializerMethodField(), schema_type=SerializerWithSensitiveData)
     field3 = SerializerWithSensitiveData(many=True)
 
 
@@ -85,15 +100,10 @@ class PermissionC(BasePermission):
     pass
 
 
-permission_classes_map_with_default = {
-    'default': [PermissionA],
-    'retrieve': [PermissionB],
-}
+permission_classes_map_with_default = {'default': [PermissionA], 'retrieve': [PermissionB]}
 
 
-permission_classes_map_no_default = {
-    'retrieve': [PermissionB],
-}
+permission_classes_map_no_default = {'retrieve': [PermissionB]}
 
 
 class ModelA(models.Model):
@@ -147,15 +157,29 @@ class SerializerB(BaseSerializer):
 
 
 class ListViewSetWithRequestSerializer(ListModelViewSet):
-    serializer_class_map = {
-        'default': SerializerA,
-        'list': {
-            'request': SerializerB,
-        }
-    }
+    serializer_class_map = {'default': SerializerA, 'list': {'request': SerializerB}}
 
 
 class ListViewSetWithoutRequestSerializer(ListModelViewSet):
-    serializer_class_map = {
-        'default': SerializerA,
-    }
+    serializer_class_map = {'default': SerializerA}
+
+
+class ROViewSet(ReadOnlyModelViewSet):
+    serializer_class_map = {'default': SerializerA}
+
+    def dispatch(self, *args, **kwargs):
+        return super(GenericAPIView).dispatch(*args, **kwargs)
+
+
+class RWViewSet(ModelViewSet):
+    serializer_class_map = {'default': SerializerA}
+
+    def dispatch(self, *args, **kwargs):
+        return super(GenericAPIView, self).dispatch(*args, **kwargs)
+
+    def update(self, *args, **kwargs):
+        return Response({})
+
+
+class ComplexResourceViewSet(ResourceViewSet):
+    resource_views_map = {'read_only': ROViewSet, 'read_write': RWViewSet}

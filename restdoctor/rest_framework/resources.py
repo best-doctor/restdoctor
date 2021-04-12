@@ -8,8 +8,9 @@ import typing
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
-from django.db.models import QuerySet, Manager
+from django.db.models import Manager, QuerySet
 from django.http import Http404
+from rest_framework.exceptions import MethodNotAllowed
 
 from restdoctor.rest_framework.generics import GenericAPIView
 from restdoctor.rest_framework.pagination import PageNumberPagination
@@ -22,8 +23,13 @@ if typing.TYPE_CHECKING:
     from rest_framework.response import Response
 
     from restdoctor.rest_framework.custom_types import (
-        Handler, ActionMap, ResourceExtraAction, ResourceViewsMap, ResourceActionsMap,
-        ResourceHandlersMap, ResourceModelsMap,
+        ActionMap,
+        Handler,
+        ResourceActionsMap,
+        ResourceExtraAction,
+        ResourceHandlersMap,
+        ResourceModelsMap,
+        ResourceViewsMap,
     )
 
 logger = logging.getLogger(__name__)
@@ -96,10 +102,12 @@ class ResourceBase:
             elif current_model is None:
                 current_model = model
             elif current_model != model:
-                errors.append((
-                    f'Resource {resource} for {cls.__name__} has wrong queryset model '
-                    f'{model} instead of {current_model}.'
-                ))
+                errors.append(
+                    (
+                        f'Resource {resource} for {cls.__name__} has wrong queryset model '
+                        f'{model} instead of {current_model}.'
+                    )
+                )
         for warning in warnings:
             logger.warning(warning)
         if errors:
@@ -114,17 +122,15 @@ class ResourceBase:
             pass
 
         if request.method in self.resource_discriminate_methods:
-            discriminant = request.GET.get(self.resource_discriminative_param) or self.default_discriminative_value
-            if (
-                settings.API_RESOURCE_SET_PARAM
-                and (
-                    discriminant != self.default_discriminative_value
-                    or settings.API_RESOURCE_SET_PARAM_FOR_DEFAULT
-                )
+            discriminant = (
+                request.GET.get(self.resource_discriminative_param)
+                or self.default_discriminative_value
+            )
+            if settings.API_RESOURCE_SET_PARAM and (
+                discriminant != self.default_discriminative_value
+                or settings.API_RESOURCE_SET_PARAM_FOR_DEFAULT
             ):
-                request.resource_args = {
-                    self.resource_discriminative_param: discriminant,
-                }
+                request.resource_args = {self.resource_discriminative_param: discriminant}
             return discriminant
         return self.default_discriminative_value
 
@@ -141,8 +147,10 @@ class ResourceViewSet(ResourceBase, GenericViewSet):
     pagination_class: typing.Optional[BasePagination] = PageNumberPagination
 
     def __init__(
-        self, resource_handlers_map: typing.Dict[str, Handler] = None,
-        *args: typing.Any, **kwargs: typing.Any,
+        self,
+        resource_handlers_map: typing.Dict[str, Handler] = None,
+        *args: typing.Any,
+        **kwargs: typing.Any,
     ) -> None:
         super().__init__(*args, **kwargs)
         self.resource_handlers_map = resource_handlers_map or {}
@@ -191,19 +199,22 @@ class ResourceViewSet(ResourceBase, GenericViewSet):
 
         method = request.method.lower()
         action = self.action_map.get(method)
-        if action in self.resource_actions_map.get(discriminator, {}):
+        actions = self.resource_actions_map.get(discriminator)
+        if actions is None:
+            raise Http404()
+        if action in actions:
             return super().dispatch(request, *args, **kwargs)
-        raise Http404()
+        raise MethodNotAllowed(request.method)
 
 
 class ResourceView(ResourceBase, GenericAPIView):
-
     @classmethod
     def as_view(cls, **initkwargs: typing.Any) -> typing.Any:
         view = super().as_view(**initkwargs)
         resource_handlers_map = view.initkwargs.get('resource_handlers_map', {})
-        actions = merge_actions([
-            getattr(handler, 'actions', None) for handler in resource_handlers_map.values()])
+        actions = merge_actions(
+            [getattr(handler, 'actions', None) for handler in resource_handlers_map.values()]
+        )
         if actions:
             view.actions = actions
         return view
