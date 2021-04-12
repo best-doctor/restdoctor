@@ -1,33 +1,35 @@
+from __future__ import annotations
+
 import pytest
 from django.core.exceptions import ImproperlyConfigured
 from django.http import Http404
 from django.test import RequestFactory
+from rest_framework.exceptions import MethodNotAllowed
 
 from restdoctor.rest_framework.resources import (
-    get_queryset_model_map, ResourceViewSet, ResourceView,
+    ResourceView,
+    ResourceViewSet,
+    get_queryset_model_map,
 )
 from tests.test_unit.stubs import (
-    ModelA, ModelAViewSet, ModelAWithMixinViewSet, NoneViewSet, ModelBViewSet, ModelAView,
+    ComplexResourceViewSet,
+    ModelA,
+    ModelAView,
+    ModelAViewSet,
+    ModelAWithMixinViewSet,
+    ModelBViewSet,
+    NoneViewSet,
 )
 
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    'resource_views_map,expected_model_map',
-    (
-        (
-            {'one': ModelAViewSet},
-            {'one': ModelA},
-        ),
-        (
-            {'one': ModelAWithMixinViewSet},
-            {'one': ModelA},
-        ),
-        (
-            {'one': NoneViewSet},
-            {'one': None},
-        ),
-    ),
+    ('resource_views_map', 'expected_model_map'),
+    [
+        ({'one': ModelAViewSet}, {'one': ModelA}),
+        ({'one': ModelAWithMixinViewSet}, {'one': ModelA}),
+        ({'one': NoneViewSet}, {'one': None}),
+    ],
 )
 def test_get_queryset_model_map_success_case(resource_views_map, expected_model_map):
     model_map = get_queryset_model_map(resource_views_map)
@@ -37,8 +39,8 @@ def test_get_queryset_model_map_success_case(resource_views_map, expected_model_
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    'base_class,resource_views_map',
-    (
+    ('base_class', 'resource_views_map'),
+    [
         (ResourceViewSet, {'one': ModelAViewSet}),
         (ResourceViewSet, {'one': ModelAViewSet, 'another': ModelAWithMixinViewSet}),
         (ResourceViewSet, {'one': ModelAViewSet, 'another': NoneViewSet}),
@@ -47,11 +49,11 @@ def test_get_queryset_model_map_success_case(resource_views_map, expected_model_
         (ResourceView, {'one': ModelAViewSet, 'another': ModelAWithMixinViewSet}),
         (ResourceView, {'one': ModelAViewSet, 'another': NoneViewSet}),
         (ResourceView, {'one': NoneViewSet}),
-    ),
+    ],
 )
 def test_check_queryset_models_success_case(base_class, resource_views_map):
     resource_class = type(
-        'TestResourceViewSet', (base_class,), {'resource_views_map': resource_views_map},
+        'TestResourceViewSet', (base_class,), {'resource_views_map': resource_views_map}
     )
 
     result = resource_class.check_queryset_models()
@@ -61,16 +63,14 @@ def test_check_queryset_models_success_case(base_class, resource_views_map):
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    'base_class,resource_views_map',
-    (
+    ('base_class', 'resource_views_map'),
+    [
         (ResourceViewSet, {'one': ModelAViewSet, 'another': ModelBViewSet}),
         (ResourceView, {'one': ModelAViewSet, 'another': ModelBViewSet}),
-    ),
+    ],
 )
 def test_check_queryset_models_fail_case(base_class, resource_views_map):
-    resource_class = type(
-        'TestResource', (base_class,), {'resource_views_map': resource_views_map},
-    )
+    resource_class = type('TestResource', (base_class,), {'resource_views_map': resource_views_map})
 
     with pytest.raises(ImproperlyConfigured):
         resource_class.check_queryset_models()
@@ -80,7 +80,8 @@ def test_check_queryset_models_fail_case(base_class, resource_views_map):
 def test_resource_viewset_dispatch_no_default_discriminator_fail_case(resource_viewset_dispatch):
     resource_discriminator = 'one'
     view_func, _ = resource_viewset_dispatch(
-        resource_discriminator, ModelAViewSet, actions={'get': 'retrieve'})
+        resource_discriminator, ModelAViewSet, actions={'get': 'retrieve'}
+    )
     request = RequestFactory().get('/')
 
     with pytest.raises(Http404):
@@ -91,7 +92,8 @@ def test_resource_viewset_dispatch_no_default_discriminator_fail_case(resource_v
 def test_resource_viewset_dispatch_wrong_discriminator_fail_case(resource_viewset_dispatch):
     resource_discriminator = 'one'
     view_func, _ = resource_viewset_dispatch(
-        resource_discriminator, ModelAViewSet, actions={'get': 'retrieve'})
+        resource_discriminator, ModelAViewSet, actions={'get': 'retrieve'}
+    )
     request = RequestFactory().get('/', {'view_type': f'NOT_{resource_discriminator}'})
 
     with pytest.raises(Http404):
@@ -102,7 +104,8 @@ def test_resource_viewset_dispatch_wrong_discriminator_fail_case(resource_viewse
 def test_resource_viewset_dispatch_success_case(resource_viewset_dispatch):
     resource_discriminator = 'one'
     view_func, mocked_dispatch = resource_viewset_dispatch(
-        resource_discriminator, ModelAViewSet, actions={'get': 'retrieve'})
+        resource_discriminator, ModelAViewSet, actions={'get': 'retrieve'}
+    )
     request = RequestFactory().get('/', {'view_type': resource_discriminator})
 
     view_func(request)
@@ -149,12 +152,11 @@ def test_resource_view_dispatch_success_case(resource_view_dispatch):
         ('application/vnd.vendor.v1-extended', '', 'extended'),
         ('application/vnd.vendor.v1-extended', 'common', 'extended'),
         ('application/vnd.vendor.v2', '', 'common'),
-    ]
+    ],
 )
 @pytest.mark.django_db
 def test_get_discriminant_for_get_method(
-    accept, view_type, expected_discriminant,
-    settings, client, api_prefix, get_discriminant_spy,
+    accept, view_type, expected_discriminant, settings, client, api_prefix, get_discriminant_spy
 ):
     settings.API_VERSIONS = {'v1': 'tests.stubs.api.v1_urls'}
     settings.API_RESOURCE_DEFAULT = 'common'
@@ -170,12 +172,11 @@ def test_get_discriminant_for_get_method(
         ('application/vnd.vendor.v1', 'common'),
         ('application/vnd.vendor.v1-common', 'common'),
         ('application/vnd.vendor.v1-extended', 'extended'),
-    ]
+    ],
 )
 @pytest.mark.django_db
 def test_get_discriminant_for_post_method(
-    accept, expected_discriminant,
-    settings, client, api_prefix, get_discriminant_spy,
+    accept, expected_discriminant, settings, client, api_prefix, get_discriminant_spy
 ):
     settings.API_VERSIONS = {'v1': 'tests.stubs.api.v1_urls'}
     settings.API_RESOURCE_DEFAULT = 'common'
@@ -183,3 +184,27 @@ def test_get_discriminant_for_post_method(
     client.post(f'/{api_prefix}mymodel/', HTTP_ACCEPT=accept)
 
     assert get_discriminant_spy.spy_return == expected_discriminant
+
+
+def test_resource_view_dispatch_complex_case_200(mocker):
+    mocked_get_discriminant = mocker.patch.object(ComplexResourceViewSet, 'get_discriminant')
+    mocked_get_discriminant.return_value = 'read_write'
+    view_func = ComplexResourceViewSet.as_view(actions={'post': 'update'})
+    request = RequestFactory().post('/')
+
+    response = view_func(request)
+
+    assert response.status_code == 200
+
+
+@pytest.mark.parametrize(
+    ('discriminator', 'exception_class'), [('read_only', MethodNotAllowed), ('default', Http404)]
+)
+def test_resource_view_dispatch_complex_case_raises(mocker, discriminator, exception_class):
+    mocked_get_discriminant = mocker.patch.object(ComplexResourceViewSet, 'get_discriminant')
+    mocked_get_discriminant.return_value = discriminator
+    view_func = ComplexResourceViewSet.as_view(actions={'post': 'update'})
+    request = RequestFactory().post('/')
+
+    with pytest.raises(exception_class):
+        view_func(request)
