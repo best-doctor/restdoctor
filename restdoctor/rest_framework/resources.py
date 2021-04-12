@@ -10,7 +10,7 @@ from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.db.models import Manager, QuerySet
 from django.http import Http404
-from rest_framework.exceptions import MethodNotAllowed
+from rest_framework.exceptions import MethodNotAllowed, NotFound
 
 from restdoctor.rest_framework.generics import GenericAPIView
 from restdoctor.rest_framework.pagination import PageNumberPagination
@@ -201,10 +201,20 @@ class ResourceViewSet(ResourceBase, GenericViewSet):
         action = self.action_map.get(method)
         actions = self.resource_actions_map.get(discriminator)
         if actions is None:
-            raise Http404()
-        if action in actions:
+            exc = NotFound()
+        elif action in actions:
             return super().dispatch(request, *args, **kwargs)
-        raise MethodNotAllowed(request.method)
+        else:
+            exc = MethodNotAllowed(request.method)
+        return self.exception_response(exc, request, *args, **kwargs)
+
+    def exception_response(
+        self, exc: Exception, request: WSGIRequest, *args: typing.Any, **kwargs: typing.Any
+    ) -> Response:
+        request = self.initialize_request(request, *args, **kwargs)
+        self.headers = self.default_response_headers
+        response = self.handle_exception(exc)
+        return self.finalize_response(request, response, *args, **kwargs)
 
 
 class ResourceView(ResourceBase, GenericAPIView):

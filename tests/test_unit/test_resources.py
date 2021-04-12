@@ -4,7 +4,7 @@ import pytest
 from django.core.exceptions import ImproperlyConfigured
 from django.http import Http404
 from django.test import RequestFactory
-from rest_framework.exceptions import MethodNotAllowed
+from rest_framework.status import HTTP_200_OK, HTTP_404_NOT_FOUND, HTTP_405_METHOD_NOT_ALLOWED
 
 from restdoctor.rest_framework.resources import (
     ResourceView,
@@ -84,8 +84,9 @@ def test_resource_viewset_dispatch_no_default_discriminator_fail_case(resource_v
     )
     request = RequestFactory().get('/')
 
-    with pytest.raises(Http404):
-        view_func(request)
+    response = view_func(request)
+
+    assert response.status_code == HTTP_404_NOT_FOUND
 
 
 @pytest.mark.django_db
@@ -96,8 +97,9 @@ def test_resource_viewset_dispatch_wrong_discriminator_fail_case(resource_viewse
     )
     request = RequestFactory().get('/', {'view_type': f'NOT_{resource_discriminator}'})
 
-    with pytest.raises(Http404):
-        view_func(request)
+    response = view_func(request)
+
+    assert response.status_code == HTTP_404_NOT_FOUND
 
 
 @pytest.mark.django_db
@@ -186,25 +188,20 @@ def test_get_discriminant_for_post_method(
     assert get_discriminant_spy.spy_return == expected_discriminant
 
 
-def test_resource_view_dispatch_complex_case_200(mocker):
-    mocked_get_discriminant = mocker.patch.object(ComplexResourceViewSet, 'get_discriminant')
-    mocked_get_discriminant.return_value = 'read_write'
-    view_func = ComplexResourceViewSet.as_view(actions={'post': 'update'})
-    request = RequestFactory().post('/')
-
-    response = view_func(request)
-
-    assert response.status_code == 200
-
-
 @pytest.mark.parametrize(
-    ('discriminator', 'exception_class'), [('read_only', MethodNotAllowed), ('default', Http404)]
+    ('discriminator', 'expected_status_code'),
+    [
+        ('read_write', HTTP_200_OK),
+        ('read_only', HTTP_405_METHOD_NOT_ALLOWED),
+        ('default', HTTP_404_NOT_FOUND),
+    ],
 )
-def test_resource_view_dispatch_complex_case_raises(mocker, discriminator, exception_class):
+def test_resource_view_dispatch_complex_case_raises(mocker, discriminator, expected_status_code):
     mocked_get_discriminant = mocker.patch.object(ComplexResourceViewSet, 'get_discriminant')
     mocked_get_discriminant.return_value = discriminator
     view_func = ComplexResourceViewSet.as_view(actions={'post': 'update'})
     request = RequestFactory().post('/')
 
-    with pytest.raises(exception_class):
-        view_func(request)
+    response = view_func(request)
+
+    assert response.status_code == expected_status_code
