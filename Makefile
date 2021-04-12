@@ -3,8 +3,9 @@ style:
 types:
 	mypy --python-version 3.8 restdoctor
 test:
+	python -m pytest -p no:warnings --disable-socket
+coverage:
 	python -m pytest --cov=restdoctor --cov-report=xml -p no:warnings --disable-socket
-
 check:
 	make test style types
 
