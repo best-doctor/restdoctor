@@ -8,16 +8,27 @@ from restdoctor.rest_framework.schema.openapi import RestDoctorSchema
 from restdoctor.rest_framework.schema.utils import get_action
 
 if typing.TYPE_CHECKING:
-    from restdoctor.rest_framework.custom_types import ResourceHandlersMap
-    from restdoctor.rest_framework.schema.custom_types import OpenAPISchema, CodeActionSchemaTuple
+    from restdoctor.rest_framework.custom_types import Handler, ResourceHandlersMap
+    from restdoctor.rest_framework.generics import GenericAPIView
+    from restdoctor.rest_framework.schema.custom_types import CodeActionSchemaTuple, OpenAPISchema
+
+
+def get_single_or_default_handler(view: GenericAPIView) -> typing.Optional[Handler]:
+    keys = list(view.resource_handlers_map.keys())
+    if len(keys) == 1:
+        return view.resource_handlers_map[keys[0]]
+    return view.resource_handlers_map.get(view.default_discriminative_value)
 
 
 class ResourceSchema(RestDoctorSchema):
     def get_object_name(self, path: str, method: str, action_name: str) -> str:
         return self.get_object_name_by_view_class_name(
-            clean_suffixes=['View', 'APIView', 'ViewSet'])
+            clean_suffixes=['View', 'APIView', 'ViewSet']
+        )
 
-    def get_action_code_schemas(self, path: str, method: str) -> typing.Iterator[CodeActionSchemaTuple]:
+    def get_action_code_schemas(
+        self, path: str, method: str
+    ) -> typing.Iterator[CodeActionSchemaTuple]:
         codes_seen: typing.Set[str] = set()
 
         if self.generator:
@@ -29,7 +40,8 @@ class ResourceSchema(RestDoctorSchema):
 
     def get_resources(self, method: str) -> ResourceHandlersMap:
         return {
-            resource: handler for resource, handler in self.view.resource_handlers_map.items()
+            resource: handler
+            for resource, handler in self.view.resource_handlers_map.items()
             if (
                 method in self.view.resource_discriminate_methods
                 or resource == self.view.default_discriminative_value
@@ -52,13 +64,17 @@ class ResourceSchema(RestDoctorSchema):
             return list_schemas[0]
         return {'oneOf': list_schemas}
 
-    def get_resources_response_schema(self, path: str, method: str, api_format: str = None) -> OpenAPISchema:
+    def get_resources_response_schema(
+        self, path: str, method: str, api_format: str = None
+    ) -> OpenAPISchema:
         schemas = {}
         if self.generator:
             for resource, handler in self.get_resources(method).items():
                 view = self.generator.create_view(handler, method, request=self.view.request)
                 if hasattr(view, get_action(path, method, view)):
-                    schemas[resource] = view.schema.get_response_schema(path, method, api_format=api_format)
+                    schemas[resource] = view.schema.get_response_schema(
+                        path, method, api_format=api_format
+                    )
 
         list_schemas = []
         for schema in schemas.values():
@@ -116,7 +132,7 @@ class ResourceSchema(RestDoctorSchema):
         return {'content': self.get_content_schema_by_type(path, method, 'request_body')}
 
     def get_pagination_parameters(self, path: str, method: str) -> typing.List[OpenAPISchema]:
-        handler = self.view.resource_handlers_map.get(self.view.default_discriminative_value)
+        handler = get_single_or_default_handler(self.view)
 
         if self.generator and handler:
             view = self.generator.create_view(handler, method, request=self.view.request)
@@ -125,7 +141,7 @@ class ResourceSchema(RestDoctorSchema):
         return []
 
     def get_filter_parameters(self, path: str, method: str) -> typing.List[OpenAPISchema]:
-        handler = self.view.resource_handlers_map.get(self.view.default_discriminative_value)
+        handler = get_single_or_default_handler(self.view)
 
         if self.generator and handler:
             view = self.generator.create_view(handler, method, request=self.view.request)
@@ -133,8 +149,10 @@ class ResourceSchema(RestDoctorSchema):
 
         return []
 
-    def get_request_serializer_filter_parameters(self, path: str, method: str) -> typing.List[OpenAPISchema]:
-        handler = self.view.resource_handlers_map.get(self.view.default_discriminative_value)
+    def get_request_serializer_filter_parameters(
+        self, path: str, method: str
+    ) -> typing.List[OpenAPISchema]:
+        handler = get_single_or_default_handler(self.view)
 
         if self.generator and handler:
             view = self.generator.create_view(handler, method, request=self.view.request)
@@ -145,12 +163,16 @@ class ResourceSchema(RestDoctorSchema):
     def _get_resources(self, method: str) -> ResourceHandlersMap:
         return self.get_resources(method)
 
-    def __get_item_schema(self, path: str, method: str, api_format: str = None) -> typing.Optional[OpenAPISchema]:
+    def __get_item_schema(
+        self, path: str, method: str, api_format: str = None
+    ) -> typing.Optional[OpenAPISchema]:
         schemas = {}
         if self.generator:
             for resource, handler in self._get_resources(method).items():
                 view = self.generator.create_view(handler, method, request=self.view.request)
-                schemas[resource] = view.schema._get_item_schema(path, method, api_format=api_format)
+                schemas[resource] = view.schema._get_item_schema(
+                    path, method, api_format=api_format
+                )
 
         list_schemas = list(schemas.values())
         if len(list_schemas) == 1:

@@ -1,10 +1,12 @@
+from __future__ import annotations
+
 from rest_framework.decorators import action as drf_action
 from rest_framework.fields import CharField, UUIDField
 from rest_framework.serializers import Serializer
 
 from restdoctor.rest_framework.resources import ResourceViewSet
 from restdoctor.rest_framework.views import SerializerClassMapApiView
-from restdoctor.rest_framework.viewsets import ModelViewSet, ListModelViewSet
+from restdoctor.rest_framework.viewsets import ListModelViewSet, ModelViewSet
 
 
 class DefaultSerializer(Serializer):
@@ -31,24 +33,16 @@ class ListFilterSerialiser(Serializer):
 class SerializerClassMapViewSet(ModelViewSet):
     serializer_class_map = {
         'default': DefaultSerializer,
-        'list': {
-            'response': ListSerializer,
-        },
-        'create': {
-            'response': CreateSerializer,
-        },
+        'list': {'response': ListSerializer},
+        'create': {'response': CreateSerializer},
     }
 
 
 class SerializerClassMapView(SerializerClassMapApiView):
     serializer_class_map = {
         'default': DefaultSerializer,
-        'get': {
-            'response': ListSerializer,
-        },
-        'post': {
-            'response': CreateSerializer,
-        },
+        'get': {'response': ListSerializer},
+        'post': {'response': CreateSerializer},
     }
 
     def get(self, request, *args, **kwargs):
@@ -69,12 +63,7 @@ class AnotherViewSet(ModelViewSet):
 class ActionsViewSet(ModelViewSet):
     serializer_class = DefaultSerializer
 
-    schema_action_codes_map = {
-        'custom_action': {
-            '200': None,
-            '201': 'Description for 201 code.',
-        },
-    }
+    schema_action_codes_map = {'custom_action': {'200': None, '201': 'Description for 201 code.'}}
 
     @drf_action(detail=True, methods=['put'])
     def custom_action(self, *args, **kwargs):
@@ -89,19 +78,12 @@ class ViewSetWithTags(ModelViewSet):
 class ListViewSetWithRequestSerializer(ListModelViewSet):
     pagination_class = None
     schema_tags = ['tag']
-    serializer_class_map = {
-        'default': DefaultSerializer,
-        'list': {
-            'request': ListFilterSerialiser,
-        }
-    }
+    serializer_class_map = {'default': DefaultSerializer, 'list': {'request': ListFilterSerialiser}}
 
 
 class ListViewSetWithoutRequestSerializer(ListModelViewSet):
     pagination_class = None
-    serializer_class_map = {
-        'default': DefaultSerializer,
-    }
+    serializer_class_map = {'default': DefaultSerializer}
 
 
 class DefaultAnotherResourceViewSet(ResourceViewSet):
@@ -111,3 +93,8 @@ class DefaultAnotherResourceViewSet(ResourceViewSet):
         'another': AnotherViewSet,
         'actions': ActionsViewSet,
     }
+
+
+class SingleResourceViewSet(ResourceViewSet):
+    default_discriminative_value = 'default'
+    resource_views_map = {'another': AnotherViewSet}
