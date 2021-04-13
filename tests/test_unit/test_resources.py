@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+import datetime
 
 import pytest
 from django.core.exceptions import ImproperlyConfigured
