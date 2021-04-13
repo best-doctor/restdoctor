@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from datetime import datetime
+
 import pytest
 from django.core.exceptions import ImproperlyConfigured
 from django.http import Http404
@@ -196,11 +198,29 @@ def test_get_discriminant_for_post_method(
         ('default', HTTP_404_NOT_FOUND),
     ],
 )
-def test_resource_view_dispatch_complex_case_raises(mocker, discriminator, expected_status_code):
+def test_resource_view_dispatch_complex_case_post(mocker, discriminator, expected_status_code):
     mocked_get_discriminant = mocker.patch.object(ComplexResourceViewSet, 'get_discriminant')
     mocked_get_discriminant.return_value = discriminator
-    view_func = ComplexResourceViewSet.as_view(actions={'post': 'update'})
+    view_func = ComplexResourceViewSet.as_view(actions={'get': 'retrieve', 'post': 'update'})
     request = RequestFactory().post('/')
+
+    response = view_func(request)
+
+    assert response.status_code == expected_status_code
+
+
+@pytest.mark.xfail(
+    reason='ViewSet with different actions set issue', until=datetime.datetime(2021, 5, 31)
+)
+@pytest.mark.parametrize(
+    ('discriminator', 'expected_status_code'),
+    [('read_write', HTTP_200_OK), ('read_only', HTTP_200_OK), ('default', HTTP_404_NOT_FOUND)],
+)
+def test_resource_view_dispatch_complex_case_get(mocker, discriminator, expected_status_code):
+    mocked_get_discriminant = mocker.patch.object(ComplexResourceViewSet, 'get_discriminant')
+    mocked_get_discriminant.return_value = discriminator
+    view_func = ComplexResourceViewSet.as_view(actions={'get': 'retrieve', 'post': 'update'})
+    request = RequestFactory().get('/')
 
     response = view_func(request)
 

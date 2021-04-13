@@ -168,7 +168,10 @@ class ROViewSet(ReadOnlyModelViewSet):
     serializer_class_map = {'default': SerializerA}
 
     def dispatch(self, *args, **kwargs):
-        return super(GenericAPIView).dispatch(*args, **kwargs)
+        return super(GenericAPIView, self).dispatch(*args, **kwargs)
+
+    def retrieve(self, *args, **kwargs):
+        return Response({})
 
 
 class RWViewSet(ModelViewSet):
@@ -176,6 +179,9 @@ class RWViewSet(ModelViewSet):
 
     def dispatch(self, *args, **kwargs):
         return super(GenericAPIView, self).dispatch(*args, **kwargs)
+
+    def retrieve(self, *args, **kwargs):
+        return Response({})
 
     def update(self, *args, **kwargs):
         return Response({})
