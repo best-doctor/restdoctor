@@ -4,14 +4,14 @@ BestDoctor's batteries for REST services.
 
 ## Для чего нужен RestDoctor
 
-Мы в BestDoctor иногда пишем REST API и у нас есть свой API Guide, в котором написано, как API должно быть
+У нас в BestDoctor есть [свой API Guide](https://github.com/best-doctor/guides/blob/master/guides/api_guide.md), в котором написано, как API должно быть
 построено. А еще у нас есть Django и довольно логично использовать Django Rest Framework. Он достаточно гибкий,
 однако в некоторых местах мы хотим получить больше контроля и соблюдения своих правил.
 
 Поэтому мы написали свою надстройку над DRF, которая имеет
 1. Полную изоляцию между версиями API
-1. Варсионирование через заголовок Accept
-1. Декларативную настройку сериализаторов и классов разрешений для View и ViewSet
+1. Версионирование через заголовок `Accept`
+1. Декларативную настройку сериализаторов и классов разрешений для `View` и `ViewSet`
 1. Прокачанную генерацию схемы
 
 ## Установка
@@ -53,8 +53,8 @@ API_VERSIONS = {
 
 ## Использование в проекте
 
-Максимально наследуемся от restdoctor там, где есть выбор между rest_framework
-и restdoctor.rest_framework.
+Максимально наследуемся от restdoctor там, где есть выбор между `rest_framework`
+и `restdoctor.rest_framework`.
 
 ```python
 from restdoctor.rest_framework.serializers import ModelSerializer
@@ -64,8 +64,8 @@ from restdoctor.rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSe
 
 ### Версионирование
 
-RestDoctor маршрутизирует вызовы по заголовку Accept на изолированный UrlConf.
-1. Во-первых, это означает, что без корректного заголовка Accept ручки API могут быть недоступны и отдавать 404.
+RestDoctor маршрутизирует вызовы по заголовку `Accept` на изолированный `UrlConf`.
+1. Во-первых, это означает, что без корректного заголовка `Accept` ручки API могут быть недоступны и отдавать 404.
 1. А во-вторых, в приложении может быть несколько различных версий API, которые не будут "видеть" друг друга.
 
 Общий формат заголовка следующий:
@@ -110,13 +110,13 @@ API_VERSIONS = {
 Кроме того, может быть дополнительно указан `{format}` для выбора формата ответа, по факту выбор сериализатора в
 `SerializerClassMapApiView`.
 
-В случае успешного определения версии и параметров API из заголовка Accept middleware выбирает для дальнейшей обработки
+В случае успешного определения версии и параметров API из заголовка Accept, middleware выбирает для дальнейшей обработки
 запроса конкретный UrlConf и добавляет к объекту `request` атрибут `api_params`.
 
 
 ### Формат ответа API
 
-Нашим API Guide задан формат ответа, за который отвечает RestDoctorRenderer
+Нашим API Guide задан [формат ответа](https://github.com/best-doctor/guides/blob/master/guides/api_guide.md#%D1%84%D0%BE%D1%80%D0%BC%D0%B0%D1%82-%D0%B7%D0%B0%D0%BF%D1%80%D0%BE%D1%81%D0%B0-%D0%B8-%D0%BE%D1%82%D0%B2%D0%B5%D1%82%D0%B0), за который отвечает RestDoctorRenderer
 (`restdoctor.rest_framework.renderers.RestDoctorRenderer`). Включается он только для запросов, содержащих атрибут
 `api_params`, и работает этот механизм через `content_negotiation_class` заданный в базовом для View и ViewSet
 миксине NegotiatedMixin (`restdoctor.rest_framework.mixins.NegotiatedMixin`).
@@ -199,7 +199,7 @@ class MyViewSet(ModelViewSet):
 #### Замечание про action
 
 В DRF action появляется во время регистрации `ViewSet` с помощью `Router`. При этом для разделения list/detail ресурсов
-используются разные наборы action_maps:
+используются разные наборы `action_maps`:
 
 ```
 list_action_map = {'get': 'list', 'post': 'create'}
@@ -207,18 +207,20 @@ detail_action_map = {'get': 'retrieve', 'put': 'update'}
 ```
 
 Django-механизмы роутинга создают функцию-обработчик, которая инстанцирует View/ViewSet с нужными параметрами.
-При этом один и тот же класс ViewSet будет присутствовать в UrlConf в двух экземплярах с разными action_map.
-Во время обработки запроса по HTTP методу будет определен action и вызван соответствующий метод экземпляра ViewSet.
+При этом один и тот же класс `ViewSet` будет присутствовать в UrlConf в двух экземплярах с разными `action_map`.
+Во время обработки запроса по HTTP методу будет определен action и вызван соответствующий метод экземпляра `ViewSet`.
 И во время обработки запроса у `ViewSet` всегда задан `self.action`.
 
-Однако это не так для View, поэтому в `SerializerClassMapApiView` добавлен атрибут `action`, на который завязывается
+Однако это не так для `View`, поэтому в `SerializerClassMapApiView` добавлен атрибут `action`, на который завязывается
 поиск сериализатора в `serializer_class_map`.
 
 
 ### Миксины и ModelViewSet
 
-Миксины задают базовые операции `ModelViewSet` для 'list', 'retrieve', 'create', 'update', 'destroy' action'ов.
-От DRF версия они отличаются в основном тем, что используют `SerializerClassMapApiView.get_request_serializer` и
+Миксины задают базовые операции `ModelViewSet` для `'list'`, `'retrieve'`, `'create'`, `'update'`, `'destroy'` action'ов.
+
+
+От DRF-версий они отличаются в основном тем, что используют `SerializerClassMapApiView.get_request_serializer` и
 `SerializerClassMapApiView.get_response_serializer` вместо `View.get_serializer`.
 
 
@@ -236,8 +238,8 @@ class ListModelMixin(BaseListModelMixin):
         return self.filter_queryset(self.get_queryset())
 ```
 
-Т.е. можно использовать ListModelMixin для работы с любыми коллекциями, а не только моделями, надо только
-переопределить `ViewSet.get_collection`. При этом, если задан сериализатор для list, то он будет использован
+Т.е. можно использовать `ListModelMixin` для работы с любыми коллекциями, а не только моделями, надо только
+переопределить `ViewSet.get_collection`. При этом, если задан сериализатор для `list`, то он будет использован
 для query-параметров, что позволит получить эти параметры и использовать дополнительно к filterset'у.
 
 
