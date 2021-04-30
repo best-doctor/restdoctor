@@ -82,6 +82,25 @@ class FieldSchema(FieldSchemaProtocol):
                 and issubclass(annotation.__args__[-1], type(None))
             )
 
+    @staticmethod
+    def has_list_annotation(annotation: typing.Union[str, typing.Any]) -> bool:
+        if isinstance(annotation, str):
+            return (
+                annotation.startswith('List')
+                or annotation.startswith('typing.List')
+                or annotation.startswith('Optional[List')
+                or annotation.startswith('typing.Optional[typing.List')
+            )
+        else:
+            return (
+                hasattr(annotation, '__args__')
+                and len(annotation.__args__) == 2
+                and issubclass(annotation.__args__[-1], type(None))
+                and issubclass(annotation.__args__[0], typing.List)
+            ) or (
+                hasattr(annotation, '__origin__') and annotation.__origin__ is list
+            )
+
     @classmethod
     def check_method_field_annotations(cls, field: Field, field_wrapper: Field) -> None:
         field_name = field_wrapper.field_name
@@ -94,6 +113,18 @@ class FieldSchema(FieldSchemaProtocol):
             raise ImproperlyConfigured(
                 f'Field {field_name} in {serializer_name} '
                 f"doesn't match with it's annotation: allow_null={field_allow_null} "
+                f'vs {return_annotation}'
+            )
+
+        field_many = (
+            getattr(field, 'many', False)
+            or isinstance(field, (ListField, MultipleChoiceField))
+        )
+        if field_many ^ cls.has_list_annotation(return_annotation):
+            serializer_name = field_wrapper.parent.__class__.__name__
+            raise ImproperlyConfigured(
+                f'Field {field_name} in {serializer_name} '
+                f"doesn't match with it's annotation: many={field_many} "
                 f'vs {return_annotation}'
             )
 

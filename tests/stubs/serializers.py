@@ -1,7 +1,7 @@
 import typing
-from typing import Optional
+from typing import Optional, List
 
-from rest_framework.fields import CharField, SerializerMethodField
+from rest_framework.fields import CharField, ListField, MultipleChoiceField, SerializerMethodField
 from rest_framework.serializers import Serializer, BaseSerializer, ListSerializer
 
 from restdoctor.rest_framework.schema import SchemaWrapper
@@ -42,7 +42,7 @@ class MyModelWithoutHelpTextsSerializer(ModelSerializer):
 
 class WithMethodFieldFirstCorrectSerializer(Serializer):
     data = SchemaWrapper(
-        SerializerMethodField(help_text='Some data'), schema_type=CharField(allow_null=True)
+        SerializerMethodField(help_text='Some data'), schema_type=CharField(allow_null=True),
     )
 
     def get_data(self) -> Optional[str]:
@@ -51,7 +51,7 @@ class WithMethodFieldFirstCorrectSerializer(Serializer):
 
 class WithMethodFieldSecondCorrectSerializer(Serializer):
     data = SchemaWrapper(
-        SerializerMethodField(help_text='Some data'), schema_type=CharField
+        SerializerMethodField(help_text='Some data'), schema_type=CharField,
     )
 
     def get_data(self) -> str:
@@ -60,7 +60,7 @@ class WithMethodFieldSecondCorrectSerializer(Serializer):
 
 class WithMethodFieldFirstIncorrectSerializer(Serializer):
     data = SchemaWrapper(
-        SerializerMethodField(help_text='Some data'), schema_type=CharField
+        SerializerMethodField(help_text='Some data'), schema_type=CharField,
     )
 
     def get_data(self) -> typing.Optional[str]:
@@ -69,8 +69,85 @@ class WithMethodFieldFirstIncorrectSerializer(Serializer):
 
 class WithMethodFieldSecondIncorrectSerializer(Serializer):
     data = SchemaWrapper(
-        SerializerMethodField(help_text='Some data'), schema_type=CharField(allow_null=True)
+        SerializerMethodField(help_text='Some data'), schema_type=CharField(allow_null=True),
     )
 
     def get_data(self) -> str:
         return 'some_data'
+
+
+class WithMethodFieldManyIncorrectSerializer(Serializer):
+    data = SchemaWrapper(
+        SerializerMethodField(help_text='Some data'), schema_type=Serializer(many=True),
+    )
+
+    def get_data(self) -> str:
+        return ''
+
+
+class WithMethodFieldOptionalManyIncorrectSerializer(Serializer):
+    data = SchemaWrapper(
+        SerializerMethodField(help_text='Some data'), schema_type=Serializer(allow_null=True),
+    )
+
+    def get_data(self) -> Optional[List]:
+        return None
+
+
+class WithMethodFieldManyCorrectSerializer(Serializer):
+    data = SchemaWrapper(
+        SerializerMethodField(help_text='Some data'), schema_type=Serializer(many=True),
+    )
+
+    def get_data(self) -> List[str]:
+        return ['some_data']
+
+
+class WithMethodFieldOptionalManyCorrectSerializer(Serializer):
+    data = SchemaWrapper(
+        SerializerMethodField(help_text='Some data'),
+        schema_type=Serializer(many=True, allow_null=True),
+    )
+
+    def get_data(self) -> Optional[List]:
+        return None
+
+
+class WithMethodFieldListFieldCorrectSerializer(Serializer):
+    data = SchemaWrapper(
+        SerializerMethodField(help_text='Some data'),
+        schema_type=ListField(child=CharField()),
+    )
+
+    def get_data(self) -> str:
+        return ''
+
+
+class WithMethodFieldListFieldIncorrectSerializer(Serializer):
+    data = SchemaWrapper(
+        SerializerMethodField(help_text='Some data'),
+        schema_type=ListField(child=CharField()),
+    )
+
+    def get_data(self) -> List[str]:
+        return ['some_data']
+
+
+class WithMethodFieldMultipleChoiceFieldCorrectSerializer(Serializer):
+    data = SchemaWrapper(
+        SerializerMethodField(help_text='Some data'),
+        schema_type=MultipleChoiceField(choices=[]),
+    )
+
+    def get_data(self) -> str:
+        return ''
+
+
+class WithMethodFieldMultipleChoiceFieldIncorrectSerializer(Serializer):
+    data = SchemaWrapper(
+        SerializerMethodField(help_text='Some data'),
+        schema_type=MultipleChoiceField(choices=[]),
+    )
+
+    def get_data(self) -> List[str]:
+        return ['some_data']
