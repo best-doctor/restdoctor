@@ -3,6 +3,9 @@ from django.urls import resolve
 from rest_framework.routers import SimpleRouter
 
 from restdoctor.rest_framework.schema import RefsSchemaGenerator
+from restdoctor.rest_framework.viewsets import ModelViewSet
+from tests.stubs.models import MyModel
+from tests.stubs.serializers import MyModelSerializer
 
 
 class UrlConf:
@@ -74,3 +77,18 @@ def resource_another_rq_schema(get_object_schema, resource_another_ref):
 @pytest.fixture()
 def resource_another_wq_schema(get_object_schema, resource_another_ref):
     return get_object_schema(resource_another_ref('WQ'))
+
+
+@pytest.fixture()
+def viewset_with_filter_backends_factory():
+    def viewset_with_filter_backend(backends, filterset, **kwargs):
+        class ModelViewSetWithFilterBackend(ModelViewSet):
+            pagination_class = None
+            queryset = MyModel.objects.all()
+            serializer_class = MyModelSerializer
+            filter_backends = backends
+            filterset_class = filterset
+
+        return ModelViewSetWithFilterBackend
+
+    return viewset_with_filter_backend
