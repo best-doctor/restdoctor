@@ -97,16 +97,14 @@ class FieldSchema(FieldSchemaProtocol):
                 and len(annotation.__args__) == 2
                 and issubclass(annotation.__args__[-1], type(None))
                 and issubclass(annotation.__args__[0], typing.List)
-            ) or (
-                hasattr(annotation, '__origin__') and annotation.__origin__ is list
-            )
+            ) or (hasattr(annotation, '__origin__') and annotation.__origin__ is list)
 
     @classmethod
     def check_method_field_annotations(cls, field: Field, field_wrapper: Field) -> None:
         field_name = field_wrapper.field_name
-        return_annotation = (
-            getattr(field_wrapper.parent, f'get_{field_name}').__annotations__['return']
-        )
+        return_annotation = typing.get_type_hints(
+            getattr(field_wrapper.parent, f'get_{field_name}')
+        )['return']
         field_allow_null = getattr(field, 'allow_null', True)
         if field_allow_null ^ cls.is_optional_annotation(return_annotation):
             serializer_name = field_wrapper.parent.__class__.__name__
@@ -116,9 +114,8 @@ class FieldSchema(FieldSchemaProtocol):
                 f'vs {return_annotation}'
             )
 
-        field_many = (
-            getattr(field, 'many', False)
-            or isinstance(field, (ListField, MultipleChoiceField))
+        field_many = getattr(field, 'many', False) or isinstance(
+            field, (ListField, MultipleChoiceField)
         )
         if field_many ^ cls.has_list_annotation(return_annotation):
             serializer_name = field_wrapper.parent.__class__.__name__

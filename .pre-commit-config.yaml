@@ -54,7 +54,7 @@ repos:
     - id: mccabe-complexity
     - id: expr-complexity
     - id: no-asserts
-      exclude: /tests/
+      exclude: tests/
     - id: forbidden-imports
 
 - repo: https://github.com/psf/black

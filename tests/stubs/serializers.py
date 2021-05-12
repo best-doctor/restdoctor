@@ -1,8 +1,10 @@
+from __future__ import annotations
+
 import typing
-from typing import Optional, List
+from typing import List, Optional
 
 from rest_framework.fields import CharField, ListField, MultipleChoiceField, SerializerMethodField
-from rest_framework.serializers import Serializer, BaseSerializer, ListSerializer
+from rest_framework.serializers import BaseSerializer, ListSerializer, Serializer
 
 from restdoctor.rest_framework.schema import SchemaWrapper
 from restdoctor.rest_framework.serializers import ModelSerializer
@@ -15,8 +17,7 @@ class BaseObjectSerializer(Serializer):
 
 class BaseListSerializer(Serializer):
     data = ListSerializer(
-        required=False, allow_empty=True,
-        child=BaseSerializer(required=False, allow_null=True),
+        required=False, allow_empty=True, child=BaseSerializer(required=False, allow_null=True)
     )
 
 
@@ -40,114 +41,82 @@ class MyModelWithoutHelpTextsSerializer(ModelSerializer):
     abstract_field = CharField()
 
 
-class WithMethodFieldFirstCorrectSerializer(Serializer):
-    data = SchemaWrapper(
-        SerializerMethodField(help_text='Some data'), schema_type=CharField(allow_null=True),
+class WithMethodFieldSerializer(Serializer):
+    field = SchemaWrapper(SerializerMethodField(help_text='Some data'), schema_type=CharField)
+    optional_field = SchemaWrapper(
+        SerializerMethodField(help_text='Some data'), schema_type=CharField(allow_null=True)
     )
-
-    def get_data(self) -> Optional[str]:
-        return None
-
-
-class WithMethodFieldSecondCorrectSerializer(Serializer):
-    data = SchemaWrapper(
-        SerializerMethodField(help_text='Some data'), schema_type=CharField,
+    many_field = SchemaWrapper(
+        SerializerMethodField(help_text='Some data'), schema_type=Serializer(many=True)
     )
-
-    def get_data(self) -> str:
-        return 'some_data'
-
-
-class WithMethodFieldFirstIncorrectSerializer(Serializer):
-    data = SchemaWrapper(
-        SerializerMethodField(help_text='Some data'), schema_type=CharField,
+    list_field = SchemaWrapper(
+        SerializerMethodField(help_text='Some data'), schema_type=ListField(child=CharField())
     )
-
-    def get_data(self) -> typing.Optional[str]:
-        return None
-
-
-class WithMethodFieldSecondIncorrectSerializer(Serializer):
-    data = SchemaWrapper(
-        SerializerMethodField(help_text='Some data'), schema_type=CharField(allow_null=True),
-    )
-
-    def get_data(self) -> str:
-        return 'some_data'
-
-
-class WithMethodFieldManyIncorrectSerializer(Serializer):
-    data = SchemaWrapper(
-        SerializerMethodField(help_text='Some data'), schema_type=Serializer(many=True),
-    )
-
-    def get_data(self) -> str:
-        return ''
-
-
-class WithMethodFieldOptionalManyIncorrectSerializer(Serializer):
-    data = SchemaWrapper(
-        SerializerMethodField(help_text='Some data'), schema_type=Serializer(allow_null=True),
-    )
-
-    def get_data(self) -> Optional[List]:
-        return None
-
-
-class WithMethodFieldManyCorrectSerializer(Serializer):
-    data = SchemaWrapper(
-        SerializerMethodField(help_text='Some data'), schema_type=Serializer(many=True),
-    )
-
-    def get_data(self) -> List[str]:
-        return ['some_data']
-
-
-class WithMethodFieldOptionalManyCorrectSerializer(Serializer):
-    data = SchemaWrapper(
+    optional_many_field = SchemaWrapper(
         SerializerMethodField(help_text='Some data'),
         schema_type=Serializer(many=True, allow_null=True),
     )
+    optional_list_field = SchemaWrapper(
+        SerializerMethodField(help_text='Some data'),
+        schema_type=ListField(child=CharField(), allow_null=True),
+    )
+    multiple_choice_field = SchemaWrapper(
+        SerializerMethodField(help_text='Some data'), schema_type=MultipleChoiceField(choices=[])
+    )
+    incorrect_field = SchemaWrapper(
+        SerializerMethodField(help_text='Some data'), schema_type=CharField(allow_null=True)
+    )
+    incorrect_optional_field = SchemaWrapper(
+        SerializerMethodField(help_text='Some data'), schema_type=CharField
+    )
+    incorrect_many_field = SchemaWrapper(
+        SerializerMethodField(help_text='Some data'), schema_type=Serializer(many=True)
+    )
+    incorrect_list_field = SchemaWrapper(
+        SerializerMethodField(help_text='Some data'), schema_type=ListField(child=CharField())
+    )
+    incorrect_optional_many_field = SchemaWrapper(
+        SerializerMethodField(help_text='Some data'), schema_type=Serializer(allow_null=True)
+    )
+    incorrect_multiple_choice_field = SchemaWrapper(
+        SerializerMethodField(help_text='Some data'), schema_type=MultipleChoiceField(choices=[])
+    )
 
-    def get_data(self) -> Optional[List]:
+    def get_field(self) -> str:
+        return 'some_data'
+
+    def get_optional_field(self) -> Optional[str]:
         return None
 
-
-class WithMethodFieldListFieldCorrectSerializer(Serializer):
-    data = SchemaWrapper(
-        SerializerMethodField(help_text='Some data'),
-        schema_type=ListField(child=CharField()),
-    )
-
-    def get_data(self) -> str:
-        return ''
-
-
-class WithMethodFieldListFieldIncorrectSerializer(Serializer):
-    data = SchemaWrapper(
-        SerializerMethodField(help_text='Some data'),
-        schema_type=ListField(child=CharField()),
-    )
-
-    def get_data(self) -> List[str]:
+    def get_many_field(self) -> List[str]:
         return ['some_data']
 
+    def get_list_field(self) -> typing.List[str]:
+        return ['some_data']
 
-class WithMethodFieldMultipleChoiceFieldCorrectSerializer(Serializer):
-    data = SchemaWrapper(
-        SerializerMethodField(help_text='Some data'),
-        schema_type=MultipleChoiceField(choices=[]),
-    )
+    def get_optional_many_field(self) -> Optional[List]:
+        return None
 
-    def get_data(self) -> str:
+    def get_optional_list_field(self) -> 'typing.Optional[typing.List]':
+        return None
+
+    def get_incorrect_optional_field(self) -> typing.Optional[str]:
+        return None
+
+    def get_incorrect_field(self) -> str:
+        return 'some_data'
+
+    def get_incorrect_many_field(self) -> str:
         return ''
 
+    def get_incorrect_list_field(self) -> str:
+        return ''
 
-class WithMethodFieldMultipleChoiceFieldIncorrectSerializer(Serializer):
-    data = SchemaWrapper(
-        SerializerMethodField(help_text='Some data'),
-        schema_type=MultipleChoiceField(choices=[]),
-    )
+    def get_incorrect_optional_many_field(self) -> Optional[List]:
+        return None
 
-    def get_data(self) -> List[str]:
+    def get_multiple_choice_field(self) -> List[str]:
         return ['some_data']
+
+    def get_incorrect_multiple_choice_field(self) -> str:
+        return ''
