@@ -72,32 +72,21 @@ class FieldSchema(FieldSchemaProtocol):
         self.view_schema = view_schema
 
     @staticmethod
-    def is_optional_annotation(annotation: typing.Union[str, typing.Any]) -> bool:
-        if isinstance(annotation, str):
-            return annotation.startswith('Optional') or annotation.startswith('typing.Optional')
-        else:
-            return (
-                hasattr(annotation, '__args__')
-                and len(annotation.__args__) == 2
-                and issubclass(annotation.__args__[-1], type(None))
-            )
+    def is_optional_annotation(annotation: typing.Type) -> bool:
+        return (
+            hasattr(annotation, '__args__')
+            and len(annotation.__args__) == 2
+            and issubclass(annotation.__args__[-1], type(None))
+        )
 
     @staticmethod
-    def has_list_annotation(annotation: typing.Union[str, typing.Any]) -> bool:
-        if isinstance(annotation, str):
-            return (
-                annotation.startswith('List')
-                or annotation.startswith('typing.List')
-                or annotation.startswith('Optional[List')
-                or annotation.startswith('typing.Optional[typing.List')
-            )
-        else:
-            return (
-                hasattr(annotation, '__args__')
-                and len(annotation.__args__) == 2
-                and issubclass(annotation.__args__[-1], type(None))
-                and issubclass(annotation.__args__[0], typing.List)
-            ) or (hasattr(annotation, '__origin__') and annotation.__origin__ is list)
+    def has_list_annotation(annotation: typing.Type) -> bool:
+        return (
+            hasattr(annotation, '__args__')
+            and len(annotation.__args__) == 2
+            and issubclass(annotation.__args__[-1], type(None))
+            and issubclass(annotation.__args__[0], typing.List)
+        ) or (hasattr(annotation, '__origin__') and annotation.__origin__ is list)
 
     @classmethod
     def check_method_field_annotations(cls, field: Field, field_wrapper: Field) -> None:

@@ -97,7 +97,7 @@ class WithMethodFieldSerializer(Serializer):
     def get_optional_many_field(self) -> Optional[List]:
         return None
 
-    def get_optional_list_field(self) -> 'typing.Optional[typing.List]':
+    def get_optional_list_field(self) -> typing.Optional[typing.List]:
         return None
 
     def get_incorrect_optional_field(self) -> typing.Optional[str]:
