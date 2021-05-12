@@ -16,7 +16,8 @@ from tests.test_unit.test_schema.stubs import (
     'viewset,expected_parameters',
     (
         (
-            ListViewSetWithRequestSerializer, [
+            ListViewSetWithRequestSerializer,
+            [
                 {
                     'in': 'query',
                     'name': 'filter_uuid_field',
@@ -54,7 +55,8 @@ def test_schema_for_list_viewset(get_create_view_func, viewset, expected_paramet
     'viewset,expected_parameters',
     (
         (
-            ListViewSetWithRequestSerializer, [
+            ListViewSetWithRequestSerializer,
+            [
                 {
                     'in': 'query',
                     'name': 'filter_uuid_field',
@@ -79,7 +81,9 @@ def test_schema_for_list_viewset(get_create_view_func, viewset, expected_paramet
         (ListViewSetWithoutRequestSerializer, []),
     ),
 )
-def test_get_request_serializer_filter_parameters(get_create_view_func, viewset, expected_parameters):
+def test_get_request_serializer_filter_parameters(
+    get_create_view_func, viewset, expected_parameters
+):
     list_view = get_create_view_func('test', viewset, 'test')
 
     view = list_view('/test/', 'GET')

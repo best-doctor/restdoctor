@@ -28,6 +28,7 @@ def get_create_view_func():
             return view
 
         return create_view
+
     return with_args
 
 
@@ -35,6 +36,7 @@ def get_create_view_func():
 def get_resource_ref():
     def with_attrs(name, suffix):
         return {'$ref': f'#/components/schemas/{name}{suffix}'}
+
     return with_attrs
 
 
@@ -42,6 +44,7 @@ def get_resource_ref():
 def resource_default_ref(get_resource_ref):
     def with_attrs(suffix):
         return get_resource_ref('tests_Default', suffix)
+
     return with_attrs
 
 
@@ -49,6 +52,7 @@ def resource_default_ref(get_resource_ref):
 def resource_another_ref(get_resource_ref):
     def with_attrs(suffix):
         return get_resource_ref('tests_Another', suffix)
+
     return with_attrs
 
 
@@ -56,6 +60,7 @@ def resource_another_ref(get_resource_ref):
 def get_object_schema():
     def with_attrs(schema):
         return {'type': 'object', 'properties': {'data': schema}}
+
     return with_attrs
 
 
