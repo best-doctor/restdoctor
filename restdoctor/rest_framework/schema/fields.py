@@ -71,6 +71,63 @@ class FieldSchema(FieldSchemaProtocol):
     def __init__(self, view_schema: ViewSchemaProtocol):
         self.view_schema = view_schema
 
+    @staticmethod
+    def is_optional_annotation(annotation: typing.Union[str, typing.Any]) -> bool:
+        if isinstance(annotation, str):
+            return annotation.startswith('Optional') or annotation.startswith('typing.Optional')
+        else:
+            return (
+                hasattr(annotation, '__args__')
+                and len(annotation.__args__) == 2
+                and issubclass(annotation.__args__[-1], type(None))
+            )
+
+    @staticmethod
+    def has_list_annotation(annotation: typing.Union[str, typing.Any]) -> bool:
+        if isinstance(annotation, str):
+            return (
+                annotation.startswith('List')
+                or annotation.startswith('typing.List')
+                or annotation.startswith('Optional[List')
+                or annotation.startswith('typing.Optional[typing.List')
+            )
+        else:
+            return (
+                hasattr(annotation, '__args__')
+                and len(annotation.__args__) == 2
+                and issubclass(annotation.__args__[-1], type(None))
+                and issubclass(annotation.__args__[0], typing.List)
+            ) or (
+                hasattr(annotation, '__origin__') and annotation.__origin__ is list
+            )
+
+    @classmethod
+    def check_method_field_annotations(cls, field: Field, field_wrapper: Field) -> None:
+        field_name = field_wrapper.field_name
+        return_annotation = (
+            getattr(field_wrapper.parent, f'get_{field_name}').__annotations__['return']
+        )
+        field_allow_null = getattr(field, 'allow_null', True)
+        if field_allow_null ^ cls.is_optional_annotation(return_annotation):
+            serializer_name = field_wrapper.parent.__class__.__name__
+            raise ImproperlyConfigured(
+                f'Field {field_name} in {serializer_name} '
+                f"doesn't match with it's annotation: allow_null={field_allow_null} "
+                f'vs {return_annotation}'
+            )
+
+        field_many = (
+            getattr(field, 'many', False)
+            or isinstance(field, (ListField, MultipleChoiceField))
+        )
+        if field_many ^ cls.has_list_annotation(return_annotation):
+            serializer_name = field_wrapper.parent.__class__.__name__
+            raise ImproperlyConfigured(
+                f'Field {field_name} in {serializer_name} '
+                f"doesn't match with it's annotation: many={field_many} "
+                f'vs {return_annotation}'
+            )
+
     def get_field_schema(self, field: Field) -> OpenAPISchema:
         schema = self.map_field(field)
         if not schema:
@@ -120,11 +177,15 @@ class FieldSchema(FieldSchemaProtocol):
             if isinstance(validator, RegexValidator):
                 schema['pattern'] = validator.regex.pattern.replace('\\Z', '\\z')
 
-    def map_field(self, field: Field) -> typing.Optional[OpenAPISchema]:
+    def map_field(self, original_field: Field) -> typing.Optional[OpenAPISchema]:
         # Field.__deepcopy__ сбрасывает кастомные атрибуты, поэтому схему ищем через класс сериализатора
+        field = original_field
         if isinstance(field, SerializerMethodField):
             parent_field = field.parent.__class__._declared_fields[field.field_name]
             field = getattr(parent_field, 'schema_type', field)
+
+            if settings.API_STRICT_SCHEMA_VALIDATION:
+                self.check_method_field_annotations(field, original_field)
 
         field_handlers = [
             (_UnvalidatedField, lambda _: None),
