@@ -100,14 +100,14 @@ def test_get_request_serializer_filter_parameters(
             DefaultFilterSet,
             [
                 {
-                    'description': 'uuid',
+                    'description': 'UUID',
                     'in': 'query',
                     'name': 'uuid',
                     'required': False,
                     'schema': {'type': 'string'},
                 },
                 {
-                    'description': 'Event timestamp',
+                    'description': 'Another Event timestamp',
                     'in': 'query',
                     'name': 'timestamp',
                     'required': False,
@@ -127,7 +127,7 @@ def test_get_request_serializer_filter_parameters(
             FilterSetWithNoLabels,
             [
                 {
-                    'description': 'uuid',
+                    'description': 'UUID',
                     'in': 'query',
                     'name': 'uuid',
                     'required': False,
@@ -135,6 +135,34 @@ def test_get_request_serializer_filter_parameters(
                 },
                 {
                     'description': 'Event timestamp',
+                    'in': 'query',
+                    'name': 'my_model__timestamp',
+                    'required': False,
+                    'schema': {'type': 'string'},
+                },
+                {
+                    'description': 'Event timestamp',
+                    'in': 'query',
+                    'name': 'my_model__timestamp__in',
+                    'required': False,
+                    'schema': {'type': 'string'},
+                },
+                {
+                    'description': 'my another one model',
+                    'in': 'query',
+                    'name': 'my_another_one_model__isnull',
+                    'required': False,
+                    'schema': {'type': 'string'},
+                },
+                {
+                    'description': 'Another One Event timestamp',
+                    'in': 'query',
+                    'name': 'my_another_one_model__timestamp',
+                    'required': False,
+                    'schema': {'type': 'string'},
+                },
+                {
+                    'description': 'Another Event timestamp',
                     'in': 'query',
                     'name': 'created_at_date',
                     'required': False,
@@ -154,21 +182,35 @@ def test_get_request_serializer_filter_parameters(
             FilterSetWithLabels,
             [
                 {
-                    'description': 'uuid',
+                    'description': 'UUID',
                     'in': 'query',
                     'name': 'uuid',
                     'required': False,
                     'schema': {'type': 'string'},
                 },
                 {
-                    'description': 'Timestamp Label',
+                    'description': 'Event timestamp',
+                    'in': 'query',
+                    'name': 'my_model__timestamp',
+                    'required': False,
+                    'schema': {'type': 'string'},
+                },
+                {
+                    'description': 'Another One Event timestamp',
+                    'in': 'query',
+                    'name': 'my_another_one_model__timestamp',
+                    'required': False,
+                    'schema': {'type': 'string'},
+                },
+                {
+                    'description': 'Created At Timestamp Label',
                     'in': 'query',
                     'name': 'created_at_date',
                     'required': False,
                     'schema': {'type': 'string'},
                 },
                 {
-                    'description': 'Created After Label',
+                    'description': 'Custom Method Label',
                     'in': 'query',
                     'name': 'created_after',
                     'required': False,
@@ -192,6 +234,19 @@ def test_schema_for_viewset_with_filter_backend(
     operation = view.schema.get_operation('/test/', 'GET')
 
     assert operation['parameters'] == expected_parameters
+
+
+def test_schema_for_viewset_with_filter_backend_strict_schema(
+    settings,
+    get_create_view_func,
+    viewset_with_filter_backends_factory,
+):
+    settings.API_STRICT_SCHEMA_VALIDATION = True
+    viewset = viewset_with_filter_backends_factory([DjangoFilterBackend], FilterSetWithLabels)
+    create_view = get_create_view_func('test', viewset, 'test')
+    view = create_view('/test/', 'GET')
+
+    view.schema.get_operation('/test/', 'GET')
 
 
 def test_schema_for_viewset_with_filter_backend_strict_schema_raises(

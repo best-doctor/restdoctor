@@ -5,6 +5,7 @@ import typing
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured, FieldDoesNotExist
+from django.db import models
 from django_filters import Filter
 from django_filters.rest_framework import DjangoFilterBackend, FilterSet
 from rest_framework.fields import Field
@@ -436,21 +437,36 @@ class RestDoctorSchema(ViewSchemaProtocol, AutoSchema):
     def _get_verbose_filter_field_description(
         self, filterset_class: FilterSet, field: Filter
     ) -> str:
-        description = None
         if field.label:
-            description = field.label
-        elif not field.method:
-            with contextlib.suppress(AttributeError, LookupError, FieldDoesNotExist):
-                model_field = filterset_class._meta.model._meta.get_field(field.field_name)
-                description = model_field.verbose_name
+            return field.label
+
+        description = self._try_get_field_verbose_name(
+            filterset_class._meta.model, field.field_name
+        )
 
         if not description and settings.API_STRICT_SCHEMA_VALIDATION:
             raise ImproperlyConfigured(
-                f'field {field.field_name} in FilterSet {filterset_class.__name__} '
+                f'Field `{field.field_name}` in `{filterset_class.__name__}` '
                 f'should have `label` argument or `verbose_name` in source model field'
             )
 
         return str(description or field.field_name)
+
+    def _try_get_field_verbose_name(
+        self, model: models.Model, full_field_name: str
+    ) -> typing.Optional[str]:
+        field_parts = full_field_name.split('__')
+        path_to_field = field_parts[:-1]
+        field_name = field_parts[-1]
+        with contextlib.suppress(AttributeError, LookupError, FieldDoesNotExist):
+            for part in path_to_field:
+                model = model._meta.get_field(part).related_model
+
+            field = model._meta.get_field(field_name)
+            if field.is_relation:
+                return field.related_model._meta.verbose_name
+            else:
+                return field.verbose_name
 
     def _map_serializer(
         self,

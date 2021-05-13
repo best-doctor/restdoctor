@@ -10,7 +10,7 @@ from rest_framework.serializers import Serializer
 from restdoctor.rest_framework.resources import ResourceViewSet
 from restdoctor.rest_framework.views import SerializerClassMapApiView
 from restdoctor.rest_framework.viewsets import ListModelViewSet, ModelViewSet
-from tests.stubs.models import MyModel
+from tests.stubs.models import MyAnotherModel
 
 
 class DefaultSerializer(Serializer):
@@ -106,14 +106,19 @@ class SingleResourceViewSet(ResourceViewSet):
 
 class DefaultFilterSet(FilterSet):
     class Meta:
-        model = MyModel
+        model = MyAnotherModel
         fields = ['uuid', 'timestamp']
 
 
 class FilterSetWithNoLabels(FilterSet):
     class Meta:
-        model = MyModel
-        fields = ['uuid', 'created_at_date']
+        model = MyAnotherModel
+        fields = {
+            'uuid': ['exact'],
+            'my_model__timestamp': ['exact', 'in'],
+            'my_another_one_model': ['isnull'],
+            'my_another_one_model__timestamp': ['exact'],
+        }
 
     created_at_date = DateFilter(field_name='timestamp', lookup_expr='date__exact')
     created_after = DateFilter(method='filter_created_after')
@@ -125,13 +130,13 @@ class FilterSetWithNoLabels(FilterSet):
 
 class FilterSetWithLabels(FilterSet):
     class Meta:
-        model = MyModel
-        fields = ['uuid', 'created_at_date']
+        model = MyAnotherModel
+        fields = ['uuid', 'my_model__timestamp', 'my_another_one_model__timestamp']
 
     created_at_date = DateFilter(
-        label='Timestamp Label', field_name='timestamp', lookup_expr='date__exact'
+        label='Created At Timestamp Label', field_name='timestamp', lookup_expr='date__exact'
     )
-    created_after = DateFilter(label='Created After Label', method='filter_created_after')
+    created_after = DateFilter(label='Custom Method Label', method='filter_created_after')
 
     @staticmethod
     def filter_created_after(queryset: QuerySet, name: str, value: str) -> QuerySet:

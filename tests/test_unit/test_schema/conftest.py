@@ -4,7 +4,7 @@ from rest_framework.routers import SimpleRouter
 
 from restdoctor.rest_framework.schema import RefsSchemaGenerator
 from restdoctor.rest_framework.viewsets import ModelViewSet
-from tests.stubs.models import MyModel
+from tests.stubs.models import MyAnotherModel
 from tests.stubs.serializers import MyModelSerializer
 
 
@@ -89,7 +89,7 @@ def viewset_with_filter_backends_factory():
     def viewset_with_filter_backend(backends, filterset, **kwargs):
         class ModelViewSetWithFilterBackend(ModelViewSet):
             pagination_class = None
-            queryset = MyModel.objects.all()
+            queryset = MyAnotherModel.objects.all()
             serializer_class = MyModelSerializer
             filter_backends = backends
             filterset_class = filterset
