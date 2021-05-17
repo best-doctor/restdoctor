@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from django.db.models import QuerySet
+from django_filters import DateFilter
+from django_filters.rest_framework import FilterSet
 from rest_framework.decorators import action as drf_action
 from rest_framework.fields import CharField, UUIDField
 from rest_framework.serializers import Serializer
@@ -7,6 +10,7 @@ from rest_framework.serializers import Serializer
 from restdoctor.rest_framework.resources import ResourceViewSet
 from restdoctor.rest_framework.views import SerializerClassMapApiView
 from restdoctor.rest_framework.viewsets import ListModelViewSet, ModelViewSet
+from tests.stubs.models import MyAnotherModel
 
 
 class DefaultSerializer(Serializer):
@@ -98,3 +102,42 @@ class DefaultAnotherResourceViewSet(ResourceViewSet):
 class SingleResourceViewSet(ResourceViewSet):
     default_discriminative_value = 'default'
     resource_views_map = {'another': AnotherViewSet}
+
+
+class DefaultFilterSet(FilterSet):
+    class Meta:
+        model = MyAnotherModel
+        fields = ['uuid', 'timestamp']
+
+
+class FilterSetWithNoLabels(FilterSet):
+    class Meta:
+        model = MyAnotherModel
+        fields = {
+            'uuid': ['exact'],
+            'my_model__timestamp': ['exact', 'in'],
+            'my_another_one_model': ['isnull'],
+            'my_another_one_model__timestamp': ['exact'],
+        }
+
+    created_at_date = DateFilter(field_name='timestamp', lookup_expr='date__exact')
+    created_after = DateFilter(method='filter_created_after')
+
+    @staticmethod
+    def filter_created_after(queryset: QuerySet, name: str, value: str) -> QuerySet:
+        return queryset.filter(timestamp__gte=value)
+
+
+class FilterSetWithLabels(FilterSet):
+    class Meta:
+        model = MyAnotherModel
+        fields = ['uuid', 'my_model__timestamp', 'my_another_one_model__timestamp']
+
+    created_at_date = DateFilter(
+        label='Created At Timestamp Label', field_name='timestamp', lookup_expr='date__exact'
+    )
+    created_after = DateFilter(label='Custom Method Label', method='filter_created_after')
+
+    @staticmethod
+    def filter_created_after(queryset: QuerySet, name: str, value: str) -> QuerySet:
+        return queryset.filter(timestamp__gte=value)

@@ -1,8 +1,13 @@
 from __future__ import annotations
 
+import contextlib
 import typing
 
 from django.conf import settings
+from django.core.exceptions import ImproperlyConfigured, FieldDoesNotExist
+from django.db import models
+from django_filters import Filter
+from django_filters.rest_framework import DjangoFilterBackend, FilterSet
 from rest_framework.fields import Field
 from rest_framework.pagination import BasePagination
 from rest_framework.schemas.openapi import AutoSchema, SchemaGenerator
@@ -50,6 +55,17 @@ class RestDoctorSchema(ViewSchemaProtocol, AutoSchema):
         operation['tags'] = self.get_tags(path, method)
 
         return operation
+
+    def get_filter_parameters(self, path: str, method: str) -> typing.List[OpenAPISchema]:
+        if not self.allows_filters(path, method):
+            return []
+        parameters = []
+        for filter_backend in self.view.filter_backends:
+            if issubclass(filter_backend, DjangoFilterBackend):
+                parameters += self.get_django_filter_schema_operation_parameters(filter_backend())
+            else:
+                parameters += filter_backend().get_schema_operation_parameters(self.view)
+        return parameters
 
     def get_request_serializer_filter_parameters(
         self, path: str, method: str
@@ -319,6 +335,67 @@ class RestDoctorSchema(ViewSchemaProtocol, AutoSchema):
             path = path[1:]
 
         return [path.split('/')[0].replace('_', '-')]
+
+    def get_django_filter_schema_operation_parameters(
+        self, filter_backend: DjangoFilterBackend
+    ) -> typing.List[OpenAPISchema]:
+        try:
+            queryset = self.view.get_queryset()
+        except Exception:
+            queryset = None
+
+        filterset_class = filter_backend.get_filterset_class(self.view, queryset)
+
+        if not filterset_class:
+            return []
+
+        parameters = []
+        for field_name, field in filterset_class.base_filters.items():
+            parameter = {
+                'name': field_name,
+                'required': field.extra['required'],
+                'in': 'query',
+                'description': self.get_verbose_filter_field_description(filterset_class, field),
+                'schema': {
+                    'type': 'string',
+                },
+            }
+            if field.extra and 'choices' in field.extra:
+                parameter['schema']['enum'] = [c[0] for c in field.extra['choices']]
+            parameters.append(parameter)
+        return parameters
+
+    def get_verbose_filter_field_description(
+        self, filterset_class: FilterSet, field: Filter
+    ) -> str:
+        if field.label:
+            return field.label
+
+        description = self.try_get_field_verbose_name(filterset_class._meta.model, field.field_name)
+
+        if not description and settings.API_STRICT_SCHEMA_VALIDATION:
+            raise ImproperlyConfigured(
+                f'Field {field.field_name} in {filterset_class.__name__} '
+                f'should have "label" argument or "verbose_name" in source model field'
+            )
+
+        return str(description or field.field_name)
+
+    def try_get_field_verbose_name(
+        self, model: models.Model, full_field_name: str
+    ) -> typing.Optional[str]:
+        field_parts = full_field_name.split('__')
+        path_to_field = field_parts[:-1]
+        field_name = field_parts[-1]
+        with contextlib.suppress(AttributeError, LookupError, FieldDoesNotExist):
+            for part in path_to_field:
+                model = model._meta.get_field(part).related_model
+
+            field = model._meta.get_field(field_name)
+            if field.is_relation:
+                return field.related_model._meta.verbose_name
+            else:
+                return field.verbose_name
 
     def _get_action_name(self, path: str, method: str) -> str:
         return self.get_action_name(path, method)

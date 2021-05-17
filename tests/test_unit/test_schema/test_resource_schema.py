@@ -124,7 +124,7 @@ def test_get_action_responses_success_case(get_create_view_func, resource_defaul
     ('viewset_class'),
     [(DefaultAnotherResourceViewSet), (SingleResourceViewSet)],
     ids=[
-        'get params from defauilt viewset in resource',
+        'get params from default viewset in resource',
         'get params from single viewset in resource',
     ],
 )
