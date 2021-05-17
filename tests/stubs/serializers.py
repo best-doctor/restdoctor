@@ -10,6 +10,9 @@ from restdoctor.rest_framework.schema import SchemaWrapper
 from restdoctor.rest_framework.serializers import ModelSerializer
 from tests.stubs.models import MyModel
 
+if typing.TYPE_CHECKING:
+    String = str
+
 
 class BaseObjectSerializer(Serializer):
     data = BaseSerializer(required=False, allow_null=True)
@@ -62,6 +65,9 @@ class WithMethodFieldSerializer(Serializer):
     )
     multiple_choice_field = SchemaWrapper(
         SerializerMethodField(help_text='Some data'), schema_type=MultipleChoiceField(choices=[])
+    )
+    type_checking_field = SchemaWrapper(
+        SerializerMethodField(help_text='Some data'), schema_type=CharField
     )
     incorrect_field = SchemaWrapper(
         SerializerMethodField(help_text='Some data'), schema_type=CharField(allow_null=True)
@@ -119,4 +125,7 @@ class WithMethodFieldSerializer(Serializer):
         return ['some_data']
 
     def get_incorrect_multiple_choice_field(self) -> str:
+        return ''
+
+    def get_type_checking_field(self) -> String:
         return ''

@@ -91,9 +91,13 @@ class FieldSchema(FieldSchemaProtocol):
     @classmethod
     def check_method_field_annotations(cls, field: Field, field_wrapper: Field) -> None:
         field_name = field_wrapper.field_name
-        return_annotation = typing.get_type_hints(
-            getattr(field_wrapper.parent, f'get_{field_name}')
-        )['return']
+        try:
+            return_annotation = typing.get_type_hints(
+                getattr(field_wrapper.parent, f'get_{field_name}')
+            )['return']
+        except NameError:
+            # We don't see types included with TYPE_CHECKING == True
+            return
         field_allow_null = getattr(field, 'allow_null', True)
         if field_allow_null ^ cls.is_optional_annotation(return_annotation):
             serializer_name = field_wrapper.parent.__class__.__name__

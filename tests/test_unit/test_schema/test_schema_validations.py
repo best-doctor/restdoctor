@@ -73,6 +73,7 @@ def test_get_field_description_model_field_success_case(settings):
         'optional_many_field',
         'optional_list_field',
         'multiple_choice_field',
+        'type_checking_field',
     ],
 )
 def test_check_annotations_success_case(settings, field):
