@@ -44,6 +44,7 @@ from restdoctor.rest_framework.schema.custom_types import (
     OpenAPISchema,
     ViewSchemaProtocol,
 )
+from restdoctor.utils.typing_inspect import is_list_type, is_optional_type
 
 
 def array_schema(item_schema: OpenAPISchema = None) -> OpenAPISchema:
@@ -71,23 +72,6 @@ class FieldSchema(FieldSchemaProtocol):
     def __init__(self, view_schema: ViewSchemaProtocol):
         self.view_schema = view_schema
 
-    @staticmethod
-    def is_optional_annotation(annotation: typing.Type) -> bool:
-        return (
-            hasattr(annotation, '__args__')
-            and len(annotation.__args__) == 2
-            and issubclass(annotation.__args__[-1], type(None))
-        )
-
-    @staticmethod
-    def has_list_annotation(annotation: typing.Type) -> bool:
-        return (
-            hasattr(annotation, '__args__')
-            and len(annotation.__args__) == 2
-            and issubclass(annotation.__args__[-1], type(None))
-            and issubclass(annotation.__args__[0], typing.List)
-        ) or (hasattr(annotation, '__origin__') and annotation.__origin__ is list)
-
     @classmethod
     def check_method_field_annotations(cls, field: Field, field_wrapper: Field) -> None:
         field_name = field_wrapper.field_name
@@ -99,7 +83,7 @@ class FieldSchema(FieldSchemaProtocol):
             # We don't see types included with TYPE_CHECKING == True
             return
         field_allow_null = getattr(field, 'allow_null', True)
-        if field_allow_null ^ cls.is_optional_annotation(return_annotation):
+        if field_allow_null ^ is_optional_type(return_annotation):
             serializer_name = field_wrapper.parent.__class__.__name__
             raise ImproperlyConfigured(
                 f'Field {field_name} in {serializer_name} '
@@ -110,7 +94,7 @@ class FieldSchema(FieldSchemaProtocol):
         field_many = getattr(field, 'many', False) or isinstance(
             field, (ListField, MultipleChoiceField)
         )
-        if field_many ^ cls.has_list_annotation(return_annotation):
+        if field_many ^ is_list_type(return_annotation):
             serializer_name = field_wrapper.parent.__class__.__name__
             raise ImproperlyConfigured(
                 f'Field {field_name} in {serializer_name} '
