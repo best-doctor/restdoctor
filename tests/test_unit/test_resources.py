@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import datetime
-
 import pytest
 from django.core.exceptions import ImproperlyConfigured
 from django.http import Http404
@@ -209,9 +207,6 @@ def test_resource_view_dispatch_complex_case_post(mocker, discriminator, expecte
     assert response.status_code == expected_status_code
 
 
-@pytest.mark.xfail(
-    reason='ViewSet with different actions set issue', until=datetime.datetime(2021, 5, 31)
-)
 @pytest.mark.parametrize(
     ('discriminator', 'expected_status_code'),
     [('read_write', HTTP_200_OK), ('read_only', HTTP_200_OK), ('default', HTTP_404_NOT_FOUND)],

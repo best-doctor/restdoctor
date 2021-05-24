@@ -52,11 +52,16 @@ def get_queryset_model_map(resource_views_map: ResourceViewsMap) -> ResourceMode
     return models_map
 
 
-def merge_actions(handlers_actions: typing.Sequence[ActionMap]) -> ActionMap:
+def merge_actions(handlers_actions: typing.Sequence[typing.Optional[ActionMap]]) -> ActionMap:
     actions = {}
     for handler_actions in handlers_actions:
-        actions.update(handler_actions)
+        if handler_actions:
+            actions.update(handler_actions)
     return actions
+
+
+def filter_actions_by_handlers(action_map: ActionMap, handlers: typing.Set[str]) -> ActionMap:
+    return {action: handler for action, handler in action_map.items() if handler in handlers}
 
 
 class ResourceBase:
@@ -159,25 +164,60 @@ class ResourceViewSet(ResourceBase, GenericViewSet):
                 setattr(self, method, lambda a: None)
 
     @classmethod
+    def get_resource_handlers(
+        cls, actions: ActionMap = None, **initkwargs: typing.Any
+    ) -> ResourceHandlersMap:
+        actions = actions or {}
+        resource_actions_map = cls.get_resource_actions_map()
+        resource_handlers = {}
+        for resource, viewset in cls.resource_views_map.items():
+            resource_actions = filter_actions_by_handlers(
+                actions, resource_actions_map.get(resource, set())
+            )
+            if resource_actions:
+                resource_handlers[resource] = viewset.as_view(
+                    actions=resource_actions, **initkwargs
+                )
+        return resource_handlers
+
+    @classmethod
     def as_view(cls, actions: ActionMap = None, **initkwargs: typing.Any) -> typing.Any:
         initkwargs['actions'] = actions
         return super().as_view(**initkwargs)
 
     @classmethod
+    def get_resource_actions_map(cls) -> ResourceActionsMap:
+        if not cls.resource_actions_map:
+            resource_actions_map = collections.defaultdict(set)
+
+            for actions_list_func in cls.resources_actions, cls.resources_extra_actions:
+                for resource, name, _ in actions_list_func():
+                    resource_actions_map[resource].add(name)
+
+            cls.resource_actions_map = resource_actions_map
+        return cls.resource_actions_map
+
+    @classmethod
     def get_action_methods(cls) -> typing.List[str]:
-        resource_actions_map = collections.defaultdict(set)
-        crud_methods_set = {'list', 'retrieve', 'create', 'update', 'partial_update', 'destroy'}
         available_methods_set = set()
-        for resource, viewset_class in cls.resource_views_map.items():
-            for crud_method in crud_methods_set:
-                if hasattr(viewset_class, crud_method):
-                    available_methods_set.add(crud_method)
-                    resource_actions_map[resource].add(crud_method)
-        for resource, name, _ in cls.resources_extra_actions():
-            available_methods_set.add(name)
-            resource_actions_map[resource].add(name)
-        cls.resource_actions_map = resource_actions_map
+        for action_map in cls.get_resource_actions_map().values():
+            available_methods_set.update(action_map)
+
         return list(available_methods_set)
+
+    @classmethod
+    def gen_resources_actions(cls) -> typing.Iterator[ResourceExtraAction]:
+        crud_methods_set = {'list', 'retrieve', 'create', 'update', 'partial_update', 'destroy'}
+        for resource, viewset_class in cls.resource_views_map.items():
+            for name in crud_methods_set:
+                handler = getattr(viewset_class, name, None)
+                if handler:
+                    yield resource, name, handler
+
+    @classmethod
+    @functools.lru_cache
+    def resources_actions(cls) -> typing.List[ResourceExtraAction]:
+        return list(cls.gen_resources_actions())
 
     @classmethod
     def gen_resources_extra_actions(cls) -> typing.Iterator[ResourceExtraAction]:
