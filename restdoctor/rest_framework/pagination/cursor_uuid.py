@@ -166,6 +166,9 @@ class CursorUUIDPagination(SerializerClassPaginationMixin, BasePagination):
                 **{self.after_query_param: self.page_boundaries[after_idx]})
             meta['before_url'] = self.get_page_link(
                 **{self.before_query_param: self.page_boundaries[before_idx]})
+        else:
+            meta['after_url'] = meta['url']
+            meta['before_url'] = meta['url']
 
         return ResponseWithMeta(data=data, meta=meta)
 
