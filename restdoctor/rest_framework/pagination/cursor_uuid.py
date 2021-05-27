@@ -157,15 +157,12 @@ class CursorUUIDPagination(SerializerClassPaginationMixin, BasePagination):
         if self.use_count:
             meta['total'] = self.total
 
-        if self.page_boundaries[0]:
-            after_idx, before_idx = 0, 1
-            if self.order == 'after':
-                after_idx, before_idx = 1, 0
+        after_idx, before_idx = 0, 1
+        if self.order == 'after':
+            after_idx, before_idx = 1, 0
 
-            meta['after_url'] = self.get_page_link(
-                **{self.after_query_param: self.page_boundaries[after_idx]})
-            meta['before_url'] = self.get_page_link(
-                **{self.before_query_param: self.page_boundaries[before_idx]})
+        meta['after_url'] = self.get_page_link(**{self.after_query_param: self.page_boundaries[after_idx] or ''})
+        meta['before_url'] = self.get_page_link(**{self.before_query_param: self.page_boundaries[before_idx] or ''})
 
         return ResponseWithMeta(data=data, meta=meta)
 
