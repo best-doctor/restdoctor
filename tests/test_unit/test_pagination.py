@@ -351,5 +351,5 @@ def test_cursor_uuid_pagination_get_empty_response_success_case(
 
     assert 'after_url' in meta
     assert 'before_url' in meta
-    assert meta['after_url'] == meta['url']
-    assert meta['before_url'] == meta['url']
+    assert 'after' in meta['after_url']
+    assert 'before' in meta['before_url']
