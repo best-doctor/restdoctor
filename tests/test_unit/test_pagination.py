@@ -336,3 +336,20 @@ def test_cursor_uuid_pagination_get_paginated_response_no_uuid_specified_success
     assert boundaries[1] in meta['after_url']
     assert 'before_url' in meta
     assert boundaries[0] in meta['before_url']
+
+
+@pytest.mark.django_db
+def test_cursor_uuid_pagination_get_empty_response_success_case(
+    n_models, rf, cursor_uuid_pagination, my_models_queryset,
+):
+    n_models(0)
+    request = Request(rf.get('/endpoint'))
+
+    _ = cursor_uuid_pagination.paginate_queryset(my_models_queryset, request)
+    paginated_response = cursor_uuid_pagination.get_paginated_response([])
+    meta = paginated_response.meta
+
+    assert 'after_url' in meta
+    assert 'before_url' in meta
+    assert meta['after_url'] == meta['url']
+    assert meta['before_url'] == meta['url']
