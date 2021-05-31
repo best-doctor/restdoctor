@@ -11,7 +11,6 @@ from restdoctor.rest_framework.mixins import ListModelMixin, RetrieveModelMixin
 from restdoctor.rest_framework.sensitive_data import clear_sensitive_data
 from restdoctor.rest_framework.signals import bind_extra_request_view_initial_metadata
 from restdoctor.utils.permissions import get_permission_classes_from_map
-from restdoctor.utils.sentry import capture_exception
 from restdoctor.utils.serializers import get_serializer_class_from_map
 from restdoctor.utils.structlog import get_logger
 
@@ -64,7 +63,6 @@ class SerializerClassMapApiView(GenericAPIView):
             try:
                 request_data = self.clear_request_data(request)
             except Exception:
-                capture_exception()
                 request_data = None
 
             logger.info(
