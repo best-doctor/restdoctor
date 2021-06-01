@@ -5,6 +5,7 @@ import copy
 import inspect
 import typing
 
+from django.core.files.uploadedfile import TemporaryUploadedFile
 from django.db.models import Model
 from rest_framework.fields import SerializerMethodField
 from rest_framework.serializers import Serializer, ListSerializer
@@ -15,7 +16,7 @@ if typing.TYPE_CHECKING:
     SerializerClassOrInstance = typing.Union[typing.Type[Serializer], Serializer]
     SensitiveDataConfig = typing.Dict[str, typing.Any]
     SensitiveDataConfigValue = typing.Union[bool, SensitiveDataConfig]
-    SerializerData = typing.Union[typing.Dict[str, typing.Any], typing.List[typing.Dict[str, typing.Any]]]
+    SerializerData = typing.Dict[str, typing.Any]
 
 
 def get_serializer_sensitive_fields(
@@ -96,11 +97,22 @@ def get_field_sensitive_data_config(
     return result
 
 
+def smart_copy(data: SerializerData, no_copy_classes: typing.List) -> SerializerData:
+    new_data = {}
+    for field_name, field_value in data.items():
+        if any([isinstance(field_value, no_copy_class) for no_copy_class in no_copy_classes]):
+            new_data[field_name] = field_value
+        else:
+            new_data[field_name] = copy.deepcopy(field_value)
+
+    return new_data
+
+
 def clear_sensitive_data(
     data: SerializerData,
     serializer: SerializerClassOrInstance,
 ) -> SerializerData:
-    data = copy.deepcopy(data)
+    data = smart_copy(data, [TemporaryUploadedFile])
 
     try:
         sensitive_data_config = get_serializer_sensitive_data_config(serializer)
@@ -119,10 +131,7 @@ def clear_sensitive_data(
 def clear_sensitive_field(
     field_name: str, field_value: typing.Any, data: SerializerData,
 ) -> None:
-    if isinstance(data, list):
-        for data_item in data:
-            clear_sensitive_field(field_name, field_value, data_item)
-    elif isinstance(data, dict) and field_name in data:
+    if isinstance(data, dict) and field_name in data:
         if isinstance(field_value, dict):
             for related_field_name, related_field_value in field_value.items():
                 clear_sensitive_field(related_field_name, related_field_value, data[field_name])
