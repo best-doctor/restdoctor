@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 import typing
 
 from django.conf import settings
@@ -102,7 +103,7 @@ class SerializerClassMapApiView(GenericAPIView):
 
         if api_format is None:
             api_format = settings.API_DEFAULT_FORMAT
-            if self.request and self.request.api_params:
+            with contextlib.suppress(AttributeError):
                 api_format = self.request.api_params.format or api_format
 
         return get_serializer_class_from_map(
