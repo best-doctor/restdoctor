@@ -107,7 +107,7 @@ def smart_copy(data: SerializerData, no_copy_classes: typing.List) -> Serializer
                 dict_data[field_name] = copy.deepcopy(field_value)
         return dict_data
 
-    return data
+    return copy.deepcopy(data)
 
 
 def clear_sensitive_data(
