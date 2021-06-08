@@ -125,12 +125,14 @@ class FieldSchema(FieldSchemaProtocol):
         schema = self.map_field(field)
         if not schema:
             return {}
+
+        if field.allow_null:
+            schema = self.set_field_nullable(schema)
+        
         if field.read_only:
             schema['readOnly'] = True
         if field.write_only:
             schema['writeOnly'] = True
-        if field.allow_null and not self.is_new_openapi_null_type:
-            schema['nullable'] = True
         if field.default and field.default != empty and not callable(field.default):
             schema['default'] = field.default
         description = self.get_field_description(field)
@@ -169,12 +171,8 @@ class FieldSchema(FieldSchemaProtocol):
         for validator in field.validators:
             if isinstance(validator, RegexValidator):
                 schema['pattern'] = validator.regex.pattern.replace('\\Z', '\\z')
-
-    def map_field(self, original_field: Field) -> typing.Optional[OpenAPISchema]:
-        schema = self.get_field_schema(original_field)
-        return self.add_null_to_type(schema, field.allow_null)
                 
-    def get_field_schema(self, original_field: Field) -> typing.Optional[OpenAPISchema]:
+    def map_field(self, original_field: Field) -> typing.Optional[OpenAPISchema]:
         # Field.__deepcopy__ сбрасывает кастомные атрибуты, поэтому схему ищем через класс сериализатора
         field = original_field
         if isinstance(field, SerializerMethodField):
@@ -215,16 +213,14 @@ class FieldSchema(FieldSchemaProtocol):
             elif isinstance(field, predicate):
                 return handler(field)
 
-    def add_null_to_type(
-            self,
-            schema: typing.Optional[OpenAPISchema],
-            allow_null: bool,
-    ) -> typing.Optional[OpenAPISchema]:
-        if schema and 'type' in schema:
-            result = schema.copy()
-            if allow_null and self.is_new_openapi_null_type:
-                result['type'] = [result['type'], 'null']
-        return result
+    def set_field_nullable(self, field_schema: OpenAPISchema) -> OpenAPISchema:
+        schema = field_schema.copy()
+        if self.is_new_openapi_null_type
+            if 'type' in schema:
+                schema['type'] = [result['type'], 'null']
+        else:
+            schema['nullable'] = True
+        return schema
 
     def map_choice_field(self, field: ChoiceField) -> OpenAPISchema:
         choices = list(
