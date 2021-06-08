@@ -1,10 +1,11 @@
 import pytest
 
 
+from django.core.files.uploadedfile import TemporaryUploadedFile, InMemoryUploadedFile
 from restdoctor.django.sensitive_data import get_model_sensitive_fields, is_model_field_sensitive
 from restdoctor.rest_framework.sensitive_data import (
     get_serializer_sensitive_fields, get_serializer_instance, get_serializer_sensitive_data_config,
-    get_field_serializer, clear_sensitive_data,
+    get_field_serializer, clear_sensitive_data, smart_copy,
 )
 from tests.test_unit.stubs import (
     ParentSensitiveDataModel, ModelWithoutSensitiveData,
@@ -117,3 +118,26 @@ def test_clear_sensitive_data(data, expected_data):
     result = clear_sensitive_data(data, ModelSerializerWithSensitiveData())
 
     assert result == expected_data
+
+
+@pytest.mark.parametrize(
+    'data, deepcopy_used',
+    (
+        ({'field': TemporaryUploadedFile('test.jpg', 'image/jpeg', 100, 'utf-8')}, False),
+        (
+            {
+                'field': InMemoryUploadedFile(
+                    b'', 'field_name', 'test.jpg', 'image/jpeg', 100, 'utf-8',
+                )
+            },
+            True
+        ),
+        ({'field': 'Иванович'}, True),
+        ({'field': {'first_name': 'Иван', 'id': 1}}, True),
+    ),
+)
+def test_clear_sensitive_data(data, deepcopy_used, mocker):
+    mock = mocker.patch('copy.deepcopy')
+    smart_copy(data, [TemporaryUploadedFile])
+
+    assert mock.called is deepcopy_used

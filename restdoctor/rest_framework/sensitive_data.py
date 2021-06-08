@@ -5,6 +5,7 @@ import copy
 import inspect
 import typing
 
+from django.core.files.uploadedfile import TemporaryUploadedFile
 from django.db.models import Model
 from rest_framework.fields import SerializerMethodField
 from rest_framework.serializers import Serializer, ListSerializer
@@ -96,11 +97,24 @@ def get_field_sensitive_data_config(
     return result
 
 
+def smart_copy(data: SerializerData, no_copy_classes: typing.List) -> SerializerData:
+    if isinstance(data, dict):
+        dict_data = {}
+        for field_name, field_value in data.items():
+            if any([isinstance(field_value, no_copy_class) for no_copy_class in no_copy_classes]):
+                dict_data[field_name] = field_value
+            else:
+                dict_data[field_name] = copy.deepcopy(field_value)
+        return dict_data
+
+    return copy.deepcopy(data)
+
+
 def clear_sensitive_data(
     data: SerializerData,
     serializer: SerializerClassOrInstance,
 ) -> SerializerData:
-    data = copy.deepcopy(data)
+    data = smart_copy(data, [TemporaryUploadedFile])
 
     try:
         sensitive_data_config = get_serializer_sensitive_data_config(serializer)
