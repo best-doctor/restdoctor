@@ -1,4 +1,7 @@
 -c requirements.txt
+
+djangorestframework-gis==0.17
+
 # flake8 stuff
 flake8==3.9.0
 flake8-adjustable-complexity==0.0.4
