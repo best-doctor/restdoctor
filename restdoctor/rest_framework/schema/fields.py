@@ -38,6 +38,7 @@ from rest_framework.relations import ManyRelatedField, PrimaryKeyRelatedField
 from rest_framework.schemas.openapi import AutoSchema
 from rest_framework.serializers import BaseSerializer, ListSerializer, ModelSerializer, Serializer
 from rest_framework.settings import api_settings
+from semver import VersionInfo
 
 from restdoctor.rest_framework.schema.custom_types import (
     FieldSchemaProtocol,
@@ -71,6 +72,17 @@ def drf_map_field_validators(obj: FieldSchemaProtocol, field: Field, schema: Ope
 class FieldSchema(FieldSchemaProtocol):
     def __init__(self, view_schema: ViewSchemaProtocol):
         self.view_schema = view_schema
+
+    @property
+    def openapi_version(self) -> VersionInfo:
+        if self.view_schema.generator:
+            return self.view_schema.generator.openapi_version
+        else:
+            return getattr(settings, 'DEFAULT_OPENAPI_VERSION', '3.0.2')
+
+    @property
+    def is_new_openapi_null_type(self) -> bool:
+        return self.openapi_version >= VersionInfo.parse('3.1.0')
 
     @classmethod
     def check_method_field_annotations(cls, field: Field, field_wrapper: Field) -> None:
@@ -110,7 +122,7 @@ class FieldSchema(FieldSchemaProtocol):
             schema['readOnly'] = True
         if field.write_only:
             schema['writeOnly'] = True
-        if field.allow_null:
+        if field.allow_null and not self.is_new_openapi_null_type:
             schema['nullable'] = True
         if field.default and field.default != empty and not callable(field.default):
             schema['default'] = field.default
@@ -177,7 +189,7 @@ class FieldSchema(FieldSchemaProtocol):
             (IPAddressField, self.map_ipaddress_field),
             (DecimalField, self.map_decimal_field),
             ((FloatField, IntegerField), self.map_numeric_field),
-            (FileField, lambda _: string_schema('binary')),
+            (FileField, self.map_file_field),
             (BooleanField, lambda _: {'type': 'boolean'}),
             ((JSONField, DictField, HStoreField), lambda _: {'type': 'object'}),
             (Field, lambda _: string_schema()),
@@ -187,7 +199,19 @@ class FieldSchema(FieldSchemaProtocol):
 
         for field_types, handler in field_handlers:
             if isinstance(field, field_types):
-                return handler(field)
+                result = handler(field)
+                return self.add_null_to_type(result, field.allow_null)
+
+    def add_null_to_type(
+            self,
+            schema: typing.Optional[OpenAPISchema],
+            allow_null: bool,
+    ) -> typing.Optional[OpenAPISchema]:
+        if schema and 'type' in schema:
+            result = schema.copy()
+            if allow_null and self.is_new_openapi_null_type:
+                result['type'] = [result['type'], 'null']
+        return result
 
     def map_choice_field(self, field: ChoiceField) -> OpenAPISchema:
         choices = list(
@@ -286,3 +310,9 @@ class FieldSchema(FieldSchemaProtocol):
     def map_ipaddress_field(self, field: IPAddressField) -> OpenAPISchema:
         string_format = field.protocol if field.protocol != 'both' else None
         return string_schema(string_format)
+
+    def map_file_field(self, field: FileField) -> OpenAPISchema:
+        if self.openapi_version >= VersionInfo.parse('3.1.0'):
+            return {'type': 'string', 'contentMediaType': 'application/octet-stream'}
+        else:
+            return string_schema('binary')

@@ -261,3 +261,14 @@ class ListModelMixin(BaseListModelMixin):
 #### ModelViewSet
 
 Полный набор action'ов: `list`, `retrieve`, `create`, `update`, `destroy`.
+
+### Генерация схемы
+Поддерживается генерация схемы openapi версий 3.0.2 и 3.1.0.
+
+Пример генерации (openapi 3.0.2):
+
+`python3 ./manage.py generateschema --urlconf api.v1.urls --generator_class restdoctor.rest_framework.schema.RefsSchemaGenerator > your_app/static/openapi.schema`
+
+Пример генерации (openapi 3.1.0):
+
+`python3 ./manage.py generateschema --urlconf api.v1.urls --generator_class restdoctor.rest_framework.schema.NewRefsSchemaGenerator > your_app/static/openapi.schema`

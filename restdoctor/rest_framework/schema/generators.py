@@ -6,8 +6,9 @@ from urllib.parse import urljoin
 from django.conf import settings
 from rest_framework.generics import GenericAPIView
 from rest_framework.request import Request
-from rest_framework.schemas.openapi import SchemaGenerator
+from semver import VersionInfo
 
+from restdoctor.rest_framework.schema.custom_types import SchemaGenerator
 from restdoctor.rest_framework.schema.openapi import RestDoctorSchema
 from restdoctor.rest_framework.schema.refs_registry import LocalRefsRegistry
 
@@ -17,6 +18,8 @@ if typing.TYPE_CHECKING:
 
 
 class RefsSchemaGenerator(SchemaGenerator):
+    openapi_version = VersionInfo.parse('3.0.2')
+
     def __init__(self, *args: typing.Any, **kwargs: typing.Any) -> None:
         super().__init__(*args, **kwargs)
         self.local_refs_registry = LocalRefsRegistry()
@@ -90,9 +93,13 @@ class RefsSchemaGenerator(SchemaGenerator):
         if not paths:
             return None
 
-        schema = {'openapi': '3.0.2', 'info': self.get_info(), 'paths': paths}
+        schema = {'openapi': str(self.openapi_version), 'info': self.get_info(), 'paths': paths}
         components = self.local_refs_registry.get_components()
         if components:
             schema['components'] = components
 
         return schema
+
+
+class NewRefsSchemaGenerator(RefsSchemaGenerator):
+    openapi_version = VersionInfo.parse('3.1.0')
