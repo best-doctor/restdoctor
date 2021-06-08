@@ -3,10 +3,10 @@ from __future__ import annotations
 import collections
 import contextlib
 import decimal
+import inspect
 import typing
 
 from django.conf import settings
-from django.contrib.gis.db.models import PointField
 from django.core.exceptions import FieldDoesNotExist, ImproperlyConfigured
 from django.core.validators import RegexValidator
 from django.db.models import AutoField
@@ -69,6 +69,13 @@ def drf_map_field_validators(obj: FieldSchemaProtocol, field: Field, schema: Ope
         AutoSchema._map_field_validators(obj, field, schema)
 
 
+def is_geometry_field(field: Field) -> bool:
+    return (
+        field.__class__.__name__ == 'GeometryField'
+        and field.__module__ == 'rest_framework_gis.fields'
+    )
+
+
 class FieldSchema(FieldSchemaProtocol):
     def __init__(self, view_schema: ViewSchemaProtocol):
         self.view_schema = view_schema
@@ -87,6 +94,7 @@ class FieldSchema(FieldSchemaProtocol):
     @classmethod
     def check_method_field_annotations(cls, field: Field, field_wrapper: Field) -> None:
         field_name = field_wrapper.field_name
+        serializer_name = field_wrapper.parent.__class__.__name__
         try:
             return_annotation = typing.get_type_hints(
                 getattr(field_wrapper.parent, f'get_{field_name}')
@@ -96,7 +104,6 @@ class FieldSchema(FieldSchemaProtocol):
             return
         field_allow_null = getattr(field, 'allow_null', True)
         if field_allow_null ^ is_optional_type(return_annotation):
-            serializer_name = field_wrapper.parent.__class__.__name__
             raise ImproperlyConfigured(
                 f'Field {field_name} in {serializer_name} '
                 f"doesn't match with it's annotation: allow_null={field_allow_null} "
@@ -164,6 +171,10 @@ class FieldSchema(FieldSchemaProtocol):
                 schema['pattern'] = validator.regex.pattern.replace('\\Z', '\\z')
 
     def map_field(self, original_field: Field) -> typing.Optional[OpenAPISchema]:
+        schema = self.get_field_schema(original_field)
+        return self.add_null_to_type(schema, field.allow_null)
+                
+    def get_field_schema(self, original_field: Field) -> typing.Optional[OpenAPISchema]:
         # Field.__deepcopy__ сбрасывает кастомные атрибуты, поэтому схему ищем через класс сериализатора
         field = original_field
         if isinstance(field, SerializerMethodField):
@@ -175,7 +186,7 @@ class FieldSchema(FieldSchemaProtocol):
 
         field_handlers = [
             (_UnvalidatedField, lambda _: None),
-            (PointField, self.map_point_field),
+            (is_geometry_field, self.map_point_field),
             ((ListSerializer, Serializer), self.map_serializer),
             ((ManyRelatedField, PrimaryKeyRelatedField), self.map_related),
             (MultipleChoiceField, self.map_choice_field),
@@ -197,10 +208,12 @@ class FieldSchema(FieldSchemaProtocol):
             (object, lambda _: string_schema()),
         ]
 
-        for field_types, handler in field_handlers:
-            if isinstance(field, field_types):
-                result = handler(field)
-                return self.add_null_to_type(result, field.allow_null)
+        for predicate, handler in field_handlers:
+            if inspect.isfunction(predicate):
+                if predicate(field):
+                    return handler(field)
+            elif isinstance(field, predicate):
+                return handler(field)
 
     def add_null_to_type(
             self,
@@ -236,15 +249,23 @@ class FieldSchema(FieldSchemaProtocol):
             return array_schema(schema)
         return schema
 
-    def map_point_field(self, field: PointField) -> OpenAPISchema:
+    def map_point_field(self, field: Field) -> OpenAPISchema:
+        # When using rest_framework_gis all Django geo fields are mapped to GeometryField
+        # We can get original model field to generate right schema from
+        # getattr(field.parent.Meta.model, field.field_name).field
+        # OpenAPI Schemas for GeoJSON can be found here https://gist.github.com/zit0un/3ac0575eb0f3aabdc645c3faad47ab4a
         return {
-            'type': {'type': 'Point'},
-            'coordinates': {
-                'type': 'array',
-                'items': {'type': 'number', 'format': 'float'},
-                'example': [12.9721, 77.5933],
-                'minItems': 2,
-                'maxItems': 3,
+            'type': 'object',
+            'required': ['type', 'coordinates'],
+            'properties': {
+                'type': {'type': 'string', 'enum': ['Point']},
+                'coordinates': {
+                    'type': 'array',
+                    'items': {'type': 'number', 'format': 'float'},
+                    'example': [12.9721, 77.5933],
+                    'minItems': 2,
+                    'maxItems': 3,
+                },
             },
         }
 
