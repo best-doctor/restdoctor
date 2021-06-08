@@ -128,7 +128,7 @@ class FieldSchema(FieldSchemaProtocol):
 
         if field.allow_null:
             schema = self.set_field_nullable(schema)
-        
+
         if field.read_only:
             schema['readOnly'] = True
         if field.write_only:
@@ -171,7 +171,7 @@ class FieldSchema(FieldSchemaProtocol):
         for validator in field.validators:
             if isinstance(validator, RegexValidator):
                 schema['pattern'] = validator.regex.pattern.replace('\\Z', '\\z')
-                
+
     def map_field(self, original_field: Field) -> typing.Optional[OpenAPISchema]:
         # Field.__deepcopy__ сбрасывает кастомные атрибуты, поэтому схему ищем через класс сериализатора
         field = original_field
@@ -215,9 +215,9 @@ class FieldSchema(FieldSchemaProtocol):
 
     def set_field_nullable(self, field_schema: OpenAPISchema) -> OpenAPISchema:
         schema = field_schema.copy()
-        if self.is_new_openapi_null_type
+        if self.is_new_openapi_null_type:
             if 'type' in schema:
-                schema['type'] = [result['type'], 'null']
+                schema['type'] = [schema['type'], 'null']
         else:
             schema['nullable'] = True
         return schema
