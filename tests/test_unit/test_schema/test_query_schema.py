@@ -3,6 +3,7 @@ from django.core.exceptions import ImproperlyConfigured
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import OrderingFilter
 
+from restdoctor.rest_framework.schema.generators import RefsSchemaGenerator, NewRefsSchemaGenerator
 from tests.test_unit.test_schema.stubs import (
     ListViewSetWithRequestSerializer,
     ListViewSetWithoutRequestSerializer,
@@ -13,10 +14,11 @@ from tests.test_unit.test_schema.stubs import (
 
 
 @pytest.mark.parametrize(
-    'viewset,expected_parameters',
+    'viewset,generator_class,expected_parameters',
     (
         (
             ListViewSetWithRequestSerializer,
+            RefsSchemaGenerator,
             [
                 {
                     'in': 'query',
@@ -39,11 +41,35 @@ from tests.test_unit.test_schema.stubs import (
                 },
             ],
         ),
-        (ListViewSetWithoutRequestSerializer, []),
+        (
+            ListViewSetWithRequestSerializer,
+            NewRefsSchemaGenerator,
+            [
+                {
+                    'in': 'query',
+                    'name': 'filter_uuid_field',
+                    'required': False,
+                    'schema': {
+                        'type': 'string',
+                        'format': 'uuid',
+                    },
+                },
+                {
+                    'in': 'query',
+                    'name': 'filter_field',
+                    'required': True,
+                    'schema': {
+                        'type': ['string', 'null'],
+                        'description': 'Help text',
+                    },
+                },
+            ],
+        ),
+        (ListViewSetWithoutRequestSerializer, RefsSchemaGenerator, []),
     ),
 )
-def test_schema_for_list_viewset(get_create_view_func, viewset, expected_parameters):
-    create_view = get_create_view_func('test', viewset, 'test')
+def test_schema_for_list_viewset(get_create_view_func, viewset, generator_class, expected_parameters):
+    create_view = get_create_view_func('test', viewset, 'test', generator_class=generator_class)
 
     view = create_view('/test/', 'GET')
     operation = view.schema.get_operation('/test/', 'GET')
@@ -52,10 +78,11 @@ def test_schema_for_list_viewset(get_create_view_func, viewset, expected_paramet
 
 
 @pytest.mark.parametrize(
-    'viewset,expected_parameters',
+    'viewset,generator_class,expected_parameters',
     (
         (
             ListViewSetWithRequestSerializer,
+            RefsSchemaGenerator,
             [
                 {
                     'in': 'query',
@@ -78,13 +105,37 @@ def test_schema_for_list_viewset(get_create_view_func, viewset, expected_paramet
                 },
             ],
         ),
-        (ListViewSetWithoutRequestSerializer, []),
+        (
+            ListViewSetWithRequestSerializer,
+            NewRefsSchemaGenerator,
+            [
+                {
+                    'in': 'query',
+                    'name': 'filter_uuid_field',
+                    'required': False,
+                    'schema': {
+                        'type': 'string',
+                        'format': 'uuid',
+                    },
+                },
+                {
+                    'in': 'query',
+                    'name': 'filter_field',
+                    'required': True,
+                    'schema': {
+                        'type': ['string', 'null'],
+                        'description': 'Help text',
+                    },
+                },
+            ],
+        ),
+        (ListViewSetWithoutRequestSerializer, RefsSchemaGenerator, []),
     ),
 )
 def test_get_request_serializer_filter_parameters(
-    get_create_view_func, viewset, expected_parameters
+    get_create_view_func, viewset, generator_class, expected_parameters
 ):
-    list_view = get_create_view_func('test', viewset, 'test')
+    list_view = get_create_view_func('test', viewset, 'test', generator_class=generator_class)
 
     view = list_view('/test/', 'GET')
     parameters = view.schema.get_request_serializer_filter_parameters('/test/', 'GET')

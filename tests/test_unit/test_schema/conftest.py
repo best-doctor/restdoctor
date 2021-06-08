@@ -14,9 +14,9 @@ class UrlConf:
 
 @pytest.fixture()
 def get_create_view_func():
-    def with_args(prefix, viewset, basename, router=None):
+    def with_args(prefix, viewset, basename, router=None, generator_class=RefsSchemaGenerator):
         router = router or SimpleRouter()
-        generator = RefsSchemaGenerator()
+        generator = generator_class()
 
         router.register(prefix, viewset, basename=basename)
         urlconf = UrlConf()

@@ -10,12 +10,12 @@ from django_filters import Filter
 from django_filters.rest_framework import DjangoFilterBackend, FilterSet
 from rest_framework.fields import Field
 from rest_framework.pagination import BasePagination
-from rest_framework.schemas.openapi import AutoSchema, SchemaGenerator
+from rest_framework.schemas.openapi import AutoSchema
 from rest_framework.schemas.utils import is_list_view
 from rest_framework.serializers import BaseSerializer
 
 from restdoctor.rest_framework.pagination.mixins import SerializerClassPaginationMixin
-from restdoctor.rest_framework.schema.custom_types import ViewSchemaProtocol
+from restdoctor.rest_framework.schema.custom_types import SchemaGenerator, ViewSchemaProtocol
 from restdoctor.rest_framework.schema.fields import FieldSchema
 from restdoctor.rest_framework.schema.serializers import SerializerSchema
 from restdoctor.rest_framework.schema.utils import (

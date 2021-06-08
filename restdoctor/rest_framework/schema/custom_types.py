@@ -3,8 +3,9 @@ from __future__ import annotations
 import typing as t
 
 from rest_framework.fields import Field
-from rest_framework.schemas.openapi import SchemaGenerator
+from rest_framework.schemas.openapi import SchemaGenerator as RestFrameworkSchemaGenerator
 from rest_framework.serializers import BaseSerializer
+from semver import VersionInfo
 
 OpenAPISchema = t.Dict[str, 'OpenAPISchema']  # type: ignore
 LocalRefs = t.Dict[t.Tuple[str, ...], t.Any]
@@ -14,6 +15,10 @@ ActionDescription = str
 
 CodeActionSchemaTuple = t.Tuple[ResponseCode, ActionDescription, t.Optional[OpenAPISchema]]  # type: ignore
 CodeDescriptionTuple = t.Tuple[ResponseCode, ActionDescription]
+
+
+class SchemaGenerator(RestFrameworkSchemaGenerator):
+    openapi_version: VersionInfo
 
 
 class ViewSchemaProtocol(t.Protocol):
