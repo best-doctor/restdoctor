@@ -14,9 +14,81 @@ BestDoctor's batteries for REST services.
 1. Декларативную настройку сериализаторов и классов разрешений для `View` и `ViewSet`
 1. Прокачанную генерацию схемы
 
-## Установка
+## Быстрый старт
 
-Добавляем пакет `restdoctor` в зависимости или ставим через pip.
+Добавляем пакет `restdoctor` в зависимости или ставим через pip, добавляем `restdoctor` в `INSTALLED_APPS`.
+
+После этого можно использовать ViewSet'ы из restdoctor, заменив импорты `rest_framework` на
+`restdoctor.rest_framework`.
+
+Пример на основе tutorial DRF. Было:
+```python
+from django.contrib.auth.models import User
+from rest_framework import viewsets
+from rest_framework import permissions
+from tutorial.quickstart.serializers import UserSerializer, UserListSerializer
+
+
+class UserViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint that allows users to be viewed or edited.
+    """
+    queryset = User.objects.all().order_by('-date_joined')
+    serializer_class = UserSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_serializer_class(self):
+        if self.action == 'list':
+            return UserListSerializer
+        return self.serializer_class
+```
+
+Стало:
+```python
+from django.contrib.auth.models import User
+from restdoctor.rest_framework import viewsets
+from rest_framework import permissions
+from tutorial.quickstart.serializers import UserSerializer, UserListSerializer
+
+
+class UserViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint that allows users to be viewed or edited.
+    """
+    queryset = User.objects.all().order_by('-date_joined')
+    serializer_class_map = {
+        'default': UserSerializer,
+        'list': {
+            'response': UserListSerializer,
+        },
+    }
+    permission_classes_map = {
+        'default': [permissions.IsAuthenticated]
+    }
+```
+
+### Дальнейшая настройка
+
+Для разбора формата из заголовка Accept необходимо добавить middleware в конфигурацию приложения:
+
+```python
+
+ROOT_URLCONF = ...
+
+MIDDLEWARE = [
+    ...,
+    'restdoctor.django.middleware.api_selector.ApiSelectorMiddleware',
+]
+
+API_PREFIXES = ('/api',)
+API_FORMATS = ('full', 'compact')
+```
+
+После этого для префиксов, указанных в `API_PREFIXES`? будет производиться разбор заголовка Accept. Во время обработки
+запроса во View или ViewSet в request добавится атрибут `api_params`.
+
+
+## Установка и конфигурирование
 
 Добавляем настройки в Settings:
 
@@ -262,13 +334,22 @@ class ListModelMixin(BaseListModelMixin):
 
 Полный набор action'ов: `list`, `retrieve`, `create`, `update`, `destroy`.
 
+
 ### Генерация схемы
 Поддерживается генерация схемы openapi версий 3.0.2 и 3.1.0.
+Схема по умолчанию задается параметром `API_DEFAULT_OPENAPI_VERSION` и равна `3.0.2`.
 
-Пример генерации (openapi 3.0.2):
+Пример генерации схемы (версия из settings):
+```shell
+python3 ./manage.py generateschema --urlconf api.v1.urls --generator_class restdoctor.rest_framework.schema.RefsSchemaGenerator > your_app/static/openapi.schema
+```
 
-`python3 ./manage.py generateschema --urlconf api.v1.urls --generator_class restdoctor.rest_framework.schema.RefsSchemaGenerator > your_app/static/openapi.schema`
+Пример генерации схемы версии openapi 3.0.2:
+```shell
+python3 ./manage.py generateschema --urlconf api.v1.urls --generator_class restdoctor.rest_framework.schema.RefsSchemaGenerator30 > your_app/static/openapi-30.schema
+```
 
-Пример генерации (openapi 3.1.0):
-
-`python3 ./manage.py generateschema --urlconf api.v1.urls --generator_class restdoctor.rest_framework.schema.NewRefsSchemaGenerator > your_app/static/openapi.schema`
+Пример генерации смхемы версии openapi 3.1.0:
+```shell
+python3 ./manage.py generateschema --urlconf api.v1.urls --generator_class restdoctor.rest_framework.schema.RefsSchemaGenerator31 > your_app/static/openapi-31.schema
+```

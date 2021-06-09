@@ -84,8 +84,7 @@ class FieldSchema(FieldSchemaProtocol):
     def openapi_version(self) -> VersionInfo:
         if self.view_schema.generator:
             return self.view_schema.generator.openapi_version
-        else:
-            return getattr(settings, 'DEFAULT_OPENAPI_VERSION', '3.0.2')
+        return settings.API_DEFAULT_OPENAPI_VERSION
 
     @property
     def is_new_openapi_null_type(self) -> bool:

@@ -1,74 +1,66 @@
+from __future__ import annotations
+
 import pytest
 from django.core.exceptions import ImproperlyConfigured
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import OrderingFilter
 
-from restdoctor.rest_framework.schema.generators import RefsSchemaGenerator, NewRefsSchemaGenerator
+from restdoctor.rest_framework.schema.generators import RefsSchemaGenerator30, RefsSchemaGenerator31
 from tests.test_unit.test_schema.stubs import (
-    ListViewSetWithRequestSerializer,
-    ListViewSetWithoutRequestSerializer,
     DefaultFilterSet,
-    FilterSetWithNoLabels,
     FilterSetWithLabels,
+    FilterSetWithNoLabels,
+    ListViewSetWithoutRequestSerializer,
+    ListViewSetWithRequestSerializer,
 )
 
 
 @pytest.mark.parametrize(
-    'viewset,generator_class,expected_parameters',
-    (
+    ('viewset', 'generator_class', 'expected_parameters'),
+    [
         (
             ListViewSetWithRequestSerializer,
-            RefsSchemaGenerator,
+            RefsSchemaGenerator30,
             [
                 {
                     'in': 'query',
                     'name': 'filter_uuid_field',
                     'required': False,
-                    'schema': {
-                        'type': 'string',
-                        'format': 'uuid',
-                    },
+                    'schema': {'type': 'string', 'format': 'uuid'},
                 },
                 {
                     'in': 'query',
                     'name': 'filter_field',
                     'required': True,
-                    'schema': {
-                        'type': 'string',
-                        'nullable': True,
-                        'description': 'Help text',
-                    },
+                    'schema': {'type': 'string', 'nullable': True, 'description': 'Help text'},
                 },
             ],
         ),
         (
             ListViewSetWithRequestSerializer,
-            NewRefsSchemaGenerator,
+            RefsSchemaGenerator31,
             [
                 {
                     'in': 'query',
                     'name': 'filter_uuid_field',
                     'required': False,
-                    'schema': {
-                        'type': 'string',
-                        'format': 'uuid',
-                    },
+                    'schema': {'type': 'string', 'format': 'uuid'},
                 },
                 {
                     'in': 'query',
                     'name': 'filter_field',
                     'required': True,
-                    'schema': {
-                        'type': ['string', 'null'],
-                        'description': 'Help text',
-                    },
+                    'schema': {'type': ['string', 'null'], 'description': 'Help text'},
                 },
             ],
         ),
-        (ListViewSetWithoutRequestSerializer, RefsSchemaGenerator, []),
-    ),
+        (ListViewSetWithoutRequestSerializer, RefsSchemaGenerator30, []),
+        (ListViewSetWithoutRequestSerializer, RefsSchemaGenerator31, []),
+    ],
 )
-def test_schema_for_list_viewset(get_create_view_func, viewset, generator_class, expected_parameters):
+def test_schema_for_list_viewset(
+    get_create_view_func, viewset, generator_class, expected_parameters
+):
     create_view = get_create_view_func('test', viewset, 'test', generator_class=generator_class)
 
     view = create_view('/test/', 'GET')
@@ -78,59 +70,47 @@ def test_schema_for_list_viewset(get_create_view_func, viewset, generator_class,
 
 
 @pytest.mark.parametrize(
-    'viewset,generator_class,expected_parameters',
-    (
+    ('viewset', 'generator_class', 'expected_parameters'),
+    [
         (
             ListViewSetWithRequestSerializer,
-            RefsSchemaGenerator,
+            RefsSchemaGenerator30,
             [
                 {
                     'in': 'query',
                     'name': 'filter_uuid_field',
                     'required': False,
-                    'schema': {
-                        'type': 'string',
-                        'format': 'uuid',
-                    },
+                    'schema': {'type': 'string', 'format': 'uuid'},
                 },
                 {
                     'in': 'query',
                     'name': 'filter_field',
                     'required': True,
-                    'schema': {
-                        'type': 'string',
-                        'nullable': True,
-                        'description': 'Help text',
-                    },
+                    'schema': {'type': 'string', 'nullable': True, 'description': 'Help text'},
                 },
             ],
         ),
         (
             ListViewSetWithRequestSerializer,
-            NewRefsSchemaGenerator,
+            RefsSchemaGenerator31,
             [
                 {
                     'in': 'query',
                     'name': 'filter_uuid_field',
                     'required': False,
-                    'schema': {
-                        'type': 'string',
-                        'format': 'uuid',
-                    },
+                    'schema': {'type': 'string', 'format': 'uuid'},
                 },
                 {
                     'in': 'query',
                     'name': 'filter_field',
                     'required': True,
-                    'schema': {
-                        'type': ['string', 'null'],
-                        'description': 'Help text',
-                    },
+                    'schema': {'type': ['string', 'null'], 'description': 'Help text'},
                 },
             ],
         ),
-        (ListViewSetWithoutRequestSerializer, RefsSchemaGenerator, []),
-    ),
+        (ListViewSetWithoutRequestSerializer, RefsSchemaGenerator30, []),
+        (ListViewSetWithoutRequestSerializer, RefsSchemaGenerator31, []),
+    ],
 )
 def test_get_request_serializer_filter_parameters(
     get_create_view_func, viewset, generator_class, expected_parameters
@@ -144,8 +124,8 @@ def test_get_request_serializer_filter_parameters(
 
 
 @pytest.mark.parametrize(
-    'filter_backends,filterset_class,expected_parameters',
-    (
+    ('filter_backends', 'filterset_class', 'expected_parameters'),
+    [
         (
             [DjangoFilterBackend, OrderingFilter],
             DefaultFilterSet,
@@ -269,7 +249,7 @@ def test_get_request_serializer_filter_parameters(
                 },
             ],
         ),
-    ),
+    ],
 )
 def test_schema_for_viewset_with_filter_backend(
     get_create_view_func,
@@ -288,9 +268,7 @@ def test_schema_for_viewset_with_filter_backend(
 
 
 def test_schema_for_viewset_with_filter_backend_strict_schema(
-    settings,
-    get_create_view_func,
-    viewset_with_filter_backends_factory,
+    settings, get_create_view_func, viewset_with_filter_backends_factory
 ):
     settings.API_STRICT_SCHEMA_VALIDATION = True
     viewset = viewset_with_filter_backends_factory([DjangoFilterBackend], FilterSetWithLabels)
@@ -301,9 +279,7 @@ def test_schema_for_viewset_with_filter_backend_strict_schema(
 
 
 def test_schema_for_viewset_with_filter_backend_strict_schema_raises(
-    settings,
-    get_create_view_func,
-    viewset_with_filter_backends_factory,
+    settings, get_create_view_func, viewset_with_filter_backends_factory
 ):
     settings.API_STRICT_SCHEMA_VALIDATION = True
     viewset = viewset_with_filter_backends_factory([DjangoFilterBackend], FilterSetWithNoLabels)

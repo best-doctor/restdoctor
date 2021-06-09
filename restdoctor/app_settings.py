@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from django.conf import settings
 
 API_FALLBACK_VERSION = 'fallback'
@@ -20,3 +22,5 @@ API_VERSIONS = {
 API_ENABLE_STRUCTLOG = getattr(settings, 'ENABLE_STRUCTLOG', False)
 
 API_STRICT_SCHEMA_VALIDATION = getattr(settings, 'API_STRICT_SCHEMA_VALIDATION', False)
+
+API_DEFAULT_OPENAPI_VERSION = '3.0.2'

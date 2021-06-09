@@ -1,8 +1,10 @@
+from __future__ import annotations
+
 import pytest
 from django.urls import resolve
 from rest_framework.routers import SimpleRouter
 
-from restdoctor.rest_framework.schema import RefsSchemaGenerator
+from restdoctor.rest_framework.schema import RefsSchemaGenerator30
 from restdoctor.rest_framework.viewsets import ModelViewSet
 from tests.stubs.models import MyAnotherModel
 from tests.stubs.serializers import MyModelSerializer
@@ -14,7 +16,7 @@ class UrlConf:
 
 @pytest.fixture()
 def get_create_view_func():
-    def with_args(prefix, viewset, basename, router=None, generator_class=RefsSchemaGenerator):
+    def with_args(prefix, viewset, basename, router=None, generator_class=RefsSchemaGenerator30):
         router = router or SimpleRouter()
         generator = generator_class()
 

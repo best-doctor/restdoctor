@@ -18,11 +18,14 @@ if typing.TYPE_CHECKING:
 
 
 class RefsSchemaGenerator(SchemaGenerator):
-    openapi_version = VersionInfo.parse('3.0.2')
+    openapi_version = None
 
     def __init__(self, *args: typing.Any, **kwargs: typing.Any) -> None:
         super().__init__(*args, **kwargs)
         self.local_refs_registry = LocalRefsRegistry()
+
+        if not self.openapi_version:
+            self.openapi_version = VersionInfo.parse(settings.API_DEFAULT_OPENAPI_VERSION)
 
         self.api_version = settings.API_DEFAULT_VERSION
         urlconf = kwargs.get('urlconf')
@@ -101,5 +104,9 @@ class RefsSchemaGenerator(SchemaGenerator):
         return schema
 
 
-class NewRefsSchemaGenerator(RefsSchemaGenerator):
+class RefsSchemaGenerator30(RefsSchemaGenerator):
+    openapi_version = VersionInfo.parse('3.0.2')
+
+
+class RefsSchemaGenerator31(RefsSchemaGenerator):
     openapi_version = VersionInfo.parse('3.1.0')
