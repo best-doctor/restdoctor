@@ -141,7 +141,7 @@ class SerializerClassMapApiView(GenericAPIView):
 
     def get_meta_serializer(self, *args: typing.Any, **kwargs: typing.Any) -> BaseSerializer:
         stage = 'meta'
-        serializer_class = self.get_serializer_class(stage)
+        serializer_class = self.get_meta_serializer_class()
         return self.get_serializer_instance(serializer_class, stage=stage, *args, **kwargs)
 
 

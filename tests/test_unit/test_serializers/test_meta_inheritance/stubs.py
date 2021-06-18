@@ -1,6 +1,8 @@
 from rest_framework.fields import CharField
 from restdoctor.rest_framework.serializers import ModelSerializer, Serializer
+from restdoctor.rest_framework.viewsets import ListModelViewSet
 from tests.stubs.models import MyModel
+from tests.test_unit.stubs import SerializerA
 
 
 class ParentModelSerializer(ModelSerializer):
@@ -30,3 +32,16 @@ class SerializerMixinA(Serializer):
 
 class SerializerMixinB(Serializer):
     field_mixin_b = CharField()
+
+
+class SerializerMeta(Serializer):
+    char_field = CharField()
+
+
+class ListViewSetWithMetaSerializer(ListModelViewSet):
+    serializer_class_map = {'default': SerializerA, 'list': {'meta': SerializerMeta}}
+
+
+class ListViewSetWithRequestSerializer(ListModelViewSet):
+    serializer_class_map = {'default': SerializerA}
+
