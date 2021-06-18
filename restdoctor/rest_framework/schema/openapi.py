@@ -34,9 +34,6 @@ if typing.TYPE_CHECKING:
         OpenAPISchema,
     )
 
-import logging
-
-l1 = logging.getLogger()
 
 class RestDoctorSchema(ViewSchemaProtocol, AutoSchema):
     def __init__(
