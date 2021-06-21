@@ -239,6 +239,7 @@ class MyApiView(SerializerClassMapApiView):
          },
          'list': {
             'response.another_format': MyAnotherSerializer,
+            'meta': MyMetaSerializer,
         }
     }
 
@@ -248,6 +249,7 @@ class MyApiView(SerializerClassMapApiView):
 переопределяем сериализаторы для обработки request'а.
 
 Кроме того, мы определили сериализатор для `compact` формата и отдельно для `list` action для `another_format`.
+Отдельно добавлена дополнительное формирование meta информации. 
 
 
 #### permission_classes_map
@@ -315,6 +317,33 @@ class ListModelMixin(BaseListModelMixin):
 для query-параметров, что позволит получить эти параметры и использовать дополнительно к filterset'у.
 
 
+Определяет формирование дополнительной `meta` информации. Определяет метод `get_meta_data`:
+
+```python
+class ListModelMixin(BaseListModelMixin):
+    def get_meta_data(self) -> typing.Dict[str, typing.Any]:
+        return {'test': typing.Any}
+```
+Т.е. можно использовать `ListModelMixin` для формирования дополнительной информации в поле `meta`. 
+Для корректной работы нужно определить сериализатор для `meta`.
+
+```python
+    serializer_class_map = {
+         'default': MyDefaultSerializer,
+         'list': {
+            'meta': MyMetaSerializer,
+        }
+    }
+```
+
+Задан обработчик `perform_list` для выбранных данных в пагинации. 
+Для работы нужно переопределить метод `perform_list`.
+
+```python
+class ListModelMixin(BaseListModelMixin):
+    def perform_list(self, data: typing.Union[typing.List, QuerySet]) -> None:
+        Sender(data)
+```
 #### ListModelViewSet
 
 Задан только обработчик для `list` action.
