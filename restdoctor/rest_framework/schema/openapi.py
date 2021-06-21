@@ -231,6 +231,11 @@ class RestDoctorSchema(ViewSchemaProtocol, AutoSchema):
             paginator = self.get_paginator()
             if paginator:
                 response_schema = paginator.get_paginated_response_schema(response_schema)
+            meta_schema = self.get_meta_schema(path, method, api_format)
+            if response_schema['properties'].get('meta'):
+                response_schema = self.update_meta_schema(response_schema, meta_schema)
+            else:
+                response_schema['properties']['meta'] = meta_schema
         else:
             response_schema['properties']['data'] = item_schema
 
@@ -241,6 +246,30 @@ class RestDoctorSchema(ViewSchemaProtocol, AutoSchema):
         if pagination_class:
             return pagination_class(view_schema=self)
         return None
+
+    def update_meta_schema(self, response_schema: OpenAPISchema, meta_schema: OpenAPISchema) -> OpenAPISchema:
+        if not meta_schema:
+            return response_schema
+        for name, value in response_schema['properties']['meta'].items():
+            with contextlib.suppress(KeyError):
+                data = meta_schema[name]
+                if isinstance(value, list):
+                    value.append(data)
+                if isinstance(value, dict):
+                    value.update(data)
+        return response_schema
+
+    def get_meta_schema(
+        self, path: str, method: str, api_format: str = None
+    ) -> typing.Optional[OpenAPISchema]:
+        if issubclass(self.view.__class__, SerializerClassMapApiView):
+            action = get_action(path, method, self.view)
+            serializer_class = self.view.get_serializer_class('meta', action, api_format, use_default=False)
+
+            if serializer_class is None:
+                return None
+            serializer = serializer_class()
+            return self.get_serializer_schema(serializer)
 
     def get_action_code_description(self, path: str, method: str) -> CodeDescriptionTuple:
         for code, description, _ in self.get_action_code_schemas(path, method):

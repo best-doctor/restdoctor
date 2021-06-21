@@ -34,7 +34,8 @@ class PageNumberRequestSerializer(PerPageSerializerBase):
 class PageNumberUncountedResponseSerializer(Serializer):
     page = IntegerField(min_value=1, help_text=_('Selected page'))
     per_page = IntegerField(
-        required=True, max_value=DEFAULT_MAX_PAGE_SIZE,
+        required=True,
+        max_value=DEFAULT_MAX_PAGE_SIZE,
         help_text=_('Page size'),
     )
     has_next = BooleanField(help_text=_('Has result next page'))
@@ -57,7 +58,8 @@ class CursorUUIDUncountedResponseSerializer(Serializer):
     after = UUIDField(required=False, allow_null=True, help_text=_('After UUID'))
     before = UUIDField(required=False, allow_null=True, help_text=_('Before UUID'))
     per_page = IntegerField(
-        required=True, max_value=DEFAULT_MAX_PAGE_SIZE,
+        required=True,
+        max_value=DEFAULT_MAX_PAGE_SIZE,
         help_text=_('Page size'),
     )
     has_next = BooleanField(help_text=_('Has result next page'))
