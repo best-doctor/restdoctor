@@ -4,7 +4,7 @@ import contextlib
 import typing
 
 from django.conf import settings
-from django.core.exceptions import ImproperlyConfigured, FieldDoesNotExist
+from django.core.exceptions import FieldDoesNotExist, ImproperlyConfigured
 from django.db import models
 from django_filters import Filter
 from django_filters.rest_framework import DjangoFilterBackend, FilterSet
@@ -247,7 +247,9 @@ class RestDoctorSchema(ViewSchemaProtocol, AutoSchema):
             return pagination_class(view_schema=self)
         return None
 
-    def update_meta_schema(self, response_schema: OpenAPISchema, meta_schema: OpenAPISchema) -> OpenAPISchema:
+    def update_meta_schema(
+        self, response_schema: OpenAPISchema, meta_schema: typing.Optional[OpenAPISchema]
+    ) -> OpenAPISchema:
         if not meta_schema:
             return response_schema
         for name, value in response_schema['properties']['meta'].items():
@@ -264,7 +266,9 @@ class RestDoctorSchema(ViewSchemaProtocol, AutoSchema):
     ) -> typing.Optional[OpenAPISchema]:
         if issubclass(self.view.__class__, SerializerClassMapApiView):
             action = get_action(path, method, self.view)
-            serializer_class = self.view.get_serializer_class('meta', action, api_format, use_default=False)
+            serializer_class = self.view.get_serializer_class(
+                'meta', action, api_format, use_default=False
+            )
 
             if serializer_class is None:
                 return None
@@ -385,9 +389,7 @@ class RestDoctorSchema(ViewSchemaProtocol, AutoSchema):
                 'required': field.extra['required'],
                 'in': 'query',
                 'description': self.get_verbose_filter_field_description(filterset_class, field),
-                'schema': {
-                    'type': 'string',
-                },
+                'schema': {'type': 'string'},
             }
             if field.extra and 'choices' in field.extra:
                 parameter['schema']['enum'] = [c[0] for c in field.extra['choices']]

@@ -3,13 +3,11 @@ from __future__ import annotations
 import typing
 
 from rest_framework import status
-from rest_framework.mixins import (
-    ListModelMixin as BaseListModelMixin,
-    RetrieveModelMixin as BaseRetrieveModelMixin,
-    CreateModelMixin as BaseCreateModelMixin,
-    UpdateModelMixin as BaseUpdateModelMixin,
-    DestroyModelMixin as BaseDestroyModelMixin,
-)
+from rest_framework.mixins import CreateModelMixin as BaseCreateModelMixin
+from rest_framework.mixins import DestroyModelMixin as BaseDestroyModelMixin
+from rest_framework.mixins import ListModelMixin as BaseListModelMixin
+from rest_framework.mixins import RetrieveModelMixin as BaseRetrieveModelMixin
+from rest_framework.mixins import UpdateModelMixin as BaseUpdateModelMixin
 from rest_framework.request import Request
 from rest_framework.response import Response
 
@@ -52,9 +50,9 @@ class ListModelMixin(BaseListModelMixin):
     def get_serializer(self, *args: typing.Any, **kwargs: typing.Any) -> BaseSerializer:
         return self.get_response_serializer(*args, **kwargs)
 
-    def list(
+    def list(  # noqa: A003
         self, request: Request, *args: typing.Any, **kwargs: typing.Any
-    ) -> Response:  # noqa: A003
+    ) -> Response:
         request_serializer = self.get_request_serializer(
             data=request.query_params, use_default=False
         )
@@ -73,7 +71,9 @@ class ListModelMixin(BaseListModelMixin):
         serializer = self.get_serializer(queryset, many=True)
         return ResponseWithMeta(data=serializer.data, meta=meta)
 
-    def get_collection(self, request_serializer: BaseSerializer) -> typing.Union[typing.List, QuerySet]:
+    def get_collection(
+        self, request_serializer: BaseSerializer
+    ) -> typing.Union[typing.List, QuerySet]:
         return self.filter_queryset(self.get_queryset())
 
     def perform_list(self, data: typing.Union[typing.List, QuerySet]) -> None:
