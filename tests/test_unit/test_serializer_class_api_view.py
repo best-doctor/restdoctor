@@ -3,7 +3,7 @@ import pytest
 from restdoctor.rest_framework.serializers import EmptySerializer
 from tests.test_unit.stubs import (
     ListViewSetWithRequestSerializer, SerializerB, ListViewSetWithoutRequestSerializer,
-    SerializerA,
+    SerializerA, ListSetWithMetaSerializer, SerializerC,
 )
 
 
@@ -20,6 +20,22 @@ def test_get_request_serializer_class(viewset, use_default, expected):
     list_view = viewset(request=None, action='list')
 
     request_serializer_class = list_view.get_request_serializer_class(use_default=use_default)
+
+    assert request_serializer_class == expected
+
+
+@pytest.mark.parametrize(
+    'viewset,expected',
+    (
+            (ListSetWithMetaSerializer, SerializerC),
+            (ListViewSetWithRequestSerializer, EmptySerializer),
+            (ListViewSetWithoutRequestSerializer, EmptySerializer),
+    ),
+)
+def test_get_meta_serializer_class(viewset, expected):
+    list_view = viewset(request=None, action='list')
+
+    request_serializer_class = list_view.get_meta_serializer_class()
 
     assert request_serializer_class == expected
 

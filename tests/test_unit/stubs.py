@@ -156,8 +156,16 @@ class SerializerB(BaseSerializer):
     pass
 
 
+class SerializerC(BaseSerializer):
+    pass
+
+
 class ListViewSetWithRequestSerializer(ListModelViewSet):
     serializer_class_map = {'default': SerializerA, 'list': {'request': SerializerB}}
+
+
+class ListSetWithMetaSerializer(ListModelViewSet):
+    serializer_class_map = {'default': SerializerA, 'list': {'request': SerializerB, 'meta': SerializerC}}
 
 
 class ListViewSetWithoutRequestSerializer(ListModelViewSet):

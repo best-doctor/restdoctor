@@ -124,6 +124,9 @@ class SerializerClassMapApiView(GenericAPIView):
     def get_response_serializer_class(self) -> SerializerType:
         return self.get_serializer_class('response')
 
+    def get_meta_serializer_class(self) -> SerializerType:
+        return self.get_serializer_class('meta', use_default=False)
+
     def get_request_serializer(
             self, *args: typing.Any, use_default: bool = True, **kwargs: typing.Any,
     ) -> BaseSerializer:
@@ -134,6 +137,11 @@ class SerializerClassMapApiView(GenericAPIView):
     def get_response_serializer(self, *args: typing.Any, **kwargs: typing.Any) -> BaseSerializer:
         stage = 'response'
         serializer_class = self.get_serializer_class(stage)
+        return self.get_serializer_instance(serializer_class, stage=stage, *args, **kwargs)
+
+    def get_meta_serializer(self, *args: typing.Any, **kwargs: typing.Any) -> BaseSerializer:
+        stage = 'meta'
+        serializer_class = self.get_meta_serializer_class()
         return self.get_serializer_instance(serializer_class, stage=stage, *args, **kwargs)
 
 

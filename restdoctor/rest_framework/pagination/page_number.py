@@ -10,7 +10,9 @@ from rest_framework.exceptions import NotFound
 from restdoctor.constants import DEFAULT_MAX_PAGE_SIZE, DEFAULT_PAGE_SIZE
 from restdoctor.rest_framework.pagination.mixins import SerializerClassPaginationMixin
 from restdoctor.rest_framework.pagination.serializers import (
-    PageNumberRequestSerializer, PageNumberResponseSerializer, PageNumberUncountedResponseSerializer,
+    PageNumberRequestSerializer,
+    PageNumberResponseSerializer,
+    PageNumberUncountedResponseSerializer,
 )
 from restdoctor.rest_framework.response import ResponseWithMeta
 
