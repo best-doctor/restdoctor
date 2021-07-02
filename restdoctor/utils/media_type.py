@@ -1,9 +1,12 @@
 from __future__ import annotations
+
 import dataclasses
+import re
 import typing
 
 from django.conf import settings
 
+from restdoctor.constants import DEFAULT_PREFIX_FORMAT_VERSION
 from restdoctor.utils.api_prefix import get_api_prefix
 
 
@@ -27,11 +30,7 @@ class APIParams:
 def parse_accept(header: str = None, vendor: str = None) -> typing.Optional[APIParams]:
     if not header:
         return None
-    api_params = APIParams(
-        prefix=get_api_prefix(),
-        accepted=header,
-        vendor=vendor or 'vendor',
-    )
+    api_params = APIParams(prefix=get_api_prefix(), accepted=header, vendor=vendor or 'vendor')
     api_options_string = header.split('/', 1)[-1]
     if getattr(settings, 'API_FALLBACK_FOR_APPLICATION_JSON_ONLY', False):
         if api_options_string == 'json':
@@ -82,8 +81,32 @@ def parse_api_format(api_options_parts: typing.List[str]) -> typing.Optional[str
     except IndexError:
         pass
     else:
-        if api_format in settings.API_FORMATS:
+        if api_format in get_api_formats():
             return api_format
+
+
+def get_api_formats() -> typing.Tuple[str, ...]:
+    api_formats: typing.List[str] = []
+    for format_name in settings.API_FORMATS:
+        if DEFAULT_PREFIX_FORMAT_VERSION in format_name:
+            api_formats.extend(_get_multi_format(format_name))
+            continue
+        api_formats.append(format_name)
+    return tuple(api_formats)
+
+
+def _get_multi_format(format_name: str) -> typing.List[str]:
+    regexp = re.findall(r'(.+)' + DEFAULT_PREFIX_FORMAT_VERSION + r'\{(.+)\}', format_name)
+    if not regexp:
+        return [format_name]
+    try:
+        format_group_name, format_version_name = regexp[0]
+    except IndexError:
+        return [format_name]
+    return [
+        f'{format_group_name}{DEFAULT_PREFIX_FORMAT_VERSION}{name}'
+        for name in format_version_name.split(',')
+    ]
 
 
 def get_api_header(params: APIParams) -> str:
