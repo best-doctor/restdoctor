@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import contextlib
-import re
 import typing
 
 from django.conf import settings
@@ -89,22 +87,38 @@ def get_serializer_class_from_map(
 
 
 def get_api_formats(api_format: str) -> typing.List[str]:
-    result = [api_format]
-    if DEFAULT_PREFIX_FORMAT_VERSION in api_format:
-        api_format_name, api_format_version = api_format.split(DEFAULT_PREFIX_FORMAT_VERSION)
-        for name in settings.API_FORMATS:
-            if not all((name.startswith(api_format_name), DEFAULT_PREFIX_FORMAT_VERSION in name)):
-                continue
-            versions = re.search(r'\{(.+)\}', name)
-            if not versions:
-                continue
-            with contextlib.suppress(IndexError, ValueError):
-                versions_pool = sorted(versions.group(1).split(','), key=int)
-                if not versions_pool:
-                    break
-                return [
-                    f'{api_format_name}{DEFAULT_PREFIX_FORMAT_VERSION}{version}'
-                    for version in versions_pool
-                    if int(version) <= int(api_format_version)
-                ]
-    return result
+    if DEFAULT_PREFIX_FORMAT_VERSION not in api_format:
+        return [api_format]
+    api_format_name, api_format_post = api_format.split(DEFAULT_PREFIX_FORMAT_VERSION)
+    try:
+        api_format_version = int(api_format_post)
+    except ValueError:
+        return [api_format]
+    result = []
+    for name in settings.API_FORMATS:
+        if not all((name.startswith(api_format_name), DEFAULT_PREFIX_FORMAT_VERSION in name)):
+            continue
+        for version in _find_format_range(name):
+            if int(version) <= int(api_format_version):
+                result.append(f'{api_format_name}{DEFAULT_PREFIX_FORMAT_VERSION}{version}')
+    return result or [api_format]
+
+
+def _find_format_range(name_format: str) -> typing.List[int]:
+    is_block = False
+    current_number = []
+    versions_pool = []
+    for word in name_format:
+        if word == '{':
+            is_block = True
+        if is_block and word.isdigit():
+            current_number.append(word)
+        if is_block and word == ',':
+            versions_pool.append(int(''.join(current_number)))
+            current_number = []
+        if word == '}':
+            if current_number:
+                versions_pool.append(int(''.join(current_number)))
+            break
+    versions_pool = sorted(versions_pool)
+    return versions_pool
