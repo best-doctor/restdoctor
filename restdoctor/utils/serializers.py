@@ -99,7 +99,7 @@ def get_api_formats(api_format: str) -> typing.List[str]:
         if not all((name.startswith(api_format_name), DEFAULT_PREFIX_FORMAT_VERSION in name)):
             continue
         for version in _find_format_range(name):
-            if int(version) <= int(api_format_version):
+            if version <= api_format_version:
                 result.append(f'{api_format_name}{DEFAULT_PREFIX_FORMAT_VERSION}{version}')
     return result or [api_format]
 
