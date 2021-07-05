@@ -90,6 +90,20 @@ class ListModelMixin(BaseListModelMixin):
 
 
 class RetrieveModelMixin(BaseRetrieveModelMixin):
+    def retrieve(self, request: Request, *args: typing.Any, **kwargs: typing.Any) -> Response:
+        request_serializer = self.get_request_serializer(
+            data=request.query_params, use_default=False
+        )
+        request_serializer.is_valid(raise_exception=True)
+
+        item = self.get_item(request_serializer)
+
+        serializer = self.get_serializer(item)
+        return Response(serializer.data)
+
+    def get_item(self, request_serializer: BaseSerializer) -> typing.Union[typing.Dict, QuerySet]:
+        return self.get_object()
+
     def get_serializer(self, *args: typing.Any, **kwargs: typing.Any) -> BaseSerializer:
         return self.get_response_serializer(*args, **kwargs)
 
