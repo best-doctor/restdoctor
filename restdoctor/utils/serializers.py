@@ -4,8 +4,8 @@ import typing
 
 from django.conf import settings
 
-from restdoctor.constants import DEFAULT_PREFIX_FORMAT_VERSION
 from restdoctor.rest_framework.serializers import EmptySerializer
+from restdoctor.utils.api_format import get_filter_formats
 
 if typing.TYPE_CHECKING:
     from rest_framework.serializers import BaseSerializer
@@ -72,7 +72,7 @@ def get_serializer_class_from_map(
     api_format = api_format or settings.API_DEFAULT_FORMAT
     if use_default:
         serializer_class = serializer_class_map.get('default', default_class)
-        for format_name in get_api_formats(api_format):
+        for format_name in get_filter_formats(settings.API_FORMATS, api_format):
             serializer_class = serializer_class_map.get(f'default.{format_name}', serializer_class)
     else:
         serializer_class = EmptySerializer
@@ -80,45 +80,7 @@ def get_serializer_class_from_map(
     action_class_map = serializer_class_map.get(action)
     if isinstance(action_class_map, dict):
         serializer_class = action_class_map.get(stage, serializer_class)
-        for format_name in get_api_formats(api_format):
+        for format_name in get_filter_formats(settings.API_FORMATS, api_format):
             serializer_class = action_class_map.get(f'{stage}.{format_name}', serializer_class)
 
     return serializer_class
-
-
-def get_api_formats(api_format: str) -> typing.List[str]:
-    if DEFAULT_PREFIX_FORMAT_VERSION not in api_format:
-        return [api_format]
-    api_format_name, api_format_post = api_format.split(DEFAULT_PREFIX_FORMAT_VERSION)
-    try:
-        api_format_version = int(api_format_post)
-    except ValueError:
-        return [api_format]
-    result = []
-    for name in settings.API_FORMATS:
-        if not all((name.startswith(api_format_name), DEFAULT_PREFIX_FORMAT_VERSION in name)):
-            continue
-        for version in _find_format_range(name):
-            if version <= api_format_version:
-                result.append(f'{api_format_name}{DEFAULT_PREFIX_FORMAT_VERSION}{version}')
-    return result or [api_format]
-
-
-def _find_format_range(name_format: str) -> typing.List[int]:
-    is_block = False
-    current_number = []
-    versions_pool = []
-    for word in name_format:
-        if word == '{':
-            is_block = True
-        if is_block and word.isdigit():
-            current_number.append(word)
-        if is_block and word == ',':
-            versions_pool.append(int(''.join(current_number)))
-            current_number = []
-        if word == '}':
-            if current_number:
-                versions_pool.append(int(''.join(current_number)))
-            break
-    versions_pool = sorted(versions_pool)
-    return versions_pool

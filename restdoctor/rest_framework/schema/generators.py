@@ -11,7 +11,7 @@ from semver import VersionInfo
 from restdoctor.rest_framework.schema.custom_types import SchemaGenerator
 from restdoctor.rest_framework.schema.openapi import RestDoctorSchema
 from restdoctor.rest_framework.schema.refs_registry import LocalRefsRegistry
-from restdoctor.utils.media_type import get_api_formats
+from restdoctor.utils.api_format import get_available_format
 
 if typing.TYPE_CHECKING:
     from restdoctor.rest_framework.custom_types import Handler
@@ -36,7 +36,7 @@ class RefsSchemaGenerator(SchemaGenerator):
                     self.api_version = api_version
                     break
         self.api_default_format = settings.API_DEFAULT_FORMAT
-        self.api_formats = get_api_formats()
+        self.api_formats = tuple(get_available_format(settings.API_FORMATS))
 
     def get_paths(self, request: Request = None) -> typing.Optional[OpenAPISchema]:
         result: OpenAPISchema = {}
