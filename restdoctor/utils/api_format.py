@@ -33,7 +33,7 @@ def generate_format(
     if DEFAULT_PREFIX_FORMAT_VERSION not in api_format:
         return [api_format]
 
-    api_format_name, api_format_prefix = api_format.split(DEFAULT_PREFIX_FORMAT_VERSION)
+    api_format_name, api_format_prefix = api_format.split(DEFAULT_PREFIX_FORMAT_VERSION, 1)
     format_range = _find_format_range(api_format_prefix)
     if not format_range:
         return [api_format]
@@ -56,7 +56,7 @@ def get_filter_formats(
 ) -> typing.List[str]:
     result = generate_format(requested_format)
     try:
-        search_prefix, api_format_prefix = requested_format.split(DEFAULT_PREFIX_FORMAT_VERSION)
+        search_prefix, api_format_prefix = requested_format.split(DEFAULT_PREFIX_FORMAT_VERSION, 1)
         api_format_version = int(api_format_prefix)
     except ValueError:
         return result
