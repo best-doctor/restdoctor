@@ -165,7 +165,10 @@ class ListViewSetWithRequestSerializer(ListModelViewSet):
 
 
 class ListSetWithMetaSerializer(ListModelViewSet):
-    serializer_class_map = {'default': SerializerA, 'list': {'request': SerializerB, 'meta': SerializerC}}
+    serializer_class_map = {
+        'default': SerializerA,
+        'list': {'request': SerializerB, 'meta': SerializerC},
+    }
 
 
 class ListViewSetWithoutRequestSerializer(ListModelViewSet):
@@ -176,7 +179,7 @@ class ROViewSet(ReadOnlyModelViewSet):
     serializer_class_map = {'default': SerializerA}
 
     def dispatch(self, *args, **kwargs):
-        return super(GenericAPIView, self).dispatch(*args, **kwargs)
+        return super().dispatch(*args, **kwargs)
 
     def retrieve(self, *args, **kwargs):
         return Response({})
