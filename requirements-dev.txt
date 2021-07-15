@@ -126,9 +126,9 @@ flake8==3.9.0 \
     #   flake8-print
     #   flake8-quotes
     #   flake8-string-format
-flake8-adjustable-complexity==0.0.4 \
-    --hash=sha256:569f0e9ada5a493018e103972c68c8c2ef4f60726ed21f0e35d6501a4bea466f \
-    --hash=sha256:f21072649429e54121ee790b333c84075e3be0e6b14da1708a27bec0912f9634
+flake8-adjustable-complexity==0.0.5 \
+    --hash=sha256:be4c981a192c565a77bd8dc1b796abccb1f64bb3b9beada08f32a922aa73e82f \
+    --hash=sha256:f6a38046a4b79499d5d8db4e4fb272674e92198356248495b6feea9a607b1746
     # via -r requirements-dev.in
 flake8-annotations-complexity==0.0.6 \
     --hash=sha256:078a84e8269ef82c4c9de5198638e9a91a2089307d4e559666464a87b528ea69 \
