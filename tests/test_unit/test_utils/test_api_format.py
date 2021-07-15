@@ -8,7 +8,7 @@ from restdoctor.utils.api_format import get_available_format, get_filter_formats
 @pytest.mark.parametrize(
     'formats,api_format,expected',
     (
-        (('full', 'compact'), 'compact', ['compact']),
+        (('full', 'compact', 'big'), 'compact', ['compact']),
         (('full', 'compact'), 'full', ['full']),
         (('full', 'compact:{3,2,1}'), 'compact:2', ['compact:1', 'compact:2']),
         (('full', 'compact:{3,2,1}'), 'full', ['full']),
@@ -17,6 +17,11 @@ from restdoctor.utils.api_format import get_available_format, get_filter_formats
         (('full', 'my_name:1', 'mobile:1:2'), 'my_name:1', ['my_name:1']),
         (('full', 'mobile:1:2'), 'mobile:1:2', ['mobile:1:2']),
         (('full', 'my_name:{32}'), 'my_name:32', ['my_name:32']),
+        (
+            ('full', 'my_name:{1,2}', 'my_name:{15,12,30}'),
+            'my_name:15',
+            ['my_name:12', 'my_name:15'],
+        ),
         (('full', 'my_name:{32,433,14}'), 'my_name:32', ['my_name:14', 'my_name:32']),
     ),
 )

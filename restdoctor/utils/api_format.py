@@ -27,9 +27,7 @@ def _find_format_range(name_format: str) -> typing.List[int]:
 
 
 @functools.lru_cache
-def generate_format(
-    api_format: str, api_format_version: typing.Optional[int] = None
-) -> typing.List[str]:
+def generate_format(api_format: str) -> typing.List[str]:
     if DEFAULT_PREFIX_FORMAT_VERSION not in api_format:
         return [api_format]
 
@@ -39,8 +37,7 @@ def generate_format(
         return [api_format]
     result = []
     for version in format_range:
-        if not api_format_version or version <= api_format_version:
-            result.append(f'{api_format_name}{DEFAULT_PREFIX_FORMAT_VERSION}{version}')
+        result.append(f'{api_format_name}{DEFAULT_PREFIX_FORMAT_VERSION}{version}')
     return result
 
 
@@ -54,14 +51,11 @@ def get_available_format(available_formats: typing.Tuple[str, ...]) -> typing.Li
 def get_filter_formats(
     available_formats: typing.Tuple[str, ...], requested_format: str
 ) -> typing.List[str]:
-    result = generate_format(requested_format)
-    try:
-        search_prefix, api_format_prefix = requested_format.split(DEFAULT_PREFIX_FORMAT_VERSION, 1)
-        api_format_version = int(api_format_prefix)
-    except ValueError:
-        return result
 
     for api_format in available_formats:
-        if api_format.startswith(search_prefix) and api_format != requested_format:
-            result = generate_format(api_format, api_format_version)
-    return result
+        result = []
+        for format_name in generate_format(api_format):
+            result.append(format_name)
+            if format_name == requested_format:
+                return result
+    return [requested_format]
