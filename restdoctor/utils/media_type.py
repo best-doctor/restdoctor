@@ -1,9 +1,11 @@
 from __future__ import annotations
+
 import dataclasses
 import typing
 
 from django.conf import settings
 
+from restdoctor.utils.api_format import get_available_format
 from restdoctor.utils.api_prefix import get_api_prefix
 
 
@@ -27,11 +29,7 @@ class APIParams:
 def parse_accept(header: str = None, vendor: str = None) -> typing.Optional[APIParams]:
     if not header:
         return None
-    api_params = APIParams(
-        prefix=get_api_prefix(),
-        accepted=header,
-        vendor=vendor or 'vendor',
-    )
+    api_params = APIParams(prefix=get_api_prefix(), accepted=header, vendor=vendor or 'vendor')
     api_options_string = header.split('/', 1)[-1]
     if getattr(settings, 'API_FALLBACK_FOR_APPLICATION_JSON_ONLY', False):
         if api_options_string == 'json':
@@ -82,7 +80,7 @@ def parse_api_format(api_options_parts: typing.List[str]) -> typing.Optional[str
     except IndexError:
         pass
     else:
-        if api_format in settings.API_FORMATS:
+        if api_format in get_available_format(settings.API_FORMATS):
             return api_format
 
 

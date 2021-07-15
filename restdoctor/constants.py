@@ -1,3 +1,7 @@
+from __future__ import annotations
+
+DEFAULT_PREFIX_FORMAT_VERSION = ':'
+
 DEFAULT_PAGE_SIZE = 20
 DEFAULT_MAX_PAGE_SIZE = 200
 

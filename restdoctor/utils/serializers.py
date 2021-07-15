@@ -1,12 +1,15 @@
 from __future__ import annotations
+
 import typing
 
 from django.conf import settings
 
 from restdoctor.rest_framework.serializers import EmptySerializer
+from restdoctor.utils.api_format import get_filter_formats
 
 if typing.TYPE_CHECKING:
     from rest_framework.serializers import BaseSerializer
+
     from restdoctor.utils.custom_types import GenericContext
 
     SerializerType = typing.Type[BaseSerializer]
@@ -36,10 +39,7 @@ def get_serializer(
     return serializer_class(instance=instance, data=data, **kwargs)
 
 
-def modify_instance(
-    instance: typing.Any,
-    update_data: GenericContext,
-) -> bool:
+def modify_instance(instance: typing.Any, update_data: GenericContext) -> bool:
     modified = False
     for key, value in update_data.items():
         old_value = getattr(instance, key)
@@ -50,9 +50,7 @@ def modify_instance(
 
 
 def update_instance(
-    instance: typing.Any,
-    update_data: GenericContext,
-    save_if_modified: bool = True,
+    instance: typing.Any, update_data: GenericContext, save_if_modified: bool = True
 ) -> bool:
     modified = modify_instance(instance, update_data)
     if modified and save_if_modified:
@@ -74,12 +72,15 @@ def get_serializer_class_from_map(
     api_format = api_format or settings.API_DEFAULT_FORMAT
     if use_default:
         serializer_class = serializer_class_map.get('default', default_class)
-        serializer_class = serializer_class_map.get(f'default.{api_format}', serializer_class)
+        for format_name in get_filter_formats(settings.API_FORMATS, api_format):
+            serializer_class = serializer_class_map.get(f'default.{format_name}', serializer_class)
     else:
         serializer_class = EmptySerializer
 
     action_class_map = serializer_class_map.get(action)
     if isinstance(action_class_map, dict):
         serializer_class = action_class_map.get(stage, serializer_class)
-        serializer_class = action_class_map.get(f'{stage}.{api_format}', serializer_class)
+        for format_name in get_filter_formats(settings.API_FORMATS, api_format):
+            serializer_class = action_class_map.get(f'{stage}.{format_name}', serializer_class)
+
     return serializer_class

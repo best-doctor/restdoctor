@@ -182,6 +182,9 @@ API_VERSIONS = {
 Кроме того, может быть дополнительно указан `{format}` для выбора формата ответа, по факту выбор сериализатора в
 `SerializerClassMapApiView`.
 
+Также у формата тоже могут быть версии. Если `{format}` в `API_FORMATS` задан `version:{2,3,5}` в запросе Accept фигурирует только номер версии `version:5`.
+Выбор сериализатора происходит от большого к меньшему.
+
 В случае успешного определения версии и параметров API из заголовка Accept, middleware выбирает для дальнейшей обработки
 запроса конкретный UrlConf и добавляет к объекту `request` атрибут `api_params`.
 
@@ -236,6 +239,8 @@ class MyApiView(SerializerClassMapApiView):
          },
          'update': {
             'request': MyUpdateSerializer,
+            'request.version:3': MyVersion3UpdateSerializer,
+            'request.version:2': MyVersionUpdateSerializer,
          },
          'list': {
             'response.another_format': MyAnotherSerializer,
@@ -248,8 +253,9 @@ class MyApiView(SerializerClassMapApiView):
 В этом примере мы задаем `MyDefaultSerializer` как базовый для ViewSet. Но для `create` и `update` action
 переопределяем сериализаторы для обработки request'а.
 
-Кроме того, мы определили сериализатор для `compact` формата и отдельно для `list` action для `another_format`.
-Отдельно добавлена дополнительное формирование meta информации. 
+Кроме того, мы определили сериализатор для `compact` формата и отдельно для action `list` и `update` форматы `another_format`, `version:2`, `version:3`.
+Формат с версиями работает по принципу поиска точной или меньшей версии сериализатора.
+Отдельно добавлена дополнительное формирование meta информации.
 
 
 #### permission_classes_map
@@ -324,7 +330,7 @@ class ListModelMixin(BaseListModelMixin):
     def get_meta_data(self) -> typing.Dict[str, typing.Any]:
         return {'test': typing.Any}
 ```
-Т.е. можно использовать `ListModelMixin` для формирования дополнительной информации в поле `meta`. 
+Т.е. можно использовать `ListModelMixin` для формирования дополнительной информации в поле `meta`.
 Для корректной работы нужно определить сериализатор для `meta`.
 
 ```python
@@ -336,7 +342,7 @@ class ListModelMixin(BaseListModelMixin):
     }
 ```
 
-Задан обработчик `perform_list` для выбранных данных в пагинации. 
+Задан обработчик `perform_list` для выбранных данных в пагинации.
 Для работы нужно переопределить метод `perform_list`.
 
 ```python
