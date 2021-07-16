@@ -30,3 +30,5 @@ ResourceViewsMap = ResourceMap[t.Type[ViewSet]]
 ResourceActionsMap = ResourceMap[t.Set[str]]
 ResourceHandlersMap = ResourceMap[Handler]
 ResourceModelsMap = ResourceMap[t.Optional[models.Model]]
+
+ModelObject = t.TypeVar('ModelObject', bound=models.Model, covariant=True)
