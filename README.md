@@ -304,6 +304,24 @@ Django-механизмы роутинга создают функцию-обр�
 `SerializerClassMapApiView.get_response_serializer` вместо `View.get_serializer`.
 
 
+#### RetrieveModelMixin
+
+Определяет обработчик для `retrieve` action. Определяет метод `get_item`:
+
+```python
+class RetrieveModelMixin(BaseListModelMixin):
+    def retrieve(self, request: Request, *args: typing.Any, **kwargs: typing.Any) -> Response:
+        item = self.get_item(request_serializer)
+        ...
+
+
+    def get_item(self, request_serializer: BaseSerializer) -> typing.Union[typing.Dict, QuerySet]:
+        return self.get_object()
+```
+
+Т.е. можно использовать `RetrieveModelMixin` для работы с любыми словарями, а не только моделями, надо только
+переопределить `ViewSet.get_item`.
+
 #### ListModelMixin
 
 Определяет обработчик для `list` action. Определяет метод `get_collection`:
