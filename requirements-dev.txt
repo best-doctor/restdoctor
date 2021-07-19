@@ -205,9 +205,9 @@ flake8-todo==0.7 \
 flake8-variables-names==0.0.4 \
     --hash=sha256:d6fa0571a807c72940b5773827c5760421ea6f8206595ff0a8ecfa01e42bf2cf
     # via -r requirements-dev.in
-freezegun==0.3.15 \
-    --hash=sha256:82c757a05b7c7ca3e176bfebd7d6779fd9139c7cb4ef969c38a28d74deef89b2 \
-    --hash=sha256:e2062f2c7f95cc276a834c22f1a17179467176b624cc6f936e8bc3be5535ad1b
+freezegun==1.1.0 \
+    --hash=sha256:177f9dd59861d871e27a484c3332f35a6e3f5d14626f2bf91be37891f18927f3 \
+    --hash=sha256:2ae695f7eb96c62529f03a038461afe3c692db3465e215355e1bb4b0ab408712
     # via -r requirements-dev.in
 identify==2.2.2 \
     --hash=sha256:43cb1965e84cdd247e875dec6d13332ef5be355ddc16776396d98089b9053d87 \
@@ -437,7 +437,6 @@ six==1.15.0 \
     # via
     #   flake8-debugger
     #   flake8-print
-    #   freezegun
     #   packaging
     #   python-dateutil
     #   virtualenv
