@@ -331,8 +331,9 @@ pytest-django==3.9.0 \
 pytest-env==0.6.2 \
     --hash=sha256:7e94956aef7f2764f3c147d216ce066bf6c42948bb9e293169b1b1c880a580c2
     # via -r requirements-dev.in
-pytest-factoryboy==2.0.3 \
-    --hash=sha256:ffef3fb7ddec1299d3df0d334846259023f3d1da5ab887ad880139a8253a5a1a
+pytest-factoryboy==2.1.0 \
+    --hash=sha256:10c02d2736cb52c7af28065db9617e7f50634e95eaa07eeb9a007026aa3dc0a8 \
+    --hash=sha256:23bc562ab32cc39eddfbbbf70e618a1b30e834a4cfa451c4bedc36216f0a7b19
     # via -r requirements-dev.in
 pytest-mock==3.1.1 \
     --hash=sha256:636e792f7dd9e2c80657e174c04bf7aa92672350090736d82e97e92ce8f68737 \
