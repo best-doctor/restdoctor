@@ -335,9 +335,9 @@ pytest-factoryboy==2.1.0 \
     --hash=sha256:10c02d2736cb52c7af28065db9617e7f50634e95eaa07eeb9a007026aa3dc0a8 \
     --hash=sha256:23bc562ab32cc39eddfbbbf70e618a1b30e834a4cfa451c4bedc36216f0a7b19
     # via -r requirements-dev.in
-pytest-mock==3.1.1 \
-    --hash=sha256:636e792f7dd9e2c80657e174c04bf7aa92672350090736d82e97e92ce8f68737 \
-    --hash=sha256:a9fedba70e37acf016238bb2293f2652ce19985ceb245bbd3d7f3e4032667402
+pytest-mock==3.6.1 \
+    --hash=sha256:30c2f2cc9759e76eee674b81ea28c9f0b94f8f0445a1b87762cadf774f0df7e3 \
+    --hash=sha256:40217a058c52a63f1042f0784f62009e976ba824c418cced42e88d5f40ab0e62
     # via -r requirements-dev.in
 pytest-randomly==3.4.0 \
     --hash=sha256:4e02887ba52f021cc8d5429e91e93be2b5df4adf38bf1715c7c153968b260b59 \
