@@ -1,6 +1,6 @@
 -c requirements.txt
 
-djangorestframework==3.12.2
+djangorestframework==3.12.4
 djangorestframework-gis==0.17
 django-filter==2.4.0
 
