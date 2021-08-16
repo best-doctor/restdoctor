@@ -13,17 +13,27 @@ if typing.TYPE_CHECKING:
     from restdoctor.utils.custom_types import ImmutableContext, GenericContext
 
 
-def _get_full_details(detail: typing.Any) -> typing.Union[typing.List, typing.Dict]:  # noqa: CCR001
+def _get_dict_details(detail: typing.Dict) -> typing.List[typing.Dict]:
+    error_items = []
+    for field, value in detail.items():
+        details = _get_full_details(value)
+        if isinstance(details, dict):
+            details['field'] = field
+            error_items.append(details)
+            continue
+        for item in details:
+            if not isinstance(item, dict):
+                continue
+            item['field'] = field
+        error_items.extend(details)
+    return error_items
+
+
+def _get_full_details(detail: typing.Any) -> typing.Union[typing.List, typing.Dict]:
     if isinstance(detail, list):
         return [_get_full_details(item) for item in detail]
     elif isinstance(detail, dict):
-        for field, value in detail.items():
-            details = _get_full_details(value)
-            for item in details:
-                if not isinstance(item, dict):
-                    continue
-                item['field'] = field
-            return details
+        return _get_dict_details(detail)
     return {
         'message': detail,
         'code': detail.code,
