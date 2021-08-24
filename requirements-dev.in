@@ -17,7 +17,7 @@ flake8-functions==0.0.6
 flake8-polyfill==1.0.2
 flake8-pytest-style==1.5.0
 flake8-print==4.0.0
-flake8-quotes==3.2.0
+flake8-quotes==3.3.0
 flake8-string-format==0.3.0
 flake8-todo==0.7
 flake8-annotations-complexity==0.0.6
