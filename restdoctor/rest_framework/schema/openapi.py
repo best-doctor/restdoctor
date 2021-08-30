@@ -139,6 +139,11 @@ class RestDoctorSchema(ViewSchemaProtocol, AutoSchema):
 
     def get_operation_id(self, path: str, method: str) -> str:
         action_name = self.get_action_name(path, method)
+
+        schema_operation_id_map = getattr(self.view, 'schema_operation_id_map', None)
+        if schema_operation_id_map and action_name in schema_operation_id_map:
+            return schema_operation_id_map[action_name]
+
         object_name = self.get_object_name(path, method, action_name)
 
         if action_name == 'list' and not object_name.endswith(

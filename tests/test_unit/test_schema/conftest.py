@@ -11,7 +11,8 @@ from tests.stubs.serializers import MyModelSerializer
 
 
 class UrlConf:
-    urlpatterns = []
+    def __init__(self, urlpatterns=None) -> None:
+        self.urlpatterns = urlpatterns or []
 
 
 @pytest.fixture()
@@ -30,6 +31,18 @@ def get_create_view_func():
             return view
 
         return create_view
+
+    return with_args
+
+
+@pytest.fixture()
+def make_urlconf():
+    def with_args(*routes):
+        router = SimpleRouter()
+        for prefix, viewset, basename in routes:
+            router.register(prefix, viewset, basename)
+
+        return UrlConf(urlpatterns=router.urls)
 
     return with_args
 

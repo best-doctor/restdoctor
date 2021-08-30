@@ -3,9 +3,13 @@ from __future__ import annotations
 import pytest
 from django.core.exceptions import ImproperlyConfigured
 from rest_framework.fields import Field
+from rest_framework.routers import SimpleRouter
 
 from restdoctor.rest_framework.schema import RestDoctorSchema
+from restdoctor.rest_framework.schema.generators import RefsSchemaGenerator30
 from tests.stubs.serializers import MyModelWithoutHelpTextsSerializer, WithMethodFieldSerializer
+from tests.test_unit.test_schema.conftest import UrlConf
+from tests.test_unit.test_schema.stubs import DefaultViewSet, DefaultViewSetWithOperationId
 
 
 @pytest.mark.parametrize(
@@ -102,3 +106,21 @@ def test_check_annotations_fail_case(settings, field):
 
     with pytest.raises(ImproperlyConfigured):
         schema.map_field(serializer.fields[field])
+
+
+def test_duplicate_operation_ids_fail_case(make_urlconf):
+    urlconf = make_urlconf(('foo', DefaultViewSet, 'foo'), ('bar', DefaultViewSet, 'bar'))
+    generator = RefsSchemaGenerator30(urlconf=urlconf)
+
+    with pytest.raises(Exception, match='duplicates existing id'):
+        generator.get_schema()
+
+
+def test_duplicate_operation_ids_success_case(make_urlconf):
+    urlconf = make_urlconf(
+        ('foo', DefaultViewSet, 'foo'), ('bar', DefaultViewSetWithOperationId, 'bar')
+    )
+    generator = RefsSchemaGenerator30(urlconf=urlconf)
+
+    schema = generator.get_schema()
+    pass
