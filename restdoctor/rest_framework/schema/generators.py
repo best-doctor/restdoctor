@@ -37,6 +37,7 @@ class RefsSchemaGenerator(SchemaGenerator):
                     break
         self.api_default_format = settings.API_DEFAULT_FORMAT
         self.api_formats = tuple(get_available_format(settings.API_FORMATS))
+        self._operation_ids: typing.Dict[str, typing.Tuple[str, str]] = {}
 
     def get_paths(self, request: Request = None) -> typing.Optional[OpenAPISchema]:
         result: OpenAPISchema = {}
@@ -50,6 +51,23 @@ class RefsSchemaGenerator(SchemaGenerator):
             if not self.has_view_permissions(path, method, view):
                 continue
             operation = view.schema.get_operation(path, method)
+
+            operation_id = operation['operationId']
+            if (
+                operation_id in self._operation_ids
+                and (method, path) != self._operation_ids[operation_id]
+            ):
+                operation_str = f'{view.__class__.__name__} {method, path}'
+                action_name = view.schema.get_action_name(path, method)
+                raise Exception(
+                    f'Operation ID {operation_id} for view {operation_str} duplicates '
+                    f'existing id for {self._operation_ids[operation_id]}. Consider adding '
+                    f"schema_operation_id_map = {{ '{action_name}': '<your_custom_operation_id>' }} "
+                    'to view/viewset to resolve this issue'
+                )
+
+            self._operation_ids[operation_id] = method, path
+
             if path.startswith('/'):
                 path = path[1:]
             path = urljoin(self.url or '/', path)

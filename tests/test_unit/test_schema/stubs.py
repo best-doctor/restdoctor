@@ -64,6 +64,17 @@ class AnotherViewSet(ModelViewSet):
     serializer_class = AnotherSerializer
 
 
+class DefaultViewSetWithOperationId(DefaultViewSet):
+    schema_operation_id_map = {
+        'list': 'listDefautBars',
+        'retrieve': 'getDefautBar',
+        'create': 'createDefautBar',
+        'update': 'updateDefautBar',
+        'partial_update': 'partialUpdateDefautBar',
+        'destroy': 'deleteDefautBar',
+    }
+
+
 class ActionsViewSet(ModelViewSet):
     serializer_class = DefaultSerializer
 
