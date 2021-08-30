@@ -18,9 +18,10 @@ from restdoctor.rest_framework.serializers import EmptySerializer
 
 if typing.TYPE_CHECKING:
     from django.db.models import QuerySet
-    from restdoctor.rest_framework.custom_types import ModelObject
     from rest_framework.pagination import BasePagination
     from rest_framework.serializers import BaseSerializer
+
+    from restdoctor.rest_framework.custom_types import ModelObject
 
 
 class NegotiatedMixin:
@@ -69,6 +70,7 @@ class ListModelMixin(BaseListModelMixin):
             return response
 
         self.perform_list(queryset)
+
         serializer = self.get_serializer(queryset, many=True)
         return ResponseWithMeta(data=serializer.data, meta=meta)
 
@@ -102,7 +104,9 @@ class RetrieveModelMixin(BaseRetrieveModelMixin):
         serializer = self.get_serializer(item)
         return Response(serializer.data)
 
-    def get_item(self, request_serializer: BaseSerializer) -> typing.Union[typing.Dict, ModelObject]:
+    def get_item(
+        self, request_serializer: BaseSerializer
+    ) -> typing.Union[typing.Dict, ModelObject]:
         return self.get_object()
 
     def get_serializer(self, *args: typing.Any, **kwargs: typing.Any) -> BaseSerializer:

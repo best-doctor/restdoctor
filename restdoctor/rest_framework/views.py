@@ -16,14 +16,15 @@ from restdoctor.utils.serializers import get_serializer_class_from_map
 from restdoctor.utils.structlog import get_logger
 
 if typing.TYPE_CHECKING:
-    from django.http import HttpRequest
     from django.core.handlers.wsgi import WSGIRequest
+    from django.http import HttpRequest
     from rest_framework.permissions import BasePermission
-    from rest_framework.response import Response
     from rest_framework.request import Request
+    from rest_framework.response import Response
     from rest_framework.serializers import BaseSerializer
-    from restdoctor.utils.serializers import SerializerType
+
     from restdoctor.rest_framework.sensitive_data import SerializerData
+    from restdoctor.utils.serializers import SerializerType
 
 
 logger = get_logger(__name__)
@@ -60,7 +61,9 @@ class SerializerClassMapApiView(GenericAPIView):
 
     def initial(self, request: Request, *args: typing.Any, **kwargs: typing.Any) -> None:
         if settings.API_ENABLE_STRUCTLOG:
-            bind_extra_request_view_initial_metadata.send(sender=self.__class__, request=request, logger=logger)
+            bind_extra_request_view_initial_metadata.send(
+                sender=self.__class__, request=request, logger=logger
+            )
             try:
                 request_data = self.clear_request_data(request)
             except Exception:
@@ -94,7 +97,11 @@ class SerializerClassMapApiView(GenericAPIView):
         return [permission() for permission in permission_classes]
 
     def get_serializer_class(
-        self, stage: str = 'response', action: str = None, api_format: str = None, use_default: bool = True,
+        self,
+        stage: str = 'response',
+        action: str = None,
+        api_format: str = None,
+        use_default: bool = True,
     ) -> SerializerType:
         action = action or self.get_action()
         serializer_class_map = getattr(self, 'serializer_class_map', {})
@@ -105,14 +112,19 @@ class SerializerClassMapApiView(GenericAPIView):
                 api_format = self.request.api_params.format or api_format
 
         return get_serializer_class_from_map(
-            action, stage, serializer_class_map, self.serializer_class, use_default=use_default, api_format=api_format)
+            action,
+            stage,
+            serializer_class_map,
+            self.serializer_class,
+            use_default=use_default,
+            api_format=api_format,
+        )
 
     def get_serializer_context(self, stage: str = 'response') -> typing.Dict[str, typing.Any]:
         return super().get_serializer_context()
 
     def get_serializer_instance(
-        self, serializer_class: SerializerType,
-        *args: typing.Any, **kwargs: typing.Any,
+        self, serializer_class: SerializerType, *args: typing.Any, **kwargs: typing.Any
     ) -> BaseSerializer:
         stage = kwargs.pop('stage', 'response')
         kwargs['context'] = self.get_serializer_context(stage)
@@ -128,7 +140,7 @@ class SerializerClassMapApiView(GenericAPIView):
         return self.get_serializer_class('meta', use_default=False)
 
     def get_request_serializer(
-            self, *args: typing.Any, use_default: bool = True, **kwargs: typing.Any,
+        self, *args: typing.Any, use_default: bool = True, **kwargs: typing.Any
     ) -> BaseSerializer:
         stage = 'request'
         serializer_class = self.get_serializer_class(stage, use_default=use_default)
