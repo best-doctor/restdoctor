@@ -251,5 +251,5 @@ def test_fields_validators_schema(field, expected_schema):
     schema = RestDoctorSchema()
 
     result = schema._get_field_schema(field)
-    print(f" field = {field!r} result = {result} expected_schema = {expected_schema}")
+
     assert result == expected_schema
