@@ -1,15 +1,20 @@
 from __future__ import annotations
 
 import inspect
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Type, Union
 
 if TYPE_CHECKING:
     from django.db.models import Model
 
-from rest_framework.serializers import (
-    ModelSerializer as BaseModelSerializer, Serializer as BaseSerializer,
-    SerializerMetaclass as BaseSerializerMetaclass,
-)
+from pydantic import BaseModel
+from pydantic import ValidationError as PydanticValidationError
+from rest_framework.exceptions import ValidationError
+from rest_framework.serializers import BaseSerializer as BaseDRFSerializer
+from rest_framework.serializers import ModelSerializer as BaseModelSerializer
+from rest_framework.serializers import Serializer as BaseSerializer
+from rest_framework.serializers import SerializerMetaclass as BaseSerializerMetaclass
+
+from restdoctor.utils.pydantic import convert_pydantic_errors_to_drf_errors
 
 
 def _is_serializer_subclass(obj: Any) -> bool:
@@ -96,3 +101,61 @@ class EmptySerializer(Serializer):
 
 class ModelSerializer(BaseModelSerializer, Serializer, metaclass=ModelSerializerMetaclass):
     pass
+
+
+class PydanticModelSerializer(BaseDRFSerializer):
+    """Serializer for pydantic models."""
+
+    pydantic_model: Type[BaseModel]
+
+    def __new__(cls, *args: list[Any], **kwargs: dict[str, Any]):  # type: ignore
+        pydantic_model = getattr(cls, 'pydantic_model', None)
+        if not inspect.isclass(pydantic_model) or not issubclass(pydantic_model, BaseModel):
+            raise AttributeError(
+                'Class attribute "pydantic_model" is mandatory for this serializer'
+            )
+        return super().__new__(cls, *args, **kwargs)
+
+    def to_internal_value(self, data: dict[str, Any]) -> BaseModel:
+        try:
+            pydantic_model = self.pydantic_model(**data)
+        except PydanticValidationError as exc:
+            errors = convert_pydantic_errors_to_drf_errors(exc.errors())
+            raise ValidationError(errors)
+        return pydantic_model
+
+    def to_representation(
+        self, instance: PydanticModelSerializer | BaseModel | dict
+    ) -> dict[str, Any]:
+        if isinstance(instance, dict):
+            value = self.to_internal_value(instance).dict()
+        elif isinstance(instance, BaseModel):
+            value = instance.dict()
+        elif isinstance(instance, PydanticModelSerializer):
+            instance.is_valid()
+            value = instance._pydantic_instance.dict()
+        else:
+            raise TypeError('Unknown type of instance for representation')
+        return value
+
+    def is_valid(self, raise_exception: bool = False) -> bool:
+        if not hasattr(self, 'initial_data'):
+            raise AssertionError(
+                'Cannot call `.is_valid()` as no `data=` keyword argument was '
+                'passed when instantiating the serializer instance.'
+            )
+        if not hasattr(self, '_validated_data'):
+            try:
+                pydantic_instance = self.pydantic_model(**self.initial_data)
+                self._pydantic_instance = pydantic_instance
+                self._validated_data = pydantic_instance.dict()
+            except PydanticValidationError as exc:
+                self._validated_data = {}
+                self._errors = convert_pydantic_errors_to_drf_errors(exc.errors())
+            else:
+                self._errors = {}
+
+        if self._errors and raise_exception:
+            raise ValidationError(self.errors)
+
+        return not bool(self._errors)

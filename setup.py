@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 from typing import Optional
 
-from setuptools import setup, find_packages
+from setuptools import find_packages, setup
 
 
 def get_version() -> Optional[str]:
@@ -18,7 +20,7 @@ def get_long_description() -> str:
 
 setup(
     name='restdoctor',
-    description='BestDoctor\'s batteries for REST services.',
+    description="BestDoctor's batteries for REST services.",
     long_description=get_long_description(),
     long_description_content_type='text/markdown',
     classifiers=[
@@ -41,8 +43,5 @@ setup(
     license='MIT',
     py_modules=['restdoctor'],
     zip_safe=False,
-    install_requires=[
-        'uritemplate==3.0.1',
-        'semver==2.13.0',
-    ]
+    install_requires=['uritemplate==3.0.1', 'semver==2.13.0', 'pydantic==1.8.2'],
 )
