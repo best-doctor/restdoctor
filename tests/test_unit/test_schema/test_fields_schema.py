@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import decimal
 import re
 
 import pytest
@@ -134,6 +135,24 @@ def test_basic_fields_schema(field, expected_schema):
             },
         ),
         (
+            # DecimalField decimal
+            DecimalField(
+                max_digits=5,
+                decimal_places=2,
+                validators=[
+                    MinValueValidator(decimal.Decimal('0.1')),
+                    MaxValueValidator(decimal.Decimal('2.1222')),
+                ],
+            ),
+            {
+                'type': 'string',
+                'format': 'decimal',
+                'multipleOf': 0.01,
+                'maximum': 2.1222,
+                'minimum': 0.1,
+            },
+        ),
+        (
             # DurationField
             DurationField(max_value=300, min_value=100),
             {'type': 'string', 'maximum': 300, 'minimum': 100},
@@ -232,5 +251,5 @@ def test_fields_validators_schema(field, expected_schema):
     schema = RestDoctorSchema()
 
     result = schema._get_field_schema(field)
-
+    print(f" field = {field!r} result = {result} expected_schema = {expected_schema}")
     assert result == expected_schema

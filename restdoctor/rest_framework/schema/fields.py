@@ -8,7 +8,7 @@ import typing
 
 from django.conf import settings
 from django.core.exceptions import FieldDoesNotExist, ImproperlyConfigured
-from django.core.validators import RegexValidator
+from django.core.validators import RegexValidator, MinValueValidator, MaxValueValidator
 from django.db.models import AutoField
 from rest_framework.fields import (
     BooleanField,
@@ -165,9 +165,14 @@ class FieldSchema(FieldSchemaProtocol):
     def map_field_validators(self, field: Field, schema: OpenAPISchema) -> None:
         drf_map_field_validators(self, field, schema)
 
-        # Backported from django-rest-framework
-        # https://github.com/encode/django-rest-framework/commit/5ce237e00471d885f05e6d979ec777552809b3b1
         for validator in field.validators:
+            # Так как схема ломается при передачи значения в decimal.
+            if isinstance(validator, MinValueValidator) and isinstance(validator.limit_value, decimal.Decimal):
+                schema['minimum'] = float(validator.limit_value)
+            if isinstance(validator, MaxValueValidator) and isinstance(validator.limit_value, decimal.Decimal):
+                schema['maximum'] = float(validator.limit_value)
+            # Backported from django-rest-framework
+            # https://github.com/encode/django-rest-framework/commit/5ce237e00471d885f05e6d979ec777552809b3b1
             if isinstance(validator, RegexValidator):
                 schema['pattern'] = validator.regex.pattern.replace('\\Z', '\\z')
 
