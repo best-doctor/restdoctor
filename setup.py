@@ -43,5 +43,5 @@ setup(
     license='MIT',
     py_modules=['restdoctor'],
     zip_safe=False,
-    install_requires=['uritemplate==3.0.1', 'semver==2.13.0', 'pydantic==1.8.2'],
+    install_requires=['uritemplate==3.0.1', 'semver==2.13.0'],
 )
