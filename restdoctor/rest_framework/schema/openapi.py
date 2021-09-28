@@ -313,8 +313,6 @@ class RestDoctorSchema(ViewSchemaProtocol, AutoSchema):
         else:
             schema_method_name = 'get_request_body_schema'
 
-        if not self.generator:
-            return self.get_default_content_schema(path, method, schema_method_name)
         return self.get_versioned_content_schema(path, method, schema_method_name)
 
     def get_versioned_content_schema(
