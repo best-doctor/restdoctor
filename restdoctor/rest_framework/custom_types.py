@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 import typing as t
 
 from django.db import models
@@ -30,5 +31,7 @@ ResourceViewsMap = ResourceMap[t.Type[ViewSet]]
 ResourceActionsMap = ResourceMap[t.Set[str]]
 ResourceHandlersMap = ResourceMap[Handler]
 ResourceModelsMap = ResourceMap[t.Optional[models.Model]]
+
+GenericRepresentation = t.Dict[str, t.Any]
 
 ModelObject = t.TypeVar('ModelObject', bound=models.Model, covariant=True)
