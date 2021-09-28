@@ -18,6 +18,11 @@ CodeDescriptionTuple = t.Tuple[ResponseCode, ActionDescription]
 
 
 class SchemaGenerator(RestFrameworkSchemaGenerator):
+    api_default_content_type: str
+    api_default_version: str
+    api_default_format: str
+    api_formats: list[str]
+    include_default_schema: bool
     openapi_version: VersionInfo
 
 

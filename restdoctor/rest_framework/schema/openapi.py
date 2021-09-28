@@ -45,7 +45,7 @@ class RestDoctorSchema(ViewSchemaProtocol, AutoSchema):
         self.serializer_schema = SerializerSchema(self)
 
     def map_renderers(self, *args: typing.Any, **kwargs: typing.Any) -> typing.Any:
-        vendor = getattr(settings, 'API_VENDOR_STRING', 'vendor').lower()
+        vendor = settings.API_VENDOR_STRING.lower()
         media_types = [f'application/vnd.{vendor}']
         return media_types
 
@@ -308,34 +308,57 @@ class RestDoctorSchema(ViewSchemaProtocol, AutoSchema):
                         yield normalize_action_schema(code, action_schema)
 
     def get_content_schema_by_type(self, path: str, method: str, schema_type: str) -> OpenAPISchema:
-        content_schema = {}
-
         if schema_type == 'responses':
             schema_method_name = 'get_response_schema'
         else:
             schema_method_name = 'get_request_body_schema'
 
-        vendor = getattr(settings, 'API_VENDOR_STRING', 'vendor').lower()
-        default_content_type = f'application/vnd.{vendor}'
+        return self.get_versioned_content_schema(path, method, schema_method_name)
 
-        schema_method = getattr(self, schema_method_name)
-        default_schema = schema_method(path, method)
+    def get_versioned_content_schema(
+        self, path: str, method: str, schema_method_name: str
+    ) -> OpenAPISchema:
+        if not self.generator:
+            return self.get_default_content_schema(path, method, schema_method_name)
 
-        content_schema[default_content_type] = {'schema': default_schema}
+        generator = self.generator
+        content_schema: OpenAPISchema = {}
 
         if not self.generator:
             return content_schema
 
-        version_content_type = f'{default_content_type}.{self.generator.api_version}'
+        version_content_type = f'{generator.api_default_content_type}.{self.generator.api_version}'
+
+        schema_method = getattr(self, schema_method_name)
+
+        default_schema = schema_method(path, method)
+        if generator.include_default_schema:
+            content_schema[generator.api_default_content_type] = {'schema': default_schema}
 
         schema_method = getattr(self.view.schema, schema_method_name)
 
         for api_format in self.generator.api_formats:
-            if api_format != self.generator.api_default_format:
-                resource_schema = schema_method(path, method, api_format=api_format)
-                if resource_schema != default_schema:
-                    content_type = f'{version_content_type}.{api_format}'
-                    content_schema[content_type] = {'schema': resource_schema}
+            resource_schema = schema_method(path, method, api_format=api_format)
+            if generator.include_default_schema and resource_schema == default_schema:
+                continue
+            content_type = f'{version_content_type}.{api_format}'
+            content_schema[content_type] = {'schema': resource_schema}
+
+        return content_schema
+
+    def get_default_content_schema(
+        self, path: str, method: str, schema_method_name: str
+    ) -> OpenAPISchema:
+        content_schema = {}
+
+        vendor = settings.API_VENDOR_STRING.lower()
+        default_content_type = f'application/vnd.{vendor}'
+
+        schema_method = getattr(self, schema_method_name)
+
+        default_schema = schema_method(path, method)
+
+        content_schema[default_content_type] = {'schema': default_schema}
 
         return content_schema
 

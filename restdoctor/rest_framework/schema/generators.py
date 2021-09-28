@@ -12,6 +12,7 @@ from restdoctor.rest_framework.schema.custom_types import SchemaGenerator
 from restdoctor.rest_framework.schema.openapi import RestDoctorSchema
 from restdoctor.rest_framework.schema.refs_registry import LocalRefsRegistry
 from restdoctor.utils.api_format import get_available_format
+from restdoctor.utils.media_type import parse_accept
 
 if typing.TYPE_CHECKING:
     from restdoctor.rest_framework.custom_types import Handler
@@ -22,22 +23,44 @@ class RefsSchemaGenerator(SchemaGenerator):
     openapi_version = None
 
     def __init__(self, *args: typing.Any, **kwargs: typing.Any) -> None:
-        super().__init__(*args, **kwargs)
         self.local_refs_registry = LocalRefsRegistry()
 
         if not self.openapi_version:
             self.openapi_version = VersionInfo.parse(settings.API_DEFAULT_OPENAPI_VERSION)
 
-        self.api_version = settings.API_DEFAULT_VERSION
-        urlconf = kwargs.get('urlconf')
-        if urlconf:
-            for api_version, api_urlconf in settings.API_VERSIONS.items():
-                if api_urlconf == urlconf:
-                    self.api_version = api_version
-                    break
-        self.api_default_format = settings.API_DEFAULT_FORMAT
-        self.api_formats = tuple(get_available_format(settings.API_FORMATS))
         self._operation_ids: typing.Dict[str, typing.Tuple[str, str]] = {}
+
+        self.api_default_version = settings.API_DEFAULT_VERSION
+        self.api_default_format = settings.API_DEFAULT_FORMAT
+        self.api_default_content_type = f'application/vnd.{settings.API_VENDOR_STRING.lower()}'
+
+        accept = kwargs.pop('accept', None)
+        if accept:
+            api_params = parse_accept(accept, settings.API_VENDOR_STRING.lower())
+
+            api_version = api_params and api_params.version
+            urlconf = settings.API_VERSIONS.get(api_version)
+            if urlconf is None:
+                raise Exception(f'Can not determine URLCONF for Accept string {accept}')
+            self.api_version = api_version
+            self.api_resource = api_params.resource_discriminator
+            self.api_formats = [api_params.format]
+            self.include_default_schema = False
+        else:
+            self.api_version = self.api_default_version
+            urlconf = kwargs.pop('urlconf', None)
+            if urlconf:
+                for api_version, api_urlconf in settings.API_VERSIONS.items():
+                    if api_urlconf == urlconf:
+                        self.api_version = api_version
+                        break
+
+            self.api_resource = None
+            self.api_formats = get_available_format(settings.API_FORMATS)
+            self.include_default_schema = True
+
+        kwargs['urlconf'] = urlconf
+        super().__init__(*args, **kwargs)
 
     def get_paths(self, request: Request = None) -> typing.Optional[OpenAPISchema]:
         result: OpenAPISchema = {}
