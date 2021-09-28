@@ -15,7 +15,7 @@ from rest_framework.schemas.utils import is_list_view
 from rest_framework.serializers import BaseSerializer
 
 from restdoctor.rest_framework.pagination.mixins import SerializerClassPaginationMixin
-from restdoctor.rest_framework.schema.custom_types import SchemaGenerator, ViewSchemaProtocol
+from restdoctor.rest_framework.schema.custom_types import SchemaGenerator, ViewSchemaBase
 from restdoctor.rest_framework.schema.fields import FieldSchema
 from restdoctor.rest_framework.schema.serializers import SerializerSchema
 from restdoctor.rest_framework.schema.utils import (
@@ -35,7 +35,7 @@ if typing.TYPE_CHECKING:
     )
 
 
-class RestDoctorSchema(ViewSchemaProtocol, AutoSchema):
+class RestDoctorSchema(ViewSchemaBase, AutoSchema):
     def __init__(
         self, generator: SchemaGenerator = None, *args: typing.Any, **kwargs: typing.Any
     ) -> None:

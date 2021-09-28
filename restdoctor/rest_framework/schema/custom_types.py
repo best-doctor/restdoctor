@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import abc
 import typing as t
 
 from rest_framework.fields import Field
@@ -26,7 +27,52 @@ class SchemaGenerator(RestFrameworkSchemaGenerator):
     openapi_version: VersionInfo
 
 
-class ViewSchemaProtocol(t.Protocol):
+class FieldSchemaProtocol(t.Protocol):
+    def get_field_schema(self, field: Field) -> OpenAPISchema:
+        ...
+
+    def map_field(self, field: Field) -> t.Optional[OpenAPISchema]:
+        ...
+
+    def get_field_description(self, field: Field) -> t.Optional[str]:
+        ...
+
+    def map_field_validators(self, field: Field, schema: OpenAPISchema) -> None:
+        ...
+
+
+class SerializerSchemaProtocol(t.Protocol):
+    def get_serializer_schema(
+        self,
+        serializer: BaseSerializer,
+        write_only: bool = True,
+        read_only: bool = True,
+        required: bool = True,
+    ) -> OpenAPISchema:
+        ...
+
+    def map_serializer(
+        self,
+        serializer: BaseSerializer,
+        write_only: bool = True,
+        read_only: bool = True,
+        required: bool = True,
+    ) -> OpenAPISchema:
+        ...
+
+    def map_query_serializer(self, serializer: BaseSerializer) -> t.List[OpenAPISchema]:
+        ...
+
+
+class FieldSchemaBase:
+    view_schema: ViewSchemaBase
+
+
+class SerializerSchemaBase:
+    view_schema: ViewSchemaBase
+
+
+class ViewSchemaBase(abc.ABC):
     generator: t.Optional[SchemaGenerator] = None
     serializer_schema: SerializerSchemaProtocol
     field_schema: FieldSchemaProtocol
@@ -67,44 +113,3 @@ class ViewSchemaProtocol(t.Protocol):
 
     def map_query_serializer(self, serializer: BaseSerializer) -> t.List[OpenAPISchema]:
         return self.serializer_schema.map_query_serializer(serializer)
-
-
-class SerializerSchemaProtocol(t.Protocol):
-    view_schema: ViewSchemaProtocol
-
-    def get_serializer_schema(
-        self,
-        serializer: BaseSerializer,
-        write_only: bool = True,
-        read_only: bool = True,
-        required: bool = True,
-    ) -> OpenAPISchema:
-        ...
-
-    def map_serializer(
-        self,
-        serializer: BaseSerializer,
-        write_only: bool = True,
-        read_only: bool = True,
-        required: bool = True,
-    ) -> OpenAPISchema:
-        ...
-
-    def map_query_serializer(self, serializer: BaseSerializer) -> t.List[OpenAPISchema]:
-        ...
-
-
-class FieldSchemaProtocol(t.Protocol):
-    view_schema: ViewSchemaProtocol
-
-    def get_field_schema(self, field: Field) -> OpenAPISchema:
-        ...
-
-    def map_field(self, field: Field) -> t.Optional[OpenAPISchema]:
-        ...
-
-    def get_field_description(self, field: Field) -> t.Optional[str]:
-        ...
-
-    def map_field_validators(self, field: Field, schema: OpenAPISchema) -> None:
-        ...

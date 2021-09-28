@@ -8,13 +8,13 @@ from rest_framework.serializers import BaseSerializer
 
 from restdoctor.rest_framework.schema.custom_types import (
     OpenAPISchema,
-    SerializerSchemaProtocol,
-    ViewSchemaProtocol,
+    SerializerSchemaBase,
+    ViewSchemaBase,
 )
 
 
-class SerializerSchema(SerializerSchemaProtocol):
-    def __init__(self, view_schema: ViewSchemaProtocol):
+class SerializerSchema(SerializerSchemaBase):
+    def __init__(self, view_schema: ViewSchemaBase):
         self.view_schema = view_schema
 
     def map_serializer_fields(

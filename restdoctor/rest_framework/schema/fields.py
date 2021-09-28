@@ -8,7 +8,7 @@ import typing
 
 from django.conf import settings
 from django.core.exceptions import FieldDoesNotExist, ImproperlyConfigured
-from django.core.validators import RegexValidator, MinValueValidator, MaxValueValidator
+from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
 from django.db.models import AutoField
 from rest_framework.fields import (
     BooleanField,
@@ -41,9 +41,10 @@ from rest_framework.settings import api_settings
 from semver import VersionInfo
 
 from restdoctor.rest_framework.schema.custom_types import (
+    FieldSchemaBase,
     FieldSchemaProtocol,
     OpenAPISchema,
-    ViewSchemaProtocol,
+    ViewSchemaBase,
 )
 from restdoctor.utils.typing_inspect import is_list_type, is_optional_type
 
@@ -76,8 +77,8 @@ def is_geometry_field(field: Field) -> bool:
     )
 
 
-class FieldSchema(FieldSchemaProtocol):
-    def __init__(self, view_schema: ViewSchemaProtocol):
+class FieldSchema(FieldSchemaBase):
+    def __init__(self, view_schema: ViewSchemaBase):
         self.view_schema = view_schema
 
     @property
@@ -167,9 +168,13 @@ class FieldSchema(FieldSchemaProtocol):
 
         for validator in field.validators:
             # Так как схема ломается при передачи значения в decimal.
-            if isinstance(validator, MinValueValidator) and isinstance(validator.limit_value, decimal.Decimal):
+            if isinstance(validator, MinValueValidator) and isinstance(
+                validator.limit_value, decimal.Decimal
+            ):
                 schema['minimum'] = float(validator.limit_value)
-            if isinstance(validator, MaxValueValidator) and isinstance(validator.limit_value, decimal.Decimal):
+            if isinstance(validator, MaxValueValidator) and isinstance(
+                validator.limit_value, decimal.Decimal
+            ):
                 schema['maximum'] = float(validator.limit_value)
             # Backported from django-rest-framework
             # https://github.com/encode/django-rest-framework/commit/5ce237e00471d885f05e6d979ec777552809b3b1

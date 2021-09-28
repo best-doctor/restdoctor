@@ -1,19 +1,20 @@
 from __future__ import annotations
+
 import typing
 
 from restdoctor.utils.serializers import get_serializer_class_from_map
 
 if typing.TYPE_CHECKING:
+    from restdoctor.rest_framework.schema.custom_types import OpenAPISchema, ViewSchemaBase
     from restdoctor.utils.serializers import SerializerClassMap, SerializerType
-    from restdoctor.rest_framework.schema.custom_types import OpenAPISchema, ViewSchemaProtocol
 
 
 class SerializerClassPaginationMixin:
-    view_schema: typing.Optional[ViewSchemaProtocol]
+    view_schema: typing.Optional[ViewSchemaBase]
     serializer_class: SerializerType
     serializer_class_map: SerializerClassMap
 
-    def __init__(self, *args: typing.Any, view_schema: ViewSchemaProtocol = None, **kwargs: typing.Any):
+    def __init__(self, *args: typing.Any, view_schema: ViewSchemaBase = None, **kwargs: typing.Any):
         self.view_schema = view_schema
         super().__init__(*args, **kwargs)  # type: ignore
 
@@ -27,5 +28,7 @@ class SerializerClassPaginationMixin:
         if self.view_schema:
             serializer_class = self.get_response_serializer_class()
             response_serializer = serializer_class()
-            schema['properties']['meta'] = self.view_schema.get_serializer_schema(response_serializer)
+            schema['properties']['meta'] = self.view_schema.get_serializer_schema(
+                response_serializer
+            )
         return schema
