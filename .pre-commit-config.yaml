@@ -16,33 +16,34 @@ repos:
     - id: python-check-blanket-noqa
 
 - repo: https://gitlab.com/pycqa/flake8
-  rev: '3.8.2'
+  rev: '3.9.2'
   hooks:
     - id: flake8
       additional_dependencies:
-      - flake8-bugbear==20.1.4
+      - flake8-bugbear==21.4.3
       - flake8-builtins==1.5.2
       - flake8-commas==2.0.0
-      - flake8-comprehensions==3.2.2
-      - flake8-debugger==3.2.1
-      - flake8-docstrings==1.5.0
-      - flake8-functions==0.0.4
+      - flake8-comprehensions==3.6.1
+      - flake8-debugger==4.0.0
+      - flake8-docstrings==1.6.0
+      - flake8-functions==0.0.6
       - flake8-polyfill==1.0.2
-      - flake8-pytest-style==1.2.3
-      - flake8-print==3.1.4
-      - flake8-quotes==3.0.0
+      - flake8-pytest-style==1.5.0
+      - flake8-print==4.0.0
+      - flake8-quotes==3.3.0
       - flake8-string-format==0.3.0
       - flake8-todo==0.7
-      - flake8-annotations-complexity==0.0.4
-      - flake8-variables-names==0.0.3
-      - flake8-class-attributes-order==0.1.0
-      - flake8-broken-line==0.2.0
-      - flake8-cognitive-complexity==0.0.2
-      - cognitive-complexity==0.0.4
-      - flake8-fine-pytest==1.0.0
+      - flake8-annotations-complexity==0.0.6
+      - flake8-variables-names==0.0.4
+      - flake8-class-attributes-order==0.1.2
+      - flake8-broken-line==0.3.0
+      - flake8-cognitive-complexity==0.1.0
+      - cognitive-complexity==1.2.0
+      - flake8-fine-pytest==1.0.2
+      - mypy_extensions==0.4.3
 
 - repo: https://github.com/pre-commit/mirrors-mypy
-  rev: v0.790
+  rev: v0.910
   hooks:
     - id: mypy
       entry: mypy .
@@ -64,6 +65,6 @@ repos:
       language_version: python
 
 - repo: https://github.com/PyCQA/isort
-  rev: '5.7.0'
+  rev: '5.9.3'
   hooks:
     - id: isort

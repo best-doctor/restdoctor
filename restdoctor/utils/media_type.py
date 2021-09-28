@@ -26,15 +26,20 @@ class APIParams:
             return f'{self.version}-{self.resource_discriminator}'
 
 
-def parse_accept(header: str = None, vendor: str = None) -> typing.Optional[APIParams]:
+def parse_accept_header(header: str = None, vendor: str = None) -> typing.Optional[APIParams]:
     if not header:
         return None
-    api_params = APIParams(prefix=get_api_prefix(), accepted=header, vendor=vendor or 'vendor')
-    api_options_string = header.split('/', 1)[-1]
+
+    return parse_accept(accept=header, vendor=vendor)
+
+
+def parse_accept(accept: str, vendor: str = None) -> APIParams:
+    api_params = APIParams(prefix=get_api_prefix(), accepted=accept, vendor=vendor or 'vendor')
+    api_options_string = accept.split('/', 1)[-1]
     if getattr(settings, 'API_FALLBACK_FOR_APPLICATION_JSON_ONLY', False):
         if api_options_string == 'json':
             return api_params
-    elif not header.startswith(f'application/vnd.{api_params.vendor}'):
+    elif not accept.startswith(f'application/vnd.{api_params.vendor}'):
         return api_params
 
     api_params.version = settings.API_DEFAULT_VERSION
