@@ -8,7 +8,7 @@ semver==2.13.0 \
     --hash=sha256:ced8b23dceb22134307c1b8abfa523da14198793d9787ac838e70e29e77458d4 \
     --hash=sha256:fa0fe2722ee1c3f57eac478820c3a5ae2f624af8264cbdf9000c980ff7f75e3f
     # via restdoctor (setup.py)
-uritemplate==3.0.1 \
-    --hash=sha256:07620c3f3f8eed1f12600845892b0e036a2420acf513c53f7de0abd911a5894f \
-    --hash=sha256:5af8ad10cec94f215e3f48112de2022e1d5a37ed427fbd88652fa908f2ab7cae
+uritemplate==4.1.0 \
+    --hash=sha256:70c68e8613ca3448ccb4d8de6537f3c211748c7aa7ed8c9f1e7c87bf6cc56171 \
+    --hash=sha256:69387b2f904692c61e01acf38b72211fbe8a01d93ec9d5e6fd215c1346393b8d
     # via restdoctor (setup.py)
