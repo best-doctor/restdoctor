@@ -135,9 +135,9 @@ flake8-annotations-complexity==0.0.6 \
     --hash=sha256:078a84e8269ef82c4c9de5198638e9a91a2089307d4e559666464a87b528ea69 \
     --hash=sha256:32dfc8f42df3b16fb4fbc66a287433e176ae1bd39894d9aec898cfc70aef25cb
     # via -r requirements-dev.in
-flake8-broken-line==0.3.0 \
-    --hash=sha256:611f79c7f27118e7e5d3dc098ef7681c40aeadf23783700c5dbee840d2baf3af \
-    --hash=sha256:f74e052833324a9e5f0055032f7ccc54b23faabafe5a26241c2f977e70b10b50
+flake8-broken-line==0.4.0 \
+    --hash=sha256:771aab5aa0997666796fed249d0e48e6c01cdfeca8c95521eea28a38b7ced4c7 \
+    --hash=sha256:e9c522856862239a2c7ef2c1de0276fa598572aa864bd4e9c7efc2a827538515
     # via -r requirements-dev.in
 flake8-bugbear==21.9.2 \
     --hash=sha256:4f7eaa6f05b7d7ea4cbbde93f7bcdc5438e79320fa1ec420d860c181af38b769 \
