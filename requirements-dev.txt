@@ -192,8 +192,8 @@ flake8-pytest-style==1.5.0 \
     --hash=sha256:668ce8f55edf7db4ac386d2735c3b354b5cb47aa341a4655d91a5788dd03124b \
     --hash=sha256:ec287a7dc4fe95082af5e408c8b2f8f4b6bcb366d5a17ff6c34112eb03446580
     # via -r requirements-dev.in
-flake8-quotes==3.3.0 \
-    --hash=sha256:f1dd87830ed77ff2ce47fc0ee0fd87ae20e8f045355354ffbf4dcaa18d528217
+flake8-quotes==3.3.1 \
+    --hash=sha256:633adca6fb8a08131536af0d750b44d6985b9aba46f498871e21588c3e6f525a
     # via -r requirements-dev.in
 flake8-string-format==0.3.0 \
     --hash=sha256:65f3da786a1461ef77fca3780b314edb2853c377f2e35069723348c8917deaa2 \
