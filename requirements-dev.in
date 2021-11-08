@@ -24,7 +24,7 @@ flake8-todo==0.7
 flake8-annotations-complexity==0.0.6
 flake8-variables-names==0.0.4
 flake8-class-attributes-order==0.1.2
-flake8-broken-line==0.3.0
+flake8-broken-line==0.4.0
 flake8-cognitive-complexity==0.1.0
 flake8-fine-pytest==1.0.2
 
