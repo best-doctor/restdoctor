@@ -22,7 +22,7 @@ repos:
       additional_dependencies:
       - flake8-bugbear==21.9.2
       - flake8-builtins==1.5.2
-      - flake8-commas==2.0.0
+      - flake8-commas==2.1.0
       - flake8-comprehensions==3.7.0
       - flake8-debugger==4.0.0
       - flake8-docstrings==1.6.0
@@ -30,13 +30,13 @@ repos:
       - flake8-polyfill==1.0.2
       - flake8-pytest-style==1.5.0
       - flake8-print==4.0.0
-      - flake8-quotes==3.3.0
+      - flake8-quotes==3.3.1
       - flake8-string-format==0.3.0
       - flake8-todo==0.7
       - flake8-annotations-complexity==0.0.6
       - flake8-variables-names==0.0.4
       - flake8-class-attributes-order==0.1.2
-      - flake8-broken-line==0.3.0
+      - flake8-broken-line==0.4.0
       - flake8-cognitive-complexity==0.1.0
       - cognitive-complexity==1.2.0
       - flake8-fine-pytest==1.0.2
