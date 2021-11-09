@@ -95,9 +95,9 @@ djangorestframework-gis==0.17 \
     --hash=sha256:5be17e27cf2be33ac6119e6d2206d3d81183c62d03aaa9b814ce95a82256614f \
     --hash=sha256:d3b6aa6beef32f75811f815bda3bc7e9ea5d2f0306f9741cad5f3820d3973be7
     # via -r requirements-dev.in
-factory-boy==3.2.0 \
-    --hash=sha256:1d3db4b44b8c8c54cdd8b83ae4bdb9aeb121e464400035f1f03ae0e1eade56a4 \
-    --hash=sha256:401cc00ff339a022f84d64a4339503d1689e8263a4478d876e58a3295b155c5b
+factory-boy==3.2.1 \
+    --hash=sha256:a98d277b0c047c75eb6e4ab8508a7f81fb03d2cb21986f627913546ef7a2a55e \
+    --hash=sha256:eb02a7dd1b577ef606b75a253b9818e6f9eaf996d94449c9d5ebb124f90dc795
     # via
     #   -r requirements-dev.in
     #   pytest-factoryboy
@@ -213,10 +213,6 @@ identify==2.2.2 \
     --hash=sha256:43cb1965e84cdd247e875dec6d13332ef5be355ddc16776396d98089b9053d87 \
     --hash=sha256:c7c0f590526008911ccc5ceee6ed7b085cbc92f7b6591d0ee5913a130ad64034
     # via pre-commit
-importlib-metadata==4.6.1 \
-    --hash=sha256:079ada16b7fc30dfbb5d13399a5113110dab1aa7c2bc62f66af75f0b717c8cac \
-    --hash=sha256:9f55f560e116f8643ecf2922d9cd3e1c7e8d52e683178fecd9d08f6aa357e11e
-    # via pytest-randomly
 inflection==0.5.1 \
     --hash=sha256:1a29730d366e996aaacffb2f1f1cb9593dc38e2ddd30c91250c6dde09ea9b417 \
     --hash=sha256:f38b2b640938a4f35ade69ac3d053042959b62a0f1076a5bbaa1b9526605a8a2
@@ -537,10 +533,6 @@ virtualenv==20.4.3 \
     --hash=sha256:49ec4eb4c224c6f7dd81bb6d0a28a09ecae5894f4e593c89b0db0885f565a107 \
     --hash=sha256:83f95875d382c7abafe06bd2a4cdd1b363e1bb77e02f155ebe8ac082a916b37c
     # via pre-commit
-zipp==3.5.0 \
-    --hash=sha256:957cfda87797e389580cb8b9e3870841ca991e2125350677b2ca83a0e99390a3 \
-    --hash=sha256:f5812b1e007e48cff63449a5e9f4e7ebea716b4111f9c4f9a645f91d579bf0c4
-    # via importlib-metadata
 
 # WARNING: The following packages were not pinned, but pip requires them to be
 # pinned when the requirements file includes hashes. Consider using the --allow-unsafe flag.
