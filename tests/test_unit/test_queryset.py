@@ -25,7 +25,9 @@ def test_get_object_use_get_queryset_for_object(lookup_fields, mocker):
     get_queryset_for_object = mocker.patch(
         'restdoctor.rest_framework.generics.GenericAPIView._get_queryset_for_object'
     )
+    view = GenericAPIView()
+    view.lookup_fields = lookup_fields
 
-    GenericAPIView()._get_queryset_for_object()
+    view._get_queryset_for_object()
 
     assert get_queryset_for_object.called
