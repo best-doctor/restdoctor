@@ -22,12 +22,16 @@ def test_get_queryset_for_object(
 
 @pytest.mark.parametrize('lookup_fields', (None, {'test': 'test'}))
 def test_get_object_use_get_queryset_for_object(lookup_fields, mocker):
+    mocker.patch('restdoctor.rest_framework.generics.GenericAPIView._check_lookup_configuration')
     get_queryset_for_object = mocker.patch(
         'restdoctor.rest_framework.generics.GenericAPIView._get_queryset_for_object'
     )
     view = GenericAPIView()
     view.lookup_fields = lookup_fields
 
-    view._get_queryset_for_object()
+    try:
+        view.get_object()
+    except AttributeError:
+        pass
 
     assert get_queryset_for_object.called
