@@ -5,6 +5,7 @@ from django.core.exceptions import ImproperlyConfigured
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import OrderingFilter
 
+from restdoctor.rest_framework.schema import RestDoctorSchema
 from restdoctor.rest_framework.schema.generators import RefsSchemaGenerator30, RefsSchemaGenerator31
 from tests.test_unit.test_schema.stubs import (
     DefaultFilterSet,
@@ -288,3 +289,17 @@ def test_schema_for_viewset_with_filter_backend_strict_schema_raises(
 
     with pytest.raises(ImproperlyConfigured):
         view.schema.get_operation('/test/', 'GET')
+
+
+@pytest.mark.parametrize('ignore,is_expected_allow', ((True, False), (False, True)))
+def test_schema_for_viewset_allows_filters(ignore, is_expected_allow, settings, mocker):
+    mocker.patch(
+        'restdoctor.rest_framework.schema.openapi.RestDoctorSchema.view', return_value=None
+    )
+    mocker.patch('rest_framework.schemas.utils.is_list_view', return_value=False)
+    mocker.patch('rest_framework.schemas.openapi.AutoSchema.allows_filters', return_value=True)
+    settings.API_IGNORE_FILTER_PARAMS_FOR_DETAIL = ignore
+
+    is_allow = RestDoctorSchema().allows_filters('path', 'method')
+
+    assert is_allow is is_expected_allow

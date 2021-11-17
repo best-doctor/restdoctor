@@ -10,7 +10,7 @@ from django.core.exceptions import (
     ValidationError as DjangoValidationError,
     ImproperlyConfigured,
 )
-from django.db.models import Model
+from django.db.models import Model, QuerySet
 from django.http import Http404
 from rest_framework.generics import GenericAPIView as BaseGenericAPIView, get_object_or_404
 
@@ -83,7 +83,7 @@ class GenericAPIView(NegotiatedMixin, BaseGenericAPIView):
                 )
             )
 
-    def _get_queryset_for_object(self):
+    def _get_queryset_for_object(self) -> QuerySet:
         qs = self.get_queryset()
         if settings.API_IGNORE_FILTER_PARAMS_FOR_DETAIL:
             return qs
