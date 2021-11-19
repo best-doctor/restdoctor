@@ -67,6 +67,13 @@ class RestDoctorSchema(ViewSchemaBase, AutoSchema):
                 parameters += filter_backend().get_schema_operation_parameters(self.view)
         return parameters
 
+    def allows_filters(self, path: str, method: str) -> bool:
+        if settings.API_IGNORE_FILTER_PARAMS_FOR_DETAIL and not is_list_view(
+            path, method, self.view
+        ):
+            return False
+        return super().allows_filters(path, method)
+
     def get_request_serializer_filter_parameters(
         self, path: str, method: str
     ) -> typing.List[OpenAPISchema]:
