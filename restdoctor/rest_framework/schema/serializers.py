@@ -11,6 +11,7 @@ from restdoctor.rest_framework.schema.custom_types import (
     SerializerSchemaBase,
     ViewSchemaBase,
 )
+from restdoctor.rest_framework.serializers import PydanticSerializer
 
 
 class SerializerSchema(SerializerSchemaBase):
@@ -47,6 +48,9 @@ class SerializerSchema(SerializerSchemaBase):
         read_only: bool = True,
         required: bool = True,
     ) -> OpenAPISchema:
+        if isinstance(serializer, PydanticSerializer):
+            return serializer.pydantic_model.schema()
+
         properties, required_list = self.map_serializer_fields(
             serializer, include_write_only=write_only, include_read_only=read_only
         )
