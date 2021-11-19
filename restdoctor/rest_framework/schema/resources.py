@@ -39,6 +39,12 @@ class ResourceSchema(RestDoctorSchema):
                         yield code, serializer, schema
 
     def get_resources(self, method: str) -> ResourceHandlersMap:
+        if self.generator and self.generator.api_resource:
+            return {
+                resource: handler
+                for resource, handler in self.view.resource_handlers_map.items()
+                if resource == self.generator.api_resource
+            }
         return {
             resource: handler
             for resource, handler in self.view.resource_handlers_map.items()
@@ -85,14 +91,22 @@ class ResourceSchema(RestDoctorSchema):
         return {'oneOf': list_schemas}
 
     def get_content_schema_by_type(self, path: str, method: str, schema_type: str) -> OpenAPISchema:
-        content_schema = {}
-
         if schema_type == 'responses':
             resources_schema_method_name = 'get_resources_response_schema'
             schema_method_name = 'get_response_schema'
         else:
             resources_schema_method_name = 'get_resources_request_body_schema'
             schema_method_name = 'get_request_body_schema'
+
+        return self.get_versioned_content_resource_schema(
+            path, method, schema_method_name, resources_schema_method_name
+        )
+
+    def get_versioned_content_resource_schema(
+        self, path: str, method: str, schema_method_name: str, resources_schema_method_name: str
+    ) -> OpenAPISchema:
+
+        content_schema = {}
 
         vendor = getattr(settings, 'API_VENDOR_STRING', 'vendor').lower()
         default_content_type = f'application/vnd.{vendor}'
@@ -105,7 +119,7 @@ class ResourceSchema(RestDoctorSchema):
 
         version_content_type = f'{default_content_type}.{self.generator.api_version}'
 
-        for resource, handler in self.view.resource_handlers_map.items():
+        for resource, handler in self.get_resources(method).items():
             view = self.generator.create_view(handler, method, request=self.view.request)
             if not hasattr(view, get_action(path, method, view)):
                 continue
