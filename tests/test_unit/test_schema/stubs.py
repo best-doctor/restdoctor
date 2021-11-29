@@ -9,7 +9,7 @@ from rest_framework.serializers import Serializer
 
 from restdoctor.rest_framework.resources import ResourceViewSet
 from restdoctor.rest_framework.views import SerializerClassMapApiView
-from restdoctor.rest_framework.viewsets import ListModelViewSet, ModelViewSet
+from restdoctor.rest_framework.viewsets import ListModelViewSet, ModelViewSet, ReadOnlyModelViewSet
 from tests.stubs.models import MyAnotherModel
 
 
@@ -64,14 +64,18 @@ class AnotherViewSet(ModelViewSet):
     serializer_class = AnotherSerializer
 
 
+class ROModelViewSet(ReadOnlyModelViewSet):
+    serializer_class = DefaultSerializer
+
+
 class DefaultViewSetWithOperationId(DefaultViewSet):
     schema_operation_id_map = {
-        'list': 'listDefautBars',
-        'retrieve': 'getDefautBar',
-        'create': 'createDefautBar',
-        'update': 'updateDefautBar',
-        'partial_update': 'partialUpdateDefautBar',
-        'destroy': 'deleteDefautBar',
+        'list': 'listDefaultBars',
+        'retrieve': 'getDefaultBar',
+        'create': 'createDefaultBar',
+        'update': 'updateDefaultBar',
+        'partial_update': 'partialUpdateDefaultBar',
+        'destroy': 'deleteDefaultBar',
     }
 
 
@@ -106,6 +110,7 @@ class DefaultAnotherResourceViewSet(ResourceViewSet):
     resource_views_map = {
         'default': DefaultViewSet,
         'another': AnotherViewSet,
+        'read_only': ROModelViewSet,
         'actions': ActionsViewSet,
     }
 

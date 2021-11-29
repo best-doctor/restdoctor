@@ -37,21 +37,27 @@ class ResourceSchema(RestDoctorSchema):
                 for code, serializer, schema in view.schema.get_action_code_schemas(path, method):
                     if code not in codes_seen:
                         yield code, serializer, schema
+                        codes_seen.add(code)
 
     def get_resources(self, method: str) -> ResourceHandlersMap:
+        action = self.view.action_map.get(method.lower())
+        filtered_resources = [
+            resource
+            for resource, actions in self.view.resource_actions_map.items()
+            if action in actions
+        ]
+
         if self.generator and self.generator.api_resource:
-            return {
-                resource: handler
-                for resource, handler in self.view.resource_handlers_map.items()
+            filtered_resources = [
+                resource
+                for resource in filtered_resources
                 if resource == self.generator.api_resource
-            }
+            ]
+
         return {
             resource: handler
             for resource, handler in self.view.resource_handlers_map.items()
-            if (
-                method in self.view.resource_discriminate_methods
-                or resource == self.view.default_discriminative_value
-            )
+            if resource in filtered_resources
         }
 
     def get_resources_request_body_schema(self, path: str, method: str) -> OpenAPISchema:

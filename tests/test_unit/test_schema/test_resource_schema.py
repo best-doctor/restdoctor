@@ -26,26 +26,16 @@ def test_object_name_success_case(view_class_name, expected_object_name):
     assert object_name == expected_object_name
 
 
-def test_get_response_schema_success_case(get_create_view_func):
+@pytest.mark.parametrize(('method'), [('POST'), ('GET')])
+def test_get_response_schema_success_case(get_create_view_func, method):
     create_view = get_create_view_func(
         'test', DefaultAnotherResourceViewSet, 'test', router=ResourceRouter()
     )
 
-    view = create_view('/test/', 'GET')
-    response_schema = view.schema.get_resources_response_schema('/test/', 'GET')
+    view = create_view('/test/', method)
+    response_schema = view.schema.get_resources_response_schema('/test/', method)
 
     assert len(response_schema.get('oneOf', [])) == 2
-
-
-def test_get_response_schema_wrong_method_success_case(get_create_view_func):
-    create_view = get_create_view_func(
-        'test', DefaultAnotherResourceViewSet, 'test', router=ResourceRouter()
-    )
-
-    view = create_view('/test/', 'POST')
-    response_schema = view.schema.get_resources_response_schema('/test/', 'POST')
-
-    assert len(response_schema.get('oneOf', [])) == 0
 
 
 def test_get_request_body_schema_success_case(get_create_view_func):
@@ -54,7 +44,6 @@ def test_get_request_body_schema_success_case(get_create_view_func):
     )
 
     view = create_view('/test/', 'POST')
-    view.resource_discriminate_methods = ['POST']
     request_body = view.schema.get_resources_request_body_schema('/test/', 'POST')
 
     assert len(request_body.get('oneOf', [])) == 2
@@ -68,10 +57,11 @@ def test_get_responses_success_case(
     )
 
     view = create_view('/test/', 'POST')
-    view.resource_discriminate_methods = ['POST']
     responses = view.schema.get_responses('/test/', 'POST')
+    responses_codes = set(responses.keys())
     content = responses['201']['content']
 
+    assert responses_codes == {'201', '400', '404'}
     assert content['application/vnd.vendor']['schema']['oneOf'] == [
         resource_default_rq_schema,
         resource_another_rq_schema,
@@ -91,7 +81,6 @@ def test_get_request_body_success_case(
     resource_another_wq_ref = resource_another_ref('WQ')
 
     view = create_view('/test/', 'POST')
-    view.resource_discriminate_methods = ['POST']
     request_body = view.schema.get_request_body('/test/', 'POST')
     content = request_body['content']
 
@@ -110,10 +99,11 @@ def test_get_action_responses_success_case(get_create_view_func, resource_defaul
     )
 
     view = create_view('/test/123/custom_action/', 'PUT')
-    view.resource_discriminate_methods = ['PUT']
     responses = view.schema.get_responses('/test/123/custom_action/', 'PUT')
+    responses_codes = set(responses.keys())
     content = responses['201']['content']
 
+    assert responses_codes == {'201', '400', '404'}
     assert content['application/vnd.vendor']['schema'] == resource_default_rq_schema
     assert 'application/vnd.vendor.v1-default' not in content
     assert 'application/vnd.vendor.v1-another' not in content
