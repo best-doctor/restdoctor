@@ -106,6 +106,7 @@ class RefsSchemaGenerator(SchemaGenerator):
         view = super().create_view(callback, method, request)
         schema_class = getattr(view, 'schema_class', RestDoctorSchema)
         view.schema = schema_class(generator=self)
+        view.swagger_fake_view = True
         return view
 
     def get_error_schema(
