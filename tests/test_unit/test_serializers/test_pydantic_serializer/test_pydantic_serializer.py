@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import pytest
+from django.core.exceptions import ImproperlyConfigured
+from pydantic import BaseModel
 from rest_framework.serializers import ListSerializer
 
 from restdoctor.rest_framework.serializers import PydanticSerializer
@@ -123,3 +125,100 @@ def test_pydantic_model_serializer_list(
     assert isinstance(serializer, ListSerializer)
     assert isinstance(serializer.child, pydantic_model_test_serializer)
     assert serializer.data == expected_data
+
+
+def test_pydantic_django_model_serializer_successful_initialization(
+    pydantic_django_model_test_serializer,
+):
+    pydantic_django_model_test_serializer()
+
+    assert True  # exception was not thrown
+
+
+def test_pydantic_django_model_serializer_invalid_fields_subset_error(
+    pydantic_django_model_test_serializer,
+):
+    class InvalidPydanticModel(BaseModel):
+        class Config:
+            orm_mode = True
+
+        field_a: str
+        field_c: int
+
+    pydantic_django_model_test_serializer.pydantic_model = InvalidPydanticModel
+
+    with pytest.raises(
+        ImproperlyConfigured, match='Pydantic model fields is not subset of django model fields'
+    ):
+        pydantic_django_model_test_serializer()
+
+
+def test_pydantic_django_model_serializer_meta_fields_error(pydantic_django_model_test_serializer):
+    pydantic_django_model_test_serializer.Meta.fields = ['field_a']
+
+    with pytest.raises(
+        ImproperlyConfigured,
+        match='Meta.fields does not affect this serializer behavior. Remove this attribute',
+    ):
+        pydantic_django_model_test_serializer()
+
+
+def test_pydantic_django_model_serializer_orm_mode_disabled_error(
+    pydantic_django_model_test_serializer,
+):
+    class InvalidPydanticModel(BaseModel):
+        field_a: str
+
+    pydantic_django_model_test_serializer.pydantic_model = InvalidPydanticModel
+
+    with pytest.raises(
+        ImproperlyConfigured,
+        match='pydantic_model.Config.orm_mode must be True for this serializer',
+    ):
+        pydantic_django_model_test_serializer()
+
+
+def test_pydantic_django_model_serializer_to_representation_success(
+    pydantic_django_model_test_serializer,
+    django_test_model,
+    pydantic_test_model_data,
+    serialized_pydantic_test_model_data,
+):
+    model_instance = django_test_model(**pydantic_test_model_data)
+
+    representation = pydantic_django_model_test_serializer().to_representation(model_instance)
+
+    assert representation == serialized_pydantic_test_model_data
+
+
+def test_pydantic_django_model_serializer_create_success(
+    pydantic_django_model_test_serializer,
+    django_test_model,
+    pydantic_test_model_data,
+    serialized_pydantic_test_model_data,
+):
+    serializer = pydantic_django_model_test_serializer(data=pydantic_test_model_data)
+
+    serializer.is_valid()
+    serializer.create(serializer.data)
+
+    django_test_model._meta.default_manager.create.assert_called_once_with(
+        **serialized_pydantic_test_model_data
+    )
+
+
+def test_pydantic_django_model_serializer_update_success(
+    pydantic_django_model_test_serializer,
+    django_test_model,
+    pydantic_test_model_data,
+    serialized_pydantic_test_model_data,
+):
+    serializer = pydantic_django_model_test_serializer(data=pydantic_test_model_data)
+    model_instance = django_test_model(**pydantic_test_model_data)
+    model_instance.field_b = 100500
+
+    serializer.is_valid()
+    serializer.update(model_instance, serializer.data)
+
+    assert model_instance.field_b == serialized_pydantic_test_model_data['field_b']
+    model_instance.save.assert_called_once()
