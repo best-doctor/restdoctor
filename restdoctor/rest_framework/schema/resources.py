@@ -13,7 +13,11 @@ if typing.TYPE_CHECKING:
     from restdoctor.rest_framework.schema.custom_types import CodeActionSchemaTuple, OpenAPISchema
 
 
-def get_single_or_default_handler(view: GenericAPIView) -> typing.Optional[Handler]:
+def get_single_or_default_handler(
+    view: GenericAPIView, resource: str = None
+) -> typing.Optional[Handler]:
+    if resource:
+        return view.resource_handlers_map.get(resource)
     keys = list(view.resource_handlers_map.keys())
     if len(keys) == 1:
         return view.resource_handlers_map[keys[0]]
@@ -152,31 +156,34 @@ class ResourceSchema(RestDoctorSchema):
         return {'content': self.get_content_schema_by_type(path, method, 'request_body')}
 
     def get_pagination_parameters(self, path: str, method: str) -> typing.List[OpenAPISchema]:
-        handler = get_single_or_default_handler(self.view)
+        if self.generator:
+            handler = get_single_or_default_handler(self.view, self.generator.api_resource)
 
-        if self.generator and handler:
-            view = self.generator.create_view(handler, method, request=self.view.request)
-            return view.schema.get_pagination_parameters(path, method)
+            if handler:
+                view = self.generator.create_view(handler, method, request=self.view.request)
+                return view.schema.get_pagination_parameters(path, method)
 
         return []
 
     def get_filter_parameters(self, path: str, method: str) -> typing.List[OpenAPISchema]:
-        handler = get_single_or_default_handler(self.view)
+        if self.generator:
+            handler = get_single_or_default_handler(self.view, self.generator.api_resource)
 
-        if self.generator and handler:
-            view = self.generator.create_view(handler, method, request=self.view.request)
-            return view.schema.get_filter_parameters(path, method)
+            if handler:
+                view = self.generator.create_view(handler, method, request=self.view.request)
+                return view.schema.get_filter_parameters(path, method)
 
         return []
 
     def get_request_serializer_filter_parameters(
         self, path: str, method: str
     ) -> typing.List[OpenAPISchema]:
-        handler = get_single_or_default_handler(self.view)
+        if self.generator:
+            handler = get_single_or_default_handler(self.view, self.generator.api_resource)
 
-        if self.generator and handler:
-            view = self.generator.create_view(handler, method, request=self.view.request)
-            return view.schema.get_request_serializer_filter_parameters(path, method)
+            if handler:
+                view = self.generator.create_view(handler, method, request=self.view.request)
+                return view.schema.get_request_serializer_filter_parameters(path, method)
 
         return []
 
