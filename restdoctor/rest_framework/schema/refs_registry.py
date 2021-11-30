@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 import logging
 import typing
 
@@ -22,6 +23,14 @@ class LocalRefsRegistry:
                     logger.error(f'Replacing schema for {path}')
             else:
                 self._local_refs[path] = schema
+
+    def get_local_ref(self, ref: str) -> OpenAPISchema | None:
+        if ref.startswith('#/components'):
+            path = tuple(ref.split('/')[2:])
+            if path[-1] != '' and path in self._local_refs:
+                return self._local_refs[path]
+
+        return None
 
     def get_components(self) -> OpenAPISchema:
         components: OpenAPISchema = {}
