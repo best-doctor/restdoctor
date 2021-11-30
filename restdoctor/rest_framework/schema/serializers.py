@@ -3,6 +3,7 @@ from __future__ import annotations
 import typing
 
 from django.utils.encoding import force_str
+from pydantic.schema import schema as pydantic_schema
 from rest_framework.fields import HiddenField
 from rest_framework.serializers import BaseSerializer
 
@@ -11,6 +12,9 @@ from restdoctor.rest_framework.schema.custom_types import (
     SerializerSchemaBase,
     ViewSchemaBase,
 )
+from restdoctor.rest_framework.serializers import PydanticSerializer
+
+OPENAPI_REF_PREFIX = '#/components/schemas/'
 
 
 class SerializerSchema(SerializerSchemaBase):
@@ -47,6 +51,9 @@ class SerializerSchema(SerializerSchemaBase):
         read_only: bool = True,
         required: bool = True,
     ) -> OpenAPISchema:
+        if isinstance(serializer, PydanticSerializer):
+            return serializer.pydantic_model.schema()
+
         properties, required_list = self.map_serializer_fields(
             serializer, include_write_only=write_only, include_read_only=read_only
         )
@@ -83,7 +90,27 @@ class SerializerSchema(SerializerSchemaBase):
 
         if serializer_class_name.endswith('Serializer'):
             serializer_class_name = serializer_class_name[:-10]
-        return f'#/components/schemas/{serializer_module_name}_{serializer_class_name}{suffix}'
+        return f'{OPENAPI_REF_PREFIX}{serializer_module_name}_{serializer_class_name}{suffix}'
+
+    def get_pydantic_ref_name(self, serializer_class_name: str) -> str:
+        if serializer_class_name.endswith('Serializer'):
+            serializer_class_name = serializer_class_name[:-10]
+
+        return f'{OPENAPI_REF_PREFIX}{serializer_class_name}'
+
+    def map_pydantic_serializer(self, serializer: PydanticSerializer) -> OpenAPISchema:
+        if not self.view_schema.generator:
+            return serializer.pydantic_model.schema()
+
+        schema = {}
+        ref_repo = pydantic_schema([serializer.pydantic_model], ref_prefix=OPENAPI_REF_PREFIX)
+        for class_name, definition in ref_repo['definitions'].items():
+            ref = self.get_pydantic_ref_name(class_name)
+            self.view_schema.generator.local_refs_registry.put_local_ref(ref, definition)
+            if class_name == serializer.pydantic_model.__name__:
+                schema = {'$ref': ref}
+
+        return schema
 
     def map_serializer(
         self,
@@ -92,6 +119,9 @@ class SerializerSchema(SerializerSchemaBase):
         read_only: bool = True,
         required: bool = True,
     ) -> OpenAPISchema:
+        if isinstance(serializer, PydanticSerializer):
+            return self.map_pydantic_serializer(serializer)
+
         schema = self.get_serializer_schema(
             serializer, write_only=write_only, read_only=read_only, required=required
         )
