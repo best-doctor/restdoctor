@@ -38,7 +38,6 @@ class PageNumberUncountedResponseSerializer(Serializer):
         max_value=DEFAULT_MAX_PAGE_SIZE,
         help_text=_('Page size'),
     )
-    has_next = BooleanField(help_text=_('Has result next page'))
     url = CharField(help_text=_('Current page URL'))
     next_url = CharField(help_text=_('Next page URL'), allow_null=True)
     prev_url = CharField(help_text=_('Previous page URL'), allow_null=True)
@@ -46,7 +45,7 @@ class PageNumberUncountedResponseSerializer(Serializer):
 
 class PageNumberResponseSerializer(PageNumberUncountedResponseSerializer):
     total = IntegerField(help_text=_('Total result size'))
-    last_url = CharField(help_text=_('Last page URL'), allow_null=True)
+    last_url = CharField(required=False, help_text=_('Last page URL'), allow_null=True)
 
 
 class CursorUUIDRequestSerializer(PerPageSerializerBase):
