@@ -69,4 +69,3 @@ class CursorUUIDUncountedResponseSerializer(Serializer):
 
 class CursorUUIDResponseSerializer(CursorUUIDUncountedResponseSerializer):
     total = IntegerField(help_text=_('Total result size'))
-    last_url = CharField(help_text=_('Last page URL'), allow_null=True)

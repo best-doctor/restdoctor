@@ -67,11 +67,6 @@ from restdoctor.rest_framework.schema import RestDoctorSchema
                     },
                     'total': {'type': 'integer', 'description': _('Total result size')},
                     'url': {'type': 'string', 'description': _('Current page URL')},
-                    'last_url': {
-                        'type': 'string',
-                        'nullable': True,
-                        'description': _('Last page URL'),
-                    },
                     'after_url': {
                         'type': 'string',
                         'nullable': True,
@@ -83,15 +78,7 @@ from restdoctor.rest_framework.schema import RestDoctorSchema
                         'description': _('URL of page before cursor position'),
                     },
                 },
-                'required': [
-                    'per_page',
-                    'has_next',
-                    'url',
-                    'after_url',
-                    'before_url',
-                    'total',
-                    'last_url',
-                ],
+                'required': ['per_page', 'has_next', 'url', 'after_url', 'before_url', 'total'],
             },
         ),
     ],
