@@ -1,42 +1,28 @@
 import pytest
-
 from django.utils.translation import gettext_lazy as _
 
-from restdoctor.constants import DEFAULT_MAX_PAGE_SIZE, DEFAULT_PAGE_SIZE
+from restdoctor.constants import DEFAULT_MAX_PAGE_SIZE
 from restdoctor.rest_framework.pagination import CursorUUIDPagination
 from restdoctor.rest_framework.pagination.page_number import PageNumberPagination
 from restdoctor.rest_framework.schema import RestDoctorSchema
 
 
 @pytest.mark.parametrize(
-    ('pagination_class', 'expected_schema'), [
+    ('pagination_class', 'expected_schema'),
+    [
         (
             PageNumberPagination,
             {
                 'type': 'object',
                 'properties': {
-                    'page': {
-                        'type': 'integer',
-                        'minimum': 1,
-                        'description': _('Selected page')
-                    },
+                    'page': {'type': 'integer', 'minimum': 1, 'description': _('Selected page')},
                     'per_page': {
                         'type': 'integer',
                         'maximum': DEFAULT_MAX_PAGE_SIZE,
                         'description': _('Page size'),
                     },
-                    'total': {
-                        'type': 'integer',
-                        'description': _('Total result size'),
-                    },
-                    'has_next': {
-                        'type': 'boolean',
-                        'description': _('Has result next page')
-                    },
-                    'url': {
-                        'type': 'string',
-                        'description': _('Current page URL'),
-                    },
+                    'total': {'type': 'integer', 'description': _('Total result size')},
+                    'url': {'type': 'string', 'description': _('Current page URL')},
                     'last_url': {
                         'type': 'string',
                         'nullable': True,
@@ -53,10 +39,7 @@ from restdoctor.rest_framework.schema import RestDoctorSchema
                         'description': _('Previous page URL'),
                     },
                 },
-                'required': [
-                    'page', 'per_page', 'has_next', 'url',
-                    'next_url', 'prev_url', 'total', 'last_url',
-                ],
+                'required': ['page', 'per_page', 'url', 'next_url', 'prev_url', 'total'],
             },
         ),
         (
@@ -69,10 +52,7 @@ from restdoctor.rest_framework.schema import RestDoctorSchema
                         'maximum': DEFAULT_MAX_PAGE_SIZE,
                         'description': _('Page size'),
                     },
-                    'has_next': {
-                        'type': 'boolean',
-                        'description': _('Has result next page')
-                    },
+                    'has_next': {'type': 'boolean', 'description': _('Has result next page')},
                     'before': {
                         'type': 'string',
                         'format': 'uuid',
@@ -85,19 +65,8 @@ from restdoctor.rest_framework.schema import RestDoctorSchema
                         'nullable': True,
                         'description': _('After UUID'),
                     },
-                    'total': {
-                        'type': 'integer',
-                        'description': _('Total result size'),
-                    },
-                    'url': {
-                        'type': 'string',
-                        'description': _('Current page URL'),
-                    },
-                    'last_url': {
-                        'type': 'string',
-                        'nullable': True,
-                        'description': _('Last page URL'),
-                    },
+                    'total': {'type': 'integer', 'description': _('Total result size')},
+                    'url': {'type': 'string', 'description': _('Current page URL')},
                     'after_url': {
                         'type': 'string',
                         'nullable': True,
@@ -109,13 +78,10 @@ from restdoctor.rest_framework.schema import RestDoctorSchema
                         'description': _('URL of page before cursor position'),
                     },
                 },
-                'required': [
-                    'per_page', 'has_next', 'url',
-                    'after_url', 'before_url', 'total', 'last_url',
-                ],
+                'required': ['per_page', 'has_next', 'url', 'after_url', 'before_url', 'total'],
             },
         ),
-    ]
+    ],
 )
 def test_pagination_schema(pagination_class, expected_schema):
     paginator = pagination_class(view_schema=RestDoctorSchema())
