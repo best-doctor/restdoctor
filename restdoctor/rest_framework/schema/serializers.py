@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import typing
 
 from django.utils.encoding import force_str
@@ -15,6 +16,19 @@ from restdoctor.rest_framework.schema.custom_types import (
 from restdoctor.rest_framework.serializers import PydanticSerializer
 
 OPENAPI_REF_PREFIX = '#/components/schemas/'
+
+
+def fix_pydantic_title(schema: OpenAPISchema) -> OpenAPISchema:
+    fixed_schema = copy.deepcopy(schema)
+    if 'title' in fixed_schema:
+        if 'description' not in fixed_schema:
+            fixed_schema['description'] = fixed_schema.get('title', '')
+        del fixed_schema['title']
+
+    for item_name, item_schema in fixed_schema.items():
+        if isinstance(item_schema, dict):
+            fixed_schema[item_name] = fix_pydantic_title(item_schema)
+    return fixed_schema
 
 
 class SerializerSchema(SerializerSchemaBase):
@@ -52,7 +66,7 @@ class SerializerSchema(SerializerSchemaBase):
         required: bool = True,
     ) -> OpenAPISchema:
         if isinstance(serializer, PydanticSerializer):
-            return serializer.pydantic_model.schema()
+            return fix_pydantic_title(serializer.pydantic_model.schema())
 
         properties, required_list = self.map_serializer_fields(
             serializer, include_write_only=write_only, include_read_only=read_only
@@ -100,11 +114,12 @@ class SerializerSchema(SerializerSchemaBase):
 
     def map_pydantic_serializer(self, serializer: PydanticSerializer) -> OpenAPISchema:
         if not self.view_schema.generator:
-            return serializer.pydantic_model.schema()
+            return fix_pydantic_title(serializer.pydantic_model.schema())
 
         schema = {}
         ref_repo = pydantic_schema([serializer.pydantic_model], ref_prefix=OPENAPI_REF_PREFIX)
         for class_name, definition in ref_repo['definitions'].items():
+            definition = fix_pydantic_title(definition)
             ref = self.get_pydantic_ref_name(class_name)
             self.view_schema.generator.local_refs_registry.put_local_ref(ref, definition)
             if class_name == serializer.pydantic_model.__name__:
