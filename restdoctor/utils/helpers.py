@@ -1,11 +1,11 @@
 from __future__ import annotations
+
 import typing
 
-if typing.TYPE_CHECKING:
-    from rest_framework.response import Response
+from restdoctor.rest_framework.test_client import DRFClientResponse
 
 
-def unpacked_error_message(response: Response) -> str:
+def unpacked_error_message(response: DRFClientResponse) -> str:
     return response.json()['errors'][0]['message']
 
 
