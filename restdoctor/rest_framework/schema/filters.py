@@ -62,7 +62,7 @@ def get_filter_schema(filter_field: Filter, filter_map: dict = None) -> dict:
     filter_map = filter_map or FILTER_MAP
     field_parents = type(filter_field).mro()
 
-    schema: dict | callable = {'type': 'string'}
+    schema: dict | typing.Callable = {'type': 'string'}
     for field_parent in field_parents[:-1]:
         try:
             schema = filter_map[field_parent]
