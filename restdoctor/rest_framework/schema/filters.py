@@ -36,14 +36,16 @@ def _get_filter_schema_choice(
         (int, 'integer'),
         ((int, float, decimal.Decimal), 'number'),
     ):
-        if all(isinstance(choice, type_) for choice, _ in choices):
+        if all(isinstance(choice, type_) for choice, _ in choices):  # type: ignore
             choice_type = repr_
             break
 
     return {'type': choice_type, 'enum': [c[0] for c in choices]}
 
 
-FILTER_MAP = {
+FILTER_MAP: typing.Dict[
+    typing.Type[Filter], typing.Union[dict, typing.Callable[[Filter], dict]]
+] = {
     BooleanFilter: {'type': 'boolean'},
     ChoiceFilter: _get_filter_schema_choice,
     MultipleChoiceFilter: _get_filter_schema_choice,
@@ -71,5 +73,5 @@ def get_filter_schema(filter_field: Filter, filter_map: dict = None) -> dict:
             pass
 
     if callable(schema):
-        schema = schema(filter_field)
+        return schema(filter_field)
     return schema
