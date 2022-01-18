@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 from django.db.models import QuerySet
-from django_filters import DateFilter
-from django_filters.rest_framework import FilterSet
+from django_filters import CharFilter, DateFilter
+from django_filters.rest_framework import DjangoFilterBackend, FilterSet
 from rest_framework.decorators import action as drf_action
 from rest_framework.fields import CharField, UUIDField
 from rest_framework.serializers import Serializer
@@ -27,6 +27,10 @@ class CreateSerializer(Serializer):
 
 class ListSerializer(Serializer):
     list_field = CharField()
+
+
+class SomeFieldSerializer(Serializer):
+    some_field = CharField(help_text='serializer some field')
 
 
 class ListFilterSerialiser(Serializer):
@@ -118,6 +122,19 @@ class DefaultAnotherResourceViewSet(ResourceViewSet):
 class SingleResourceViewSet(ResourceViewSet):
     default_discriminative_value = 'default'
     resource_views_map = {'another': AnotherViewSet}
+
+
+class SomeFieldFilterSet(FilterSet):
+    some_field = CharFilter(label='filter some field')
+
+
+class MultipleSiblingParametersView(ReadOnlyModelViewSet):
+    serializer_class_map = {'default': DefaultSerializer, 'list': {'request': SomeFieldSerializer}}
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = SomeFieldFilterSet
+
+    def get(self, request, *args, **kwargs):
+        pass
 
 
 class DefaultFilterSet(FilterSet):

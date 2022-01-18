@@ -9,6 +9,7 @@ from rest_framework.serializers import BaseSerializer
 from semver import VersionInfo
 
 OpenAPISchema = t.Dict[str, 'OpenAPISchema']  # type: ignore
+OpenAPISchemaParameter = t.Dict[str, t.Any]
 LocalRefs = t.Dict[t.Tuple[str, ...], t.Any]
 
 ResponseCode = str
