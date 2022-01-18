@@ -25,7 +25,7 @@ def get_filter_schema(filter_field: Filter) -> dict:
 
 
 @get_filter_schema.register
-def _(filter_field: BooleanFilter) -> dict:
+def _get_filter_schema_bool(filter_field: BooleanFilter) -> dict:
     return {'type': 'boolean'}
 
 
@@ -33,7 +33,7 @@ def _(filter_field: BooleanFilter) -> dict:
 @get_filter_schema.register(MultipleChoiceFilter)
 @get_filter_schema.register(TypedChoiceFilter)
 @get_filter_schema.register(TypedMultipleChoiceFilter)
-def _(
+def _get_filter_schema_choice(
     filter_field: ChoiceFilter
     | MultipleChoiceFilter
     | TypedChoiceFilter
@@ -60,21 +60,21 @@ def _(
 
 @get_filter_schema.register(DateFilter)
 @get_filter_schema.register(DateFromToRangeFilter)
-def _(filter_field: DateFilter | DateFromToRangeFilter) -> dict:
+def _get_filter_schema_date(filter_field: DateFilter | DateFromToRangeFilter) -> dict:
     return {'type': 'string', 'format': 'date'}
 
 
 @get_filter_schema.register(DateTimeFilter)
 @get_filter_schema.register(DateTimeFromToRangeFilter)
-def _(filter_field: DateTimeFilter | DateTimeFromToRangeFilter) -> dict:
+def _get_filter_schema_datetime(filter_field: DateTimeFilter | DateTimeFromToRangeFilter) -> dict:
     return {'type': 'string', 'format': 'date-time'}
 
 
 @get_filter_schema.register
-def _(filter_field: NumberFilter) -> dict:
+def _get_filter_schema_number(filter_field: NumberFilter) -> dict:
     return {'type': 'number'}
 
 
 @get_filter_schema.register
-def _(filter_field: TimeFilter) -> dict:
+def _get_filter_schema_time(filter_field: TimeFilter) -> dict:
     return {'type': 'string', 'format': 'time'}
