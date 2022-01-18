@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import decimal
-import functools
+import typing
 
 from django_filters import (
     Filter,
@@ -19,25 +19,10 @@ from django_filters import (
 )
 
 
-@functools.singledispatch
-def get_filter_schema(filter_field: Filter) -> dict:
-    return {'type': 'string'}
-
-
-@get_filter_schema.register
-def _get_filter_schema_bool(filter_field: BooleanFilter) -> dict:
-    return {'type': 'boolean'}
-
-
-@get_filter_schema.register(ChoiceFilter)
-@get_filter_schema.register(MultipleChoiceFilter)
-@get_filter_schema.register(TypedChoiceFilter)
-@get_filter_schema.register(TypedMultipleChoiceFilter)
 def _get_filter_schema_choice(
-    filter_field: ChoiceFilter
-    | MultipleChoiceFilter
-    | TypedChoiceFilter
-    | TypedMultipleChoiceFilter,
+    filter_field: typing.Union[
+        ChoiceFilter, MultipleChoiceFilter, TypedChoiceFilter, TypedMultipleChoiceFilter
+    ]
 ) -> dict:
     choice_type = 'string'
 
@@ -58,23 +43,33 @@ def _get_filter_schema_choice(
     return {'type': choice_type, 'enum': [c[0] for c in choices]}
 
 
-@get_filter_schema.register(DateFilter)
-@get_filter_schema.register(DateFromToRangeFilter)
-def _get_filter_schema_date(filter_field: DateFilter | DateFromToRangeFilter) -> dict:
-    return {'type': 'string', 'format': 'date'}
+FILTER_MAP = {
+    BooleanFilter: {'type': 'boolean'},
+    ChoiceFilter: _get_filter_schema_choice,
+    MultipleChoiceFilter: _get_filter_schema_choice,
+    TypedChoiceFilter: _get_filter_schema_choice,
+    TypedMultipleChoiceFilter: _get_filter_schema_choice,
+    DateFilter: {'type': 'string', 'format': 'date'},
+    DateFromToRangeFilter: {'type': 'string', 'format': 'date'},
+    DateTimeFilter: {'type': 'string', 'format': 'date-time'},
+    DateTimeFromToRangeFilter: {'type': 'string', 'format': 'date-time'},
+    NumberFilter: {'type': 'number'},
+    TimeFilter: {'type': 'string', 'format': 'time'},
+}
 
 
-@get_filter_schema.register(DateTimeFilter)
-@get_filter_schema.register(DateTimeFromToRangeFilter)
-def _get_filter_schema_datetime(filter_field: DateTimeFilter | DateTimeFromToRangeFilter) -> dict:
-    return {'type': 'string', 'format': 'date-time'}
+def get_filter_schema(filter_field: Filter, filter_map: dict = None) -> dict:
+    filter_map = filter_map or FILTER_MAP
+    field_parents = type(filter_field).mro()
 
+    schema: dict | callable = {'type': 'string'}
+    for field_parent in field_parents[:-1]:
+        try:
+            schema = filter_map[field_parent]
+            break
+        except KeyError:
+            pass
 
-@get_filter_schema.register
-def _get_filter_schema_number(filter_field: NumberFilter) -> dict:
-    return {'type': 'number'}
-
-
-@get_filter_schema.register
-def _get_filter_schema_time(filter_field: TimeFilter) -> dict:
-    return {'type': 'string', 'format': 'time'}
+    if callable(schema):
+        schema = schema(filter_field)
+    return schema

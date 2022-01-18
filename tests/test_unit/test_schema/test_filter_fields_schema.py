@@ -17,7 +17,7 @@ from django_filters import (
 )
 from django_filters.rest_framework import BooleanFilter as RestBooleanFilter
 
-from restdoctor.rest_framework.schema.filters import get_filter_schema
+from restdoctor.rest_framework.schema.filters import get_filter_schema, FILTER_MAP
 
 url_pattern = URLValidator.regex.pattern.replace('\\Z', '\\z')
 
@@ -52,3 +52,16 @@ def test__get_filter_schema(field, expected_schema):
     result = get_filter_schema(field)
 
     assert result == expected_schema
+
+
+class CustomDateFilter(DateFilter):
+    pass
+
+
+def test__get_filter_schema__custom_field():
+    result = get_filter_schema(
+        filter_field=CustomDateFilter(),
+        filter_map={**FILTER_MAP, CustomDateFilter: {'type': 'custom-date'}},
+    )
+
+    assert result == {'type': 'custom-date'}
