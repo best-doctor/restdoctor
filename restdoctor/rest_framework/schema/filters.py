@@ -20,6 +20,8 @@ from django_filters import (
     ModelMultipleChoiceFilter,
 )
 
+from restdoctor.utils.custom_types import FilterMap
+
 
 def _get_filter_schema_choice(
     filter_field: typing.Union[
@@ -46,9 +48,7 @@ def _get_filter_schema_choice(
     return {'type': choice_type, 'enum': choice_keys}
 
 
-FILTER_MAP: typing.Dict[
-    typing.Type[Filter], typing.Union[dict, typing.Callable[[Filter], dict]]
-] = {
+FILTER_MAP: FilterMap = {
     BooleanFilter: {'type': 'boolean'},
     ChoiceFilter: _get_filter_schema_choice,
     MultipleChoiceFilter: _get_filter_schema_choice,
@@ -65,7 +65,7 @@ FILTER_MAP: typing.Dict[
 }
 
 
-def get_filter_schema(filter_field: Filter, filter_map: dict = None) -> dict:
+def get_filter_schema(filter_field: Filter, filter_map: FilterMap) -> dict:
     field_parents = type(filter_field).mro()
 
     schema: typing.Union[dict, typing.Callable] = {'type': 'string'}
