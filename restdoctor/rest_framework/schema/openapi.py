@@ -7,6 +7,7 @@ import typing
 from django.conf import settings
 from django.core.exceptions import FieldDoesNotExist, ImproperlyConfigured
 from django.db import models
+from django.utils.module_loading import import_string
 from django_filters import Filter
 from django_filters.rest_framework import DjangoFilterBackend, FilterSet
 from rest_framework.fields import Field
@@ -41,7 +42,7 @@ log = logging.getLogger(__name__)
 
 
 class RestDoctorSchema(ViewSchemaBase, AutoSchema):
-    filter_map = FILTER_MAP
+    filter_map = import_string(settings.API_SCHEMA_FILTER_MAP_PATH)
 
     def __init__(
         self, generator: SchemaGenerator = None, *args: typing.Any, **kwargs: typing.Any

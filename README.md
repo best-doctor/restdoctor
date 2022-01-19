@@ -417,3 +417,6 @@ python3 ./manage.py generateschema --urlconf api.v1.urls --generator_class restd
 
 ##### API_SCHEMA_PRIORITIZE_SERIALIZER_PARAMETERS
 При включении этой опции для схемы будут выбираться поля сериализатора, даже если они дублируют существующие.
+
+##### API_SCHEMA_FILTER_MAP_PATH
+Путь до кастомной схемы обработки фильтров для `DjangoFilterBackend`, по умолчанию - `restdoctor.rest_framework.schema.filters.FILTER_MAP`.

@@ -16,6 +16,8 @@ from django_filters import (
     TypedChoiceFilter,
     MultipleChoiceFilter,
     TypedMultipleChoiceFilter,
+    ModelChoiceFilter,
+    ModelMultipleChoiceFilter,
 )
 
 
@@ -58,11 +60,12 @@ FILTER_MAP: typing.Dict[
     DateTimeFromToRangeFilter: {'type': 'string', 'format': 'date-time'},
     NumberFilter: {'type': 'number'},
     TimeFilter: {'type': 'string', 'format': 'time'},
+    ModelChoiceFilter: {'type': 'string'},
+    ModelMultipleChoiceFilter: {'type': 'string'},
 }
 
 
 def get_filter_schema(filter_field: Filter, filter_map: dict = None) -> dict:
-    filter_map = filter_map or FILTER_MAP
     field_parents = type(filter_field).mro()
 
     schema: typing.Union[dict, typing.Callable] = {'type': 'string'}
