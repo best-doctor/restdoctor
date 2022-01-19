@@ -31,16 +31,17 @@ def _get_filter_schema_choice(
     except KeyError:
         return {'type': choice_type}
 
+    choice_keys = [c for c, _ in choices]
     for type_, repr_ in (
         (bool, 'boolean'),
         (int, 'integer'),
         ((int, float, decimal.Decimal), 'number'),
     ):
-        if all(isinstance(choice, type_) for choice, _ in choices):  # type: ignore
+        if all(isinstance(choice, type_) for choice in choice_keys):  # type: ignore
             choice_type = repr_
             break
 
-    return {'type': choice_type, 'enum': [c[0] for c in choices]}
+    return {'type': choice_type, 'enum': choice_keys}
 
 
 FILTER_MAP: typing.Dict[
