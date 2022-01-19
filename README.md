@@ -406,3 +406,14 @@ python3 ./manage.py generateschema --urlconf api.v1.urls --generator_class restd
 ```shell
 python3 ./manage.py generateschema --urlconf api.v1.urls --generator_class restdoctor.rest_framework.schema.RefsSchemaGenerator31 > your_app/static/openapi-31.schema
 ```
+
+#### Опции генерации
+##### API_STRICT_SCHEMA_VALIDATION
+- делает обязательным использование описаний у полей (`help_text`, `verbose_name` у модели)
+- проверяет на совпадение аннотацию поля и атрибут `allow_null`
+- проверяет на совпадение аннотацию поля и атрибут `many`
+
+Если какая-то проверка не проходит, генерация схемы завершается ошибкой.
+
+##### API_SCHEMA_PRIORITIZE_SERIALIZER_PARAMETERS
+При включении этой опции для схемы будут выбираться поля сериализатора, даже если они дублируют существующие.

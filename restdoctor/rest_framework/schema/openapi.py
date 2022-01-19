@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import contextlib
+import logging
 import typing
 
 from django.conf import settings
@@ -33,7 +34,10 @@ if typing.TYPE_CHECKING:
         CodeActionSchemaTuple,
         CodeDescriptionTuple,
         OpenAPISchema,
+        OpenAPISchemaParameter,
     )
+
+log = logging.getLogger(__name__)
 
 
 class RestDoctorSchema(ViewSchemaBase, AutoSchema):
@@ -52,9 +56,40 @@ class RestDoctorSchema(ViewSchemaBase, AutoSchema):
         media_types = [f'application/vnd.{vendor}']
         return media_types
 
+    def merge_parameters(
+        self,
+        path: str,
+        parameters: list[OpenAPISchemaParameter],
+        serializer_parameters: list[OpenAPISchemaParameter],
+    ) -> list[OpenAPISchemaParameter]:
+        original_parameters = {
+            parameter['name']: parameter_index
+            for parameter_index, parameter in enumerate(parameters)
+        }
+        for serializer_parameter in serializer_parameters:
+            if serializer_parameter['name'] in original_parameters:
+                if settings.API_SCHEMA_PRIORITIZE_SERIALIZER_PARAMETERS:
+                    parameters.pop(original_parameters[serializer_parameter['name']])
+                    parameters.append(serializer_parameter)
+                else:
+                    log.warning(
+                        f'Serializer at path {path} shadows parameter '
+                        f'"{serializer_parameter["name"]}". '
+                        f'Turn on API_SCHEMA_PRIORITIZE_SERIALIZER_PARAMETERS to use serializer '
+                        f'parameter for schema.'
+                    )
+            else:
+                parameters.append(serializer_parameter)
+
+        return parameters
+
     def get_operation(self, path: str, method: str) -> OpenAPISchema:
         operation = super().get_operation(path, method)
-        operation['parameters'] += self.get_request_serializer_filter_parameters(path, method)
+        operation['parameters'] = self.merge_parameters(
+            path,
+            operation['parameters'],
+            self.get_request_serializer_filter_parameters(path, method),
+        )
         operation['tags'] = self.get_tags(path, method)
 
         return operation
