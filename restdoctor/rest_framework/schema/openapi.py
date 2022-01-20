@@ -7,6 +7,7 @@ import typing
 from django.conf import settings
 from django.core.exceptions import FieldDoesNotExist, ImproperlyConfigured
 from django.db import models
+from django.utils.module_loading import import_string
 from django_filters import Filter
 from django_filters.rest_framework import DjangoFilterBackend, FilterSet
 from rest_framework.fields import Field
@@ -18,7 +19,7 @@ from rest_framework.serializers import BaseSerializer
 from restdoctor.rest_framework.pagination.mixins import SerializerClassPaginationMixin
 from restdoctor.rest_framework.schema.custom_types import SchemaGenerator, ViewSchemaBase
 from restdoctor.rest_framework.schema.fields import FieldSchema
-from restdoctor.rest_framework.schema.filters import get_filter_schema, FILTER_MAP
+from restdoctor.rest_framework.schema.filters import get_filter_schema
 from restdoctor.rest_framework.schema.serializers import SerializerSchema
 from restdoctor.rest_framework.schema.utils import (
     get_action,
@@ -41,7 +42,7 @@ log = logging.getLogger(__name__)
 
 
 class RestDoctorSchema(ViewSchemaBase, AutoSchema):
-    filter_map = FILTER_MAP
+    filter_map = import_string(settings.API_SCHEMA_FILTER_MAP_PATH)
 
     def __init__(
         self, generator: SchemaGenerator = None, *args: typing.Any, **kwargs: typing.Any

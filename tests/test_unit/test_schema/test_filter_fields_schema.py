@@ -14,6 +14,8 @@ from django_filters import (
     DateTimeFromToRangeFilter,
     NumberFilter,
     TimeFilter,
+    ModelChoiceFilter,
+    ModelMultipleChoiceFilter,
 )
 from django_filters.rest_framework import BooleanFilter as RestBooleanFilter
 
@@ -46,10 +48,12 @@ url_pattern = URLValidator.regex.pattern.replace('\\Z', '\\z')
         (DateTimeFromToRangeFilter(), {'type': 'string', 'format': 'date-time'}),
         (NumberFilter(), {'type': 'number'}),
         (TimeFilter(), {'type': 'string', 'format': 'time'}),
+        (ModelChoiceFilter(), {'type': 'string'}),
+        (ModelMultipleChoiceFilter(), {'type': 'string'}),
     ],
 )
 def test__get_filter_schema(field, expected_schema):
-    result = get_filter_schema(field)
+    result = get_filter_schema(filter_field=field, filter_map=FILTER_MAP)
 
     assert result == expected_schema
 
