@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import datetime
 import decimal
+import functools
 import typing
 
 from django_filters import (
@@ -19,6 +21,7 @@ from django_filters import (
     ModelChoiceFilter,
     ModelMultipleChoiceFilter,
 )
+from rest_framework import ISO_8601
 
 from restdoctor.utils.custom_types import FilterMap
 
@@ -48,18 +51,43 @@ def _get_filter_schema_choice(
     return {'type': choice_type, 'enum': choice_keys}
 
 
+def _get_filter_schema_datetime(
+    filter_field: typing.Union[
+        DateFilter, DateFromToRangeFilter, DateTimeFilter, DateTimeFromToRangeFilter
+    ],
+    schema_format: str,
+) -> dict:
+    schema = {'type': 'string', 'format': schema_format}
+    input_formats = list(
+        filter_field.extra.get(
+            'input_formats', getattr(filter_field.field_class, 'input_formats', [])
+        )
+    )
+    if input_formats:
+        input_format = input_formats[0]
+        example_datetime = datetime.datetime(2022, 1, 31, 11, 22, 33, tzinfo=datetime.timezone.utc)
+        if input_format.lower() == ISO_8601:
+            schema['example'] = example_datetime.isoformat(timespec='microseconds')
+        else:
+            schema['example'] = example_datetime.strftime(input_format)
+
+    return schema
+
+
 FILTER_MAP: FilterMap = {
     BooleanFilter: {'type': 'boolean'},
     ChoiceFilter: _get_filter_schema_choice,
     MultipleChoiceFilter: _get_filter_schema_choice,
     TypedChoiceFilter: _get_filter_schema_choice,
     TypedMultipleChoiceFilter: _get_filter_schema_choice,
-    DateFilter: {'type': 'string', 'format': 'date'},
-    DateFromToRangeFilter: {'type': 'string', 'format': 'date'},
-    DateTimeFilter: {'type': 'string', 'format': 'date-time'},
-    DateTimeFromToRangeFilter: {'type': 'string', 'format': 'date-time'},
+    DateFilter: functools.partial(_get_filter_schema_datetime, schema_format='date'),
+    DateFromToRangeFilter: functools.partial(_get_filter_schema_datetime, schema_format='date'),
+    DateTimeFilter: functools.partial(_get_filter_schema_datetime, schema_format='date-time'),
+    DateTimeFromToRangeFilter: functools.partial(
+        _get_filter_schema_datetime, schema_format='date-time'
+    ),
     NumberFilter: {'type': 'number'},
-    TimeFilter: {'type': 'string', 'format': 'time'},
+    TimeFilter: functools.partial(_get_filter_schema_datetime, schema_format='time'),
     ModelChoiceFilter: {'type': 'string'},
     ModelMultipleChoiceFilter: {'type': 'string'},
 }
