@@ -1,5 +1,5 @@
 from __future__ import annotations
 
-__version__ = '0.0.51'
+__version__ = '0.0.52'
 
 default_app_config = 'restdoctor.apps.AppConfig'
