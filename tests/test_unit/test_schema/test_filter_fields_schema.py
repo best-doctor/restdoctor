@@ -18,6 +18,7 @@ from django_filters import (
     ModelMultipleChoiceFilter,
 )
 from django_filters.rest_framework import BooleanFilter as RestBooleanFilter
+from rest_framework import ISO_8601
 
 from restdoctor.rest_framework.schema.filters import get_filter_schema, FILTER_MAP
 
@@ -42,12 +43,32 @@ url_pattern = URLValidator.regex.pattern.replace('\\Z', '\\z')
             TypedMultipleChoiceFilter(choices=(('a', 'a'), ('b', 'b'))),
             {'type': 'string', 'enum': ['a', 'b']},
         ),
-        (DateFilter(), {'type': 'string', 'format': 'date'}),
+        (DateFilter(), {'type': 'string', 'format': 'date', 'example': '2022-01-31'}),
+        (
+            DateFilter(input_formats=['%Y-%m']),
+            {'type': 'string', 'format': 'date', 'example': '2022-01'},
+        ),
         (DateFromToRangeFilter(), {'type': 'string', 'format': 'date'}),
-        (DateTimeFilter(), {'type': 'string', 'format': 'date-time'}),
+        (
+            DateTimeFilter(),
+            {'type': 'string', 'format': 'date-time', 'example': '2022-01-31 11:22:33'},
+        ),
+        (
+            DateTimeFilter(input_formats=[ISO_8601]),
+            {
+                'type': 'string',
+                'format': 'date-time',
+                'example': '2022-01-31T11:22:33.000000+00:00',
+            },
+        ),
+        (
+            DateTimeFilter(input_formats=['%Y-%m-%dT%H %M %S %z']),
+            {'type': 'string', 'format': 'date-time', 'example': '2022-01-31T11 22 33 +0000'},
+        ),
         (DateTimeFromToRangeFilter(), {'type': 'string', 'format': 'date-time'}),
         (NumberFilter(), {'type': 'number'}),
-        (TimeFilter(), {'type': 'string', 'format': 'time'}),
+        (TimeFilter(), {'type': 'string', 'format': 'time', 'example': '11:22:33'}),
+        (TimeFilter(input_formats=['%H %M %S %f']), {'type': 'string', 'format': 'time', 'example': '11 22 33 000000'}),
         (ModelChoiceFilter(), {'type': 'string'}),
         (ModelMultipleChoiceFilter(), {'type': 'string'}),
     ],

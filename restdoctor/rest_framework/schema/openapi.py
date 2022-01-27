@@ -443,13 +443,16 @@ class RestDoctorSchema(ViewSchemaBase, AutoSchema):
 
         return [path.split('/')[0].replace('_', '-')]
 
+    def get_view_queryset(self) -> models.QuerySet | None:
+        try:
+            return self.view.get_queryset()
+        except Exception:
+            return None
+
     def get_django_filter_schema_operation_parameters(
         self, filter_backend: DjangoFilterBackend
     ) -> typing.List[OpenAPISchema]:
-        try:
-            queryset = self.view.get_queryset()
-        except Exception:
-            queryset = None
+        queryset = self.get_view_queryset()
 
         filterset_class = filter_backend.get_filterset_class(self.view, queryset)
 
