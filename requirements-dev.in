@@ -35,7 +35,7 @@ mypy==0.910
 pytest==6.2.5
 pytest-django==4.4.0
 pytest-factoryboy==2.1.0
-pytest-cov==2.12.1
+pytest-cov==3.0.0
 pytest-env==0.6.2
 pytest-mock==3.6.1
 pytest-randomly==3.10.1
