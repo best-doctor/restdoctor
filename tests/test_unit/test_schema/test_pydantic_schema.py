@@ -23,11 +23,11 @@ class PydanticNestedTestModel(BaseModel):
     nested_field: PydanticTestModel
 
 
-class TestPydanticSerializer(PydanticSerializer):
+class PydanticTestSerializer(PydanticSerializer):
     pydantic_model = PydanticTestModel
 
 
-class TestNestedPydanticSerializer(PydanticSerializer):
+class NestedPydanticTestSerializer(PydanticSerializer):
     pydantic_model = PydanticNestedTestModel
 
 
@@ -67,20 +67,20 @@ def test_nested_model_schema(test_model_schema, test_nested_model_schema_without
 
 
 def test_get_serializer_schema_success_case(test_model_schema):
-    schema = RestDoctorSchema().get_serializer_schema(TestPydanticSerializer())
+    schema = RestDoctorSchema().get_serializer_schema(PydanticTestSerializer())
 
     assert schema == test_model_schema
 
 
 def test_map_serializer_without_generator_success_case(test_model_schema):
-    schema = RestDoctorSchema().map_serializer(TestPydanticSerializer())
+    schema = RestDoctorSchema().map_serializer(PydanticTestSerializer())
 
     assert schema == test_model_schema
 
 
 def test_map_serializer_with_generator_success_case(test_model_schema):
     schema_generator = RefsSchemaGenerator()
-    schema = RestDoctorSchema(generator=schema_generator).map_serializer(TestPydanticSerializer())
+    schema = RestDoctorSchema(generator=schema_generator).map_serializer(PydanticTestSerializer())
     ref = f'{OPENAPI_REF_PREFIX}PydanticTestModel'
 
     assert schema == {'$ref': ref}
@@ -88,13 +88,13 @@ def test_map_serializer_with_generator_success_case(test_model_schema):
 
 
 def test_get_serializer_schema_for_nested_serializer_success_case(test_nested_model_schema):
-    schema = RestDoctorSchema().get_serializer_schema(TestNestedPydanticSerializer())
+    schema = RestDoctorSchema().get_serializer_schema(NestedPydanticTestSerializer())
 
     assert schema == test_nested_model_schema
 
 
 def test_map_serializer_with_nested_serializer_success_case(test_nested_model_schema):
-    schema = RestDoctorSchema().map_serializer(TestNestedPydanticSerializer())
+    schema = RestDoctorSchema().map_serializer(NestedPydanticTestSerializer())
 
     assert schema == test_nested_model_schema
 
@@ -104,7 +104,7 @@ def test_map_serializer_with_refs_generator_with_nested_serializer_success_case(
 ):
     schema_generator = RefsSchemaGenerator()
     schema = RestDoctorSchema(generator=schema_generator).map_serializer(
-        TestNestedPydanticSerializer()
+        NestedPydanticTestSerializer()
     )
     ref = f'{OPENAPI_REF_PREFIX}PydanticNestedTestModel'
     nested_ref = test_nested_model_schema_without_definitions['properties']['nested_field']['$ref']
