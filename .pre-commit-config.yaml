@@ -59,7 +59,7 @@ repos:
     - id: forbidden-imports
 
 - repo: https://github.com/psf/black
-  rev: aebd3c3
+  rev: '22.6.0'
   hooks:
     - id: black
       language_version: python

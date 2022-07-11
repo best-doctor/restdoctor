@@ -149,8 +149,20 @@ class ResourceSchema(RestDoctorSchema):
 
         return content_schema
 
+    def is_method_with_request_body(self, method: str) -> bool:
+        if self.generator:
+            for _, handler in self.view.resource_handlers_map.items():
+                view = self.generator.create_view(handler, method, request=self.view.request)
+                try:
+                    if view.schema.is_method_with_request_body(method):
+                        return True
+                except AttributeError:
+                    pass
+
+        return method in self.methods_with_request_body
+
     def get_request_body(self, path: str, method: str) -> OpenAPISchema:
-        if method not in ('PUT', 'PATCH', 'POST'):
+        if not self.is_method_with_request_body(method):
             return {}
 
         return {'content': self.get_content_schema_by_type(path, method, 'request_body')}

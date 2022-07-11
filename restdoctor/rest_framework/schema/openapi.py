@@ -43,6 +43,7 @@ log = logging.getLogger(__name__)
 
 class RestDoctorSchema(ViewSchemaBase, AutoSchema):
     filter_map = import_string(settings.API_SCHEMA_FILTER_MAP_PATH)
+    methods_with_request_body = {'PUT', 'PATCH', 'POST'}
 
     def __init__(
         self, generator: SchemaGenerator = None, *args: typing.Any, **kwargs: typing.Any
@@ -242,8 +243,14 @@ class RestDoctorSchema(ViewSchemaBase, AutoSchema):
 
         return self.map_serializer(serializer, read_only=False, required=(method != 'PATCH'))
 
+    def is_method_with_request_body(self, method: str) -> bool:
+        methods_with_request_body = set(
+            getattr(self.view, 'schema_methods_with_request_body', self.methods_with_request_body)
+        )
+        return method in methods_with_request_body
+
     def get_request_body(self, path: str, method: str) -> OpenAPISchema:
-        if method not in ('PUT', 'PATCH', 'POST'):
+        if not self.is_method_with_request_body(method):
             return {}
 
         self.request_media_types = self.map_parsers(path, method)
