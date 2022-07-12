@@ -6,12 +6,12 @@ django-filter==2.4.0
 pydantic==1.8.2
 
 # flake8 stuff
-flake8==3.9.2
+flake8==4.0.1
 flake8-adjustable-complexity==0.0.5
 flake8-bugbear==21.9.2
 flake8-builtins==1.5.3
 flake8-commas==2.1.0
-flake8-comprehensions==3.7.0
+flake8-comprehensions==3.10.0
 flake8-debugger==4.0.0
 flake8-docstrings==1.6.0
 flake8-functions==0.0.6
@@ -35,15 +35,15 @@ mypy==0.910
 pytest==6.2.5
 pytest-django==4.4.0
 pytest-factoryboy==2.1.0
-pytest-cov==2.12.1
+pytest-cov==3.0.0
 pytest-env==0.6.2
 pytest-mock==3.6.1
 pytest-randomly==3.10.1
 pytest-socket==0.4.1
 freezegun==1.1.0
 factory-boy==3.2.1
-typed-ast==1.4.3
+typed-ast==1.5.4
 
 pre-commit==2.15.0
 black==22.6.0
-isort==5.9.3
+isort==5.10.1
