@@ -44,6 +44,7 @@ log = logging.getLogger(__name__)
 class RestDoctorSchema(ViewSchemaBase, AutoSchema):
     filter_map = import_string(settings.API_SCHEMA_FILTER_MAP_PATH)
     methods_with_request_body = {'PUT', 'PATCH', 'POST'}
+    methods_with_request_serializer_filter = {'GET'}
 
     def __init__(
         self, generator: SchemaGenerator = None, *args: typing.Any, **kwargs: typing.Any
@@ -114,12 +115,21 @@ class RestDoctorSchema(ViewSchemaBase, AutoSchema):
             return False
         return super().allows_filters(path, method)
 
+    def allows_request_serializer_filter(self, path: str, method: str) -> bool:
+        methods_with_request_serializer_filter = set(
+            getattr(
+                self.view,
+                'schema_methods_with_request_serializer_filter',
+                self.methods_with_request_serializer_filter,
+            )
+        )
+        return method in methods_with_request_serializer_filter
+
     def get_request_serializer_filter_parameters(
         self, path: str, method: str
     ) -> typing.List[OpenAPISchema]:
-        if not is_list_view(path, method, self.view):
+        if not self.allows_request_serializer_filter(path, method):
             return []
-
         parameters = []
         request_serializer_class = self.view.get_request_serializer_class(use_default=False)
         request_serializer = request_serializer_class()
