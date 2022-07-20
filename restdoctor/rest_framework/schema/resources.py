@@ -2,8 +2,6 @@ from __future__ import annotations
 
 import typing
 
-from django.conf import settings
-
 from restdoctor.rest_framework.schema.openapi import RestDoctorSchema
 from restdoctor.rest_framework.schema.utils import get_action
 
@@ -115,19 +113,16 @@ class ResourceSchema(RestDoctorSchema):
     def get_versioned_content_resource_schema(
         self, path: str, method: str, schema_method_name: str, resources_schema_method_name: str
     ) -> OpenAPISchema:
-
-        content_schema = {}
-
-        vendor = getattr(settings, 'API_VENDOR_STRING', 'vendor').lower()
-        default_content_type = f'application/vnd.{vendor}'
-
-        resources_schema_method = getattr(self, resources_schema_method_name)
-        content_schema[default_content_type] = {'schema': resources_schema_method(path, method)}
-
+        default_content_schema = self.get_default_content_schema(
+            path, method, resources_schema_method_name
+        )
         if not self.generator:
-            return content_schema
+            return default_content_schema
 
-        version_content_type = f'{default_content_type}.{self.generator.api_version}'
+        generator = self.generator
+        content_schema: OpenAPISchema = (
+            default_content_schema if generator.include_default_schema else {}
+        )
 
         for resource, handler in self.get_resources(method).items():
             view = self.generator.create_view(handler, method, request=self.view.request)
@@ -136,15 +131,16 @@ class ResourceSchema(RestDoctorSchema):
             schema_method = getattr(view.schema, schema_method_name)
             default_resource_schema = schema_method(path, method)
 
-            resource_content_type = f'{version_content_type}-{resource}'
-
+            resource_content_type = generator.get_content_type(resource=resource, api_format=None)
             content_schema[resource_content_type] = {'schema': default_resource_schema}
 
             for api_format in self.generator.api_formats:
                 if api_format != self.generator.api_default_format:
                     resource_schema = schema_method(path, method, api_format=api_format)
                     if resource_schema != default_resource_schema:
-                        content_type = f'{resource_content_type}.{api_format}'
+                        content_type = generator.get_content_type(
+                            resource=resource, api_format=api_format
+                        )
                         content_schema[content_type] = {'schema': resource_schema}
 
         return content_schema

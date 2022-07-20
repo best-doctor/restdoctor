@@ -55,6 +55,9 @@ class RestDoctorSchema(ViewSchemaBase, AutoSchema):
         self.serializer_schema = SerializerSchema(self)
 
     def map_renderers(self, *args: typing.Any, **kwargs: typing.Any) -> typing.Any:
+        if self.generator:
+            return [self.generator.get_content_type(resource=None, api_format=None)]
+
         vendor = settings.API_VENDOR_STRING.lower()
         media_types = [f'application/vnd.{vendor}']
         return media_types
@@ -387,25 +390,20 @@ class RestDoctorSchema(ViewSchemaBase, AutoSchema):
         generator = self.generator
         content_schema: OpenAPISchema = {}
 
-        if not self.generator:
-            return content_schema
-
-        version_content_type = f'{generator.api_default_content_type}.{self.generator.api_version}'
-
         schema_method = getattr(self, schema_method_name)
 
         default_schema = schema_method(path, method)
-        if generator.include_default_schema:
-            content_schema[generator.api_default_content_type] = {'schema': default_schema}
+        content_type = generator.get_content_type(resource=None, api_format=None)
+        content_schema[content_type] = {'schema': default_schema}
 
         schema_method = getattr(self.view.schema, schema_method_name)
 
         for api_format in self.generator.api_formats:
-            resource_schema = schema_method(path, method, api_format=api_format)
-            if generator.include_default_schema and resource_schema == default_schema:
-                continue
-            content_type = f'{version_content_type}.{api_format}'
-            content_schema[content_type] = {'schema': resource_schema}
+            if api_format != self.generator.api_default_format:
+                resource_schema = schema_method(path, method, api_format=api_format)
+                if resource_schema != default_schema:
+                    content_type = generator.get_content_type(resource=None, api_format=api_format)
+                    content_schema[content_type] = {'schema': resource_schema}
 
         return content_schema
 

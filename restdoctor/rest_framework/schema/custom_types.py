@@ -24,6 +24,7 @@ class SchemaGenerator(RestFrameworkSchemaGenerator):
     api_default_version: str
     api_default_format: str
     api_formats: list[str]
+    api_version: str
     api_resource: str | None
     include_default_schema: bool
     openapi_version: VersionInfo

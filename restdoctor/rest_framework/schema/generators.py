@@ -38,7 +38,7 @@ class RefsSchemaGenerator(SchemaGenerator):
         if accept:
             api_params = parse_accept(accept, settings.API_VENDOR_STRING.lower())
 
-            api_version = api_params and api_params.version
+            api_version = api_params.version
             urlconf = settings.API_VERSIONS.get(api_version)
             if urlconf is None:
                 raise Exception(f'Can not determine URLCONF for Accept string {accept}')
@@ -144,6 +144,46 @@ class RefsSchemaGenerator(SchemaGenerator):
             schema['components'] = components
 
         return schema
+
+    def get_effective_api_format(self, api_format: str | None = None) -> str | None:
+        effective_api_format = api_format
+        if (
+            effective_api_format is None
+            and len(self.api_formats) == 1
+            and self.api_formats[0] != self.api_default_format
+        ):
+            effective_api_format = self.api_formats[0]
+        return effective_api_format
+
+    def should_include_api_version(
+        self, resource: str | None = None, api_format: str | None = None
+    ) -> bool:
+        return (
+            not (self.api_version == self.api_default_version)
+            or resource is not None
+            or api_format is not None
+        )
+
+    def get_content_type(self, resource: str | None = None, api_format: str | None = None) -> str:
+        effective_resource = resource or self.api_resource
+        effective_api_format = self.get_effective_api_format(api_format=api_format)
+        include_api_version = self.should_include_api_version(
+            resource=effective_resource, api_format=effective_api_format
+        )
+
+        if effective_resource:
+            content_type = (
+                f'{self.api_default_content_type}.{self.api_version}-{effective_resource}'
+            )
+        elif include_api_version:
+            content_type = f'{self.api_default_content_type}.{self.api_version}'
+        else:
+            content_type = f'{self.api_default_content_type}'
+
+        if effective_api_format:
+            content_type = f'{content_type}.{effective_api_format}'
+
+        return content_type
 
 
 class RefsSchemaGenerator30(RefsSchemaGenerator):
