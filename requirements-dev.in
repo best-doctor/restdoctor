@@ -40,7 +40,7 @@ pytest-env==0.6.2
 pytest-mock==3.6.1
 pytest-randomly==3.10.1
 pytest-socket==0.4.1
-freezegun==1.1.0
+freezegun==1.2.2
 factory-boy==3.2.1
 typed-ast==1.4.3
 
