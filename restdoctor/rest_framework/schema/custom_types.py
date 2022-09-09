@@ -75,7 +75,7 @@ class SerializerSchemaBase:
     view_schema: ViewSchemaBase
 
 
-class ViewSchemaBase(abc.ABC):
+class ViewSchemaBase(abc.ABC):  # noqa B024
     generator: t.Optional[SchemaGenerator] = None
     serializer_schema: SerializerSchemaProtocol
     field_schema: FieldSchemaProtocol

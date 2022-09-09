@@ -224,7 +224,7 @@ class RestDoctorSchema(ViewSchemaBase, AutoSchema):
         if isinstance(paginator, SerializerClassPaginationMixin):
             serializer_class = paginator.get_request_serializer_class()
         else:
-            serializer_class = getattr(paginator, 'serializer_class', None)
+            serializer_class = getattr(paginator, 'serializer_class', None)  # type: ignore
         if serializer_class:
             return self.serializer_schema.map_query_serializer(serializer_class())
         return paginator.get_schema_operation_parameters(self.view)
