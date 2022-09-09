@@ -95,6 +95,20 @@ def test_pydantic_model_serializer_is_valid_success(
     assert serializer.errors == {}
 
 
+def test_pydantic_model_serializer_is_valid_success_with_aliases(
+    pydantic_model_with_aliases_test_serializer,
+    pydantic_test_model_with_aliases_data,
+    serialized_pydantic_test_model_with_aliases_data,
+):
+    serializer = pydantic_model_with_aliases_test_serializer(data=pydantic_test_model_with_aliases_data)
+
+    valid = serializer.is_valid()
+
+    assert valid is True
+    assert serializer.data == serialized_pydantic_test_model_with_aliases_data
+    assert serializer.errors == {}
+
+
 def test_pydantic_model_serializer_is_valid_errors(pydantic_model_test_serializer):
     corrupted_data = {'field_a': 1, 'field_b': 'wrong type', 'created_at': 'wrong type'}
     serializer = pydantic_model_test_serializer(data=corrupted_data)
