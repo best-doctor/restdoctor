@@ -116,6 +116,7 @@ class PydanticSerializer(BaseDRFSerializer):
         model: typing.Optional[typing.Type[DjangoModel]] = None
 
     pydantic_model: typing.Type[BaseModel]
+    pydantic_use_aliases: bool = False
 
     def __new__(cls, *args: list[typing.Any], **kwargs: dict[str, typing.Any]):  # type: ignore
         if not hasattr(cls, 'pydantic_model'):
@@ -186,12 +187,12 @@ class PydanticSerializer(BaseDRFSerializer):
         # Типы аргумента instance были выяснены экспериментальным путем
         # в ходе тестирования
         if isinstance(instance, dict):
-            value = self.to_internal_value(instance).dict()
+            value = self.to_internal_value(instance).dict(by_alias=self.pydantic_use_aliases)
         elif isinstance(instance, BaseModel):
-            value = instance.dict()
+            value = instance.dict(by_alias=self.pydantic_use_aliases)
         elif isinstance(instance, PydanticSerializer):
             instance.is_valid(raise_exception=True)
-            value = instance._pydantic_instance.dict()  # type: ignore
+            value = instance._pydantic_instance.dict(by_alias=self.pydantic_use_aliases)  # type: ignore
         elif isinstance(instance, DjangoModel):
             value = self._django_model_to_representation(instance)
         else:
@@ -208,7 +209,7 @@ class PydanticSerializer(BaseDRFSerializer):
             try:
                 pydantic_instance = self.pydantic_model(**self.initial_data)
                 self._pydantic_instance = pydantic_instance
-                self._validated_data = pydantic_instance.dict()
+                self._validated_data = pydantic_instance.dict(by_alias=self.pydantic_use_aliases)
             except PydanticValidationError as exc:
                 self._validated_data = {}
                 self._errors = convert_pydantic_errors_to_drf_errors(exc.errors())
@@ -222,7 +223,7 @@ class PydanticSerializer(BaseDRFSerializer):
 
     def _django_model_to_representation(self, instance: DjangoModel) -> GenericRepresentation:
         try:
-            value = self.pydantic_model.from_orm(instance).dict()
+            value = self.pydantic_model.from_orm(instance).dict(by_alias=self.pydantic_use_aliases)
         except PydanticValidationError as exc:
             raise ValidationError(convert_pydantic_errors_to_drf_errors(exc.errors()))
         return value
