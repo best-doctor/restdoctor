@@ -1,6 +1,6 @@
 -c requirements.txt
 
-djangorestframework==3.13.1
+djangorestframework>=3.12
 djangorestframework-gis==1.0
 django-filter==22.1
 pydantic==1.10.2
