@@ -18,7 +18,7 @@ class PydanticTestModel(BaseModel):
     field_b: StrictInt
 
 
-class PydanticIdTestModel(BaseModel):
+class PydanticObjectTestModel(BaseModel):
     class Config:
         allow_population_by_field_name = True
 
@@ -30,7 +30,7 @@ class PydanticTestModelWithAliases(PydanticTestModel):
         allow_population_by_field_name = True
 
     object_type: str = Field(alias='type')
-    object: PydanticIdTestModel = Field(alias='model_object')
+    model_object: PydanticObjectTestModel = Field(alias='object')
 
 
 class DjangoTestModel(models.Model):
