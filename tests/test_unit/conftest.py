@@ -1,3 +1,5 @@
+from unittest.mock import PropertyMock
+
 import pytest
 
 from pytest_factoryboy import register
@@ -87,6 +89,7 @@ def resource_view_dispatch(mocker, resource_class):
     def with_args(resource_discriminator, resource_view):
         view_class = resource_class(resource_discriminator, resource_view, base=ResourceView)
         mocked_dispatch = mocker.patch.object(resource_view, 'dispatch')
+        mocked_dispatch.__annotations__ = {}
         view_func = view_class.as_view()
 
         return view_func, mocked_dispatch

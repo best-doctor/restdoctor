@@ -13,5 +13,5 @@ install-dev:
 	pip-sync requirements.txt requirements-dev.txt
 
 lock:
-	pip-compile --generate-hashes --no-emit-index-url
-	pip-compile --generate-hashes --no-emit-index-url requirements-dev.in
+	pip-compile --generate-hashes --no-emit-index-url --allow-unsafe
+	pip-compile --generate-hashes --no-emit-index-url --allow-unsafe requirements-dev.in

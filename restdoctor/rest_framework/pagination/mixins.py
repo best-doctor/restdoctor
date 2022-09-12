@@ -16,7 +16,7 @@ class SerializerClassPaginationMixin:
 
     def __init__(self, *args: typing.Any, view_schema: ViewSchemaBase = None, **kwargs: typing.Any):
         self.view_schema = view_schema
-        super().__init__(*args, **kwargs)  # type: ignore
+        super().__init__(*args, **kwargs)
 
     def get_request_serializer_class(self) -> SerializerType:
         return get_serializer_class_from_map('pagination', 'request', self.serializer_class_map)

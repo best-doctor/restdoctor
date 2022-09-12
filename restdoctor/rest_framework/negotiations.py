@@ -27,6 +27,6 @@ class APIVersionContentNegotiation(DefaultContentNegotiation):
 
     def select_parser(self, request: HttpRequest, parsers: Parsers) -> OptionalParser:
         api_params = getattr(request, 'api_params', None)
-        parser = BestDoctorParser('application/json', api_params)
+        parser = BestDoctorParser('application/json', api_params)  # type: ignore
 
         return super().select_parser(request, [parser, *parsers])

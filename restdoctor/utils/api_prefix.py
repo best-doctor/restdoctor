@@ -19,7 +19,7 @@ def get_api_prefixes(default: Optional[SequenceOrT[Prefix]] = '/') -> Prefixes:
     elif not isinstance(prefixes, tuple):
         prefixes = tuple(prefixes) if isinstance(prefixes, list) else (prefixes,)
     return tuple(
-        f'/{prefix.strip("/")}' for prefix in prefixes
+        f'/{prefix.strip("/")}' for prefix in prefixes  # type: ignore
     )
 
 
@@ -34,5 +34,5 @@ def get_api_path_prefixes(default: Optional[SequenceOrT[Prefix]] = '/') -> Prefi
     elif not isinstance(prefixes, tuple):
         prefixes = tuple(prefixes) if isinstance(prefixes, list) else (prefixes,)
     return tuple(
-        f'{prefix.strip("/")}/' for prefix in prefixes
+        f'{prefix.strip("/")}/' for prefix in prefixes  # type: ignore
     )
