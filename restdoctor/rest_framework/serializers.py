@@ -114,18 +114,18 @@ class PydanticSerializer(BaseDRFSerializer):
 
     class Meta:
         model: typing.Optional[typing.Type[DjangoModel]] = None
+        pydantic_model: typing.Type[BaseModel]
+        pydantic_use_aliases: bool = False
 
-    pydantic_model: typing.Type[BaseModel]
-    pydantic_use_aliases: bool = False
+    pydantic_model: typing.Optional[
+        typing.Type[BaseModel]
+    ] = None  # deprecated: use Meta.pydantic_model
 
     def __new__(cls, *args: list[typing.Any], **kwargs: dict[str, typing.Any]):  # type: ignore
-        if not hasattr(cls, 'pydantic_model'):
+        pydantic_model = cls._get_pydantic_model()
+        if not inspect.isclass(pydantic_model) or not issubclass(pydantic_model, BaseModel):
             raise AttributeError(
-                'Class attribute "pydantic_model" is mandatory for this serializer'
-            )
-        if not inspect.isclass(cls.pydantic_model) or not issubclass(cls.pydantic_model, BaseModel):
-            raise AttributeError(
-                'Class attribute "pydantic_model" must be an instance of pydantic.BaseModel'
+                'Meta class attribute "pydantic_model" must be an instance of pydantic.BaseModel'
             )
         cls._validate_django_model()
         return super().__new__(cls, *args, **kwargs)
@@ -140,6 +140,25 @@ class PydanticSerializer(BaseDRFSerializer):
         self._setup_create_update_methods()
         super().__init__(instance=instance, data=data, **kwargs)
 
+    @property
+    def pydantic_model_class(self) -> typing.Type[BaseModel]:
+        # self.pydantic_model for backward, will be removed in future
+        return getattr(self.Meta, 'pydantic_model', None) or self.pydantic_model  # type: ignore
+
+    @property
+    def pydantic_use_aliases(self) -> bool:
+        return getattr(self.Meta, 'pydantic_use_aliases', False)
+
+    @classmethod
+    def _get_pydantic_model(cls) -> typing.Type[BaseModel]:
+        # cls.pydantic_model for backward, will be removed in future
+        pydantic_model = getattr(cls.Meta, 'pydantic_model', None) or cls.pydantic_model
+        if pydantic_model is None:
+            raise AttributeError(
+                'Meta class attribute "pydantic_model" is mandatory for this serializer'
+            )
+        return pydantic_model
+
     @classmethod
     def _validate_django_model(cls) -> None:
         model = getattr(cls.Meta, 'model', None)
@@ -151,7 +170,7 @@ class PydanticSerializer(BaseDRFSerializer):
 
     @classmethod
     def _validate_django_model_fields(cls, model: DjangoModel) -> None:
-        pydantic_fields_set = set(cls.pydantic_model.__fields__.keys())
+        pydantic_fields_set = set(cls._get_pydantic_model().__fields__.keys())
         model_info = model_meta.get_field_info(model)
         model_fields = list(model_info.fields.keys())
         model_fields.extend(model_info.relations.keys())
@@ -168,14 +187,14 @@ class PydanticSerializer(BaseDRFSerializer):
 
     @classmethod
     def _validate_orm_mode_enabled(cls) -> None:
-        if not getattr(cls.pydantic_model.Config, 'orm_mode', False):
+        if not getattr(cls._get_pydantic_model().Config, 'orm_mode', False):
             raise ImproperlyConfigured(
                 'pydantic_model.Config.orm_mode must be True for this serializer'
             )
 
     def to_internal_value(self, data: dict[str, typing.Any]) -> BaseModel:
         try:
-            pydantic_model = self.pydantic_model(**data)
+            pydantic_model = self.pydantic_model_class(**data)
         except PydanticValidationError as exc:
             errors = convert_pydantic_errors_to_drf_errors(exc.errors())
             raise ValidationError(errors)
@@ -207,7 +226,7 @@ class PydanticSerializer(BaseDRFSerializer):
             )
         if not hasattr(self, '_validated_data'):
             try:
-                pydantic_instance = self.pydantic_model(**self.initial_data)
+                pydantic_instance = self.pydantic_model_class(**self.initial_data)
                 self._pydantic_instance = pydantic_instance
                 self._validated_data = pydantic_instance.dict(by_alias=self.pydantic_use_aliases)
             except PydanticValidationError as exc:
@@ -223,7 +242,9 @@ class PydanticSerializer(BaseDRFSerializer):
 
     def _django_model_to_representation(self, instance: DjangoModel) -> GenericRepresentation:
         try:
-            value = self.pydantic_model.from_orm(instance).dict(by_alias=self.pydantic_use_aliases)
+            value = self.pydantic_model_class.from_orm(instance).dict(
+                by_alias=self.pydantic_use_aliases
+            )
         except PydanticValidationError as exc:
             raise ValidationError(convert_pydantic_errors_to_drf_errors(exc.errors()))
         return value

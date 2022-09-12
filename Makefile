@@ -15,3 +15,6 @@ install-dev:
 lock:
 	pip-compile --generate-hashes --no-emit-index-url --allow-unsafe
 	pip-compile --generate-hashes --no-emit-index-url --allow-unsafe requirements-dev.in
+
+install-hooks:
+	pre-commit install -t pre-commit

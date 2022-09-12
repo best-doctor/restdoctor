@@ -43,12 +43,25 @@ class DjangoTestModel(models.Model):
 
 
 class TestPydanticSerializer(PydanticSerializer):
-    pydantic_model = PydanticTestModel
+    class Meta:
+        pydantic_model = PydanticTestModel
 
 
 class TestPydanticSerializerWithAliases(PydanticSerializer):
+    class Meta:
+        pydantic_model = PydanticTestModelWithAliases
+        pydantic_use_aliases = True
+
+
+class TestPydanticSerializerDeprecated(PydanticSerializer):
+    pydantic_model = PydanticTestModel
+
+
+class TestPydanticSerializerWithAliasesDeprecated(PydanticSerializer):
+    class Meta:
+        pydantic_use_aliases = True
+
     pydantic_model = PydanticTestModelWithAliases
-    pydantic_use_aliases = True
 
 
 @pytest.fixture()
@@ -72,6 +85,16 @@ def pydantic_model_with_aliases_test_serializer() -> TestPydanticSerializer:
 
 
 @pytest.fixture()
+def pydantic_model_test_serializer_deprecated() -> TestPydanticSerializer:
+    return TestPydanticSerializerDeprecated
+
+
+@pytest.fixture()
+def pydantic_model_with_aliases_test_serializer_deprecated() -> TestPydanticSerializer:
+    return TestPydanticSerializerWithAliasesDeprecated
+
+
+@pytest.fixture()
 def django_test_model(mocker) -> DjangoTestModel:
     mocker.patch.object(DjangoTestModel._meta, 'default_manager')
     mocker.patch.object(DjangoTestModel, 'save')
@@ -80,6 +103,18 @@ def django_test_model(mocker) -> DjangoTestModel:
 
 @pytest.fixture()
 def pydantic_django_model_test_serializer(
+    pydantic_test_model: BaseModel, django_test_model: models.Model
+) -> PydanticSerializer:
+    class TestPydanticDjangoModelSerializer(PydanticSerializer):
+        class Meta:
+            model = django_test_model
+            pydantic_model = pydantic_test_model
+
+    return TestPydanticDjangoModelSerializer
+
+
+@pytest.fixture()
+def pydantic_django_model_test_serializer_deprecated(
     pydantic_test_model: BaseModel, django_test_model: models.Model
 ) -> PydanticSerializer:
     class TestPydanticDjangoModelSerializer(PydanticSerializer):
