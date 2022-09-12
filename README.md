@@ -388,6 +388,20 @@ class ListModelMixin(BaseListModelMixin):
 Полный набор action'ов: `list`, `retrieve`, `create`, `update`, `destroy`.
 
 
+### PydanticSerializer
+
+Для использования сериализатор на основе [pydantic](https://pydantic-docs.helpmanual.io/) необходимо наследовать
+сериализатор от `PydanticSerializer`, указать в `Meta` `pydantic_model` и `pydantic_use_aliases` (при необходимости).
+
+Параметр `pydantic_use_aliases` позволяет использовать [алиасы pydantic моделей](https://pydantic-docs.helpmanual.io/usage/model_config/#alias-precedence) для сериализации.
+```python
+
+class PydanticSerializer(PydanticSerializer):
+    class Meta:
+        pydantic_model = PydanticModel
+        pydantic_use_aliases = True
+```
+
 ### Генерация схемы
 Поддерживается генерация схемы openapi версий 3.0.2 и 3.1.0.
 Схема по умолчанию задается параметром `API_DEFAULT_OPENAPI_VERSION` и равна `3.0.2`.
@@ -420,3 +434,14 @@ python3 ./manage.py generateschema --urlconf api.v1.urls --generator_class restd
 
 ##### API_SCHEMA_FILTER_MAP_PATH
 Путь до кастомной схемы обработки фильтров для `DjangoFilterBackend`, по умолчанию - `restdoctor.rest_framework.schema.filters.FILTER_MAP`.
+
+
+### pre-commit
+
+Этот репозиторий использует git-хуки настроенные с помощью [pre-commit](https://pre-commit.com)
+поэтому если планируется дальнейшее внесение изменений в репозиторий необходимо инициализировать
+pre-commit с помощью следующей команды:
+
+```shell script
+make install-hooks
+```
