@@ -393,7 +393,7 @@ class ListModelMixin(BaseListModelMixin):
 Для использования сериализатор на основе [pydantic](https://pydantic-docs.helpmanual.io/) необходимо наследовать
 сериализатор от `PydanticSerializer`, указать в `Meta` `pydantic_model` и `pydantic_use_aliases` (при необходимости).
 
-Параметр `pydantic_model` позволяет использовать [алиасы pydantic моделей](https://pydantic-docs.helpmanual.io/usage/model_config/#alias-precedence) для сериализации.
+Параметр `pydantic_use_aliases` позволяет использовать [алиасы pydantic моделей](https://pydantic-docs.helpmanual.io/usage/model_config/#alias-precedence) для сериализации.
 ```python
 
 class PydanticSerializer(PydanticSerializer):
