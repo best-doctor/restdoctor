@@ -23,8 +23,8 @@ jobs:
           key: ${{ env.pythonLocation }}.${{ hashFiles('requirements.txt') }}.${{ hashFiles('requirements-dev.txt') }}
       - name: Install dependencies
         run: |
-          pip install --no-deps -r requirements.txt
-          pip install --no-deps -r requirements-dev.txt
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
           sudo apt-get install -y --no-install-recommends gdal-bin
       - name: Run checks
         run: make style types test
@@ -37,7 +37,7 @@ jobs:
         uses: actions/setup-python@v2
       - name: Install dependencies
         run: |
-          pip install --no-deps -r requirements.txt
+          pip install -r requirements.txt
           pip install setuptools wheel twine
       - name: Build and publish
         env:
