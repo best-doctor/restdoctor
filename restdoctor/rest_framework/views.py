@@ -13,7 +13,7 @@ from restdoctor.rest_framework.sensitive_data import clear_sensitive_data
 from restdoctor.rest_framework.signals import bind_extra_request_view_initial_metadata
 from restdoctor.utils.permissions import get_permission_classes_from_map
 from restdoctor.utils.serializers import get_serializer_class_from_map
-from restdoctor.utils.structlog import get_logger
+from restdoctor.utils.structlog import bind_contextvars, get_logger
 
 if typing.TYPE_CHECKING:
     from django.core.handlers.wsgi import WSGIRequest
@@ -62,21 +62,26 @@ class SerializerClassMapApiView(GenericAPIView):
     def initial(self, request: Request, *args: typing.Any, **kwargs: typing.Any) -> None:
         if settings.API_ENABLE_STRUCTLOG:
             bind_extra_request_view_initial_metadata.send(
-                sender=self.__class__, request=request, logger=logger
+                sender=self.__class__, request=request, logger=logger, view_instance=self
             )
             try:
                 request_data = self.clear_request_data(request)
             except Exception:
                 request_data = None
 
+            api_view_loging_context = {
+                'api_view_app_name': self.__module__.split('.')[0],
+                'api_view_module': self.__module__,
+                'api_view_name': self.__class__.__name__,
+                'api_view_action': self.get_action(),
+            }
+            if settings.API_BIND_STRUCTLOG_CONTEXTVARS:
+                bind_contextvars(**api_view_loging_context)
             logger.info(
                 'view_initial',
-                app_name=self.__module__.split('.')[0],
-                module=self.__module__,
-                view_name=self.__class__.__name__,
                 request_data=request_data,
                 request_query_params=dict(request.query_params),
-                action=self.get_action(),
+                **api_view_loging_context,
             )
         super().initial(request, *args, **kwargs)
 
