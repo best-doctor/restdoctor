@@ -5,6 +5,8 @@ djangorestframework-gis==1.0
 django-filter==22.1
 pydantic==1.10.2
 
+backports.zoneinfo==0.2.1; python_version < '3.9'
+
 # flake8 stuff
 flake8==5.0.4
 flake8-adjustable-complexity==0.0.6
