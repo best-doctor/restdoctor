@@ -4,3 +4,4 @@ django-filter==22.1
 pydantic==1.10.2
 
 backports.zoneinfo==0.2.1; python_version < '3.9'
+pytz==2022.2.1
