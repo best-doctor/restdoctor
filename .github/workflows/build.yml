@@ -25,7 +25,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -r requirements.txt
-          pip install django==${{ matrix.django-version }}.* djangorestframework=${{ matrix.drf-version }}.*
+          pip install django==${{ matrix.django-version }}.* djangorestframework==${{ matrix.drf-version }}.*
           pip install -r requirements-deps.in
           pip install -r requirements-dev.txt
           sudo apt-get install -y --no-install-recommends gdal-bin
