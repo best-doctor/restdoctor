@@ -10,10 +10,11 @@ check:
 	make test style types
 
 install-dev:
-	pip-sync requirements.txt requirements-dev.txt
+	pip-sync requirements.txt requirements-dev.txt requirements-deps.txt
 
 lock:
 	pip-compile --generate-hashes --no-emit-index-url --allow-unsafe
+	pip-compile --generate-hashes --no-emit-index-url --allow-unsafe requirements-deps.in
 	pip-compile --generate-hashes --no-emit-index-url --allow-unsafe requirements-dev.in
 
 install-hooks:
