@@ -16,6 +16,7 @@ class PydanticTestModel(BaseModel):
     created_at: datetime.datetime = Field(default_factory=datetime.datetime.utcnow)
     field_a: StrictStr
     field_b: StrictInt
+    title: str
 
 
 class PydanticNestedTestModel(BaseModel):
@@ -40,8 +41,9 @@ def test_model_schema():
             'created_at': {'description': 'Created At', 'type': 'string', 'format': 'date-time'},
             'field_a': {'description': 'Field A', 'type': 'string'},
             'field_b': {'description': 'Field B', 'type': 'integer'},
+            'title': {'description': 'Title', 'type': 'string'},
         },
-        'required': ['field_a', 'field_b'],
+        'required': ['field_a', 'field_b', 'title'],
     }
 
 

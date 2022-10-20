@@ -20,7 +20,8 @@ OPENAPI_REF_PREFIX = '#/components/schemas/'
 
 def fix_pydantic_title(schema: OpenAPISchema) -> OpenAPISchema:
     fixed_schema = copy.deepcopy(schema)
-    if 'title' in fixed_schema:
+    title = fixed_schema.get('title')
+    if title and isinstance(title, str):
         if 'description' not in fixed_schema:
             fixed_schema['description'] = fixed_schema.get('title', '')
         del fixed_schema['title']
