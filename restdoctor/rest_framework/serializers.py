@@ -201,6 +201,9 @@ class PydanticSerializer(typing.Generic[TPydanticModel], BaseDRFSerializer):
                 'pydantic_model.Config.orm_mode must be True for this serializer'
             )
 
+    def get_fields(self) -> dict[str, None]:
+        return {field_name: None for field_name in self.pydantic_model_class.__fields__.keys()}
+
     def to_internal_value(self, data: dict[str, typing.Any]) -> TPydanticModel:
         try:
             pydantic_model = self.pydantic_model_class(**data)
