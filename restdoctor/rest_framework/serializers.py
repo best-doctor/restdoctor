@@ -20,6 +20,8 @@ from rest_framework.utils import model_meta
 
 from restdoctor.utils.pydantic import convert_pydantic_errors_to_drf_errors
 
+TPydanticModel = typing.TypeVar('TPydanticModel', bound=BaseModel)
+
 
 def _is_serializer_subclass(obj: typing.Any) -> bool:
     try:
@@ -109,7 +111,7 @@ class ModelSerializer(BaseModelSerializer, Serializer, metaclass=ModelSerializer
     pass
 
 
-class PydanticSerializer(BaseDRFSerializer):
+class PydanticSerializer(typing.Generic[TPydanticModel], BaseDRFSerializer):
     """Serializer for pydantic models."""
 
     class Meta:
@@ -118,7 +120,7 @@ class PydanticSerializer(BaseDRFSerializer):
         pydantic_use_aliases: bool = False
 
     pydantic_model: typing.Optional[
-        typing.Type[BaseModel]
+        typing.Type[TPydanticModel]
     ] = None  # deprecated: use Meta.pydantic_model
 
     def __new__(cls, *args: list[typing.Any], **kwargs: dict[str, typing.Any]):  # type: ignore
@@ -136,21 +138,28 @@ class PydanticSerializer(BaseDRFSerializer):
         data: dict[str, typing.Any] | empty = empty,
         **kwargs: dict[str, typing.Any],
     ):
-        self._pydantic_instance: BaseModel | None = None
+        self._pydantic_instance: TPydanticModel | None = None
         self._setup_create_update_methods()
         super().__init__(instance=instance, data=data, **kwargs)
 
     @property
-    def pydantic_model_class(self) -> typing.Type[BaseModel]:
+    def pydantic_model_class(self) -> typing.Type[TPydanticModel]:
         # self.pydantic_model for backward, will be removed in future
         return getattr(self.Meta, 'pydantic_model', None) or self.pydantic_model  # type: ignore
+
+    @property
+    def pydantic_instance(self) -> TPydanticModel | None:
+        if not hasattr(self, '_validated_data'):
+            msg = 'You must call `.is_valid()` before accessing `.pydantic_instance`.'
+            raise AssertionError(msg)
+        return self._pydantic_instance
 
     @property
     def pydantic_use_aliases(self) -> bool:
         return getattr(self.Meta, 'pydantic_use_aliases', False)
 
     @classmethod
-    def _get_pydantic_model(cls) -> typing.Type[BaseModel]:
+    def _get_pydantic_model(cls) -> typing.Type[TPydanticModel]:
         # cls.pydantic_model for backward, will be removed in future
         pydantic_model = getattr(cls.Meta, 'pydantic_model', None) or cls.pydantic_model
         if pydantic_model is None:
@@ -192,7 +201,10 @@ class PydanticSerializer(BaseDRFSerializer):
                 'pydantic_model.Config.orm_mode must be True for this serializer'
             )
 
-    def to_internal_value(self, data: dict[str, typing.Any]) -> BaseModel:
+    def get_fields(self) -> dict[str, None]:
+        return {field_name: None for field_name in self.pydantic_model_class.__fields__.keys()}
+
+    def to_internal_value(self, data: dict[str, typing.Any]) -> TPydanticModel:
         try:
             pydantic_model = self.pydantic_model_class(**data)
         except PydanticValidationError as exc:
@@ -201,7 +213,7 @@ class PydanticSerializer(BaseDRFSerializer):
         return pydantic_model
 
     def to_representation(  # noqa: CAC001
-        self, instance: PydanticSerializer | BaseModel | DjangoModel | dict
+        self, instance: PydanticSerializer | TPydanticModel | DjangoModel | dict
     ) -> GenericRepresentation:
         # Типы аргумента instance были выяснены экспериментальным путем
         # в ходе тестирования

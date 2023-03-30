@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import datetime
+import typing
 
 import pytest
 from django.db import models
@@ -62,6 +63,20 @@ class TestPydanticSerializerWithAliasesDeprecated(PydanticSerializer):
         pydantic_use_aliases = True
 
     pydantic_model = PydanticTestModelWithAliases
+
+
+class TestPydanticDtoWithSensitiveData(BaseModel):
+    first_name: str
+    last_name: str
+    title: str
+
+
+class PydanticSerializerWithSensitiveData(PydanticSerializer):
+    class Meta:
+        pydantic_model = TestPydanticDtoWithSensitiveData
+
+    class SensitiveData:
+        include = ['first_name', 'last_name']
 
 
 @pytest.fixture()
@@ -154,3 +169,10 @@ def serialized_pydantic_test_model_with_aliases_data(
     return pydantic_test_model_with_aliases(**pydantic_test_model_with_aliases_data).dict(
         by_alias=True
     )
+
+
+@pytest.fixture()
+def pydantic_model_serializer_with_sensitive_data() -> typing.Type[
+    PydanticSerializerWithSensitiveData
+]:
+    return PydanticSerializerWithSensitiveData
