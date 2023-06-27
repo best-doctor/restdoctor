@@ -175,7 +175,6 @@ class RestDoctorSchema(ViewSchemaBase, AutoSchema):
 
         # Try to deduce the ID from the view's model
         model = getattr(getattr(self.view, 'queryset', None), 'model', None)
-
         if model is not None:
             return model.__name__
 
@@ -186,7 +185,7 @@ class RestDoctorSchema(ViewSchemaBase, AutoSchema):
                 object_name = serializer_class.__name__
                 if object_name.endswith('Serializer'):
                     object_name = object_name[:-10]
-                return f'{object_name}'
+                return object_name
 
         object_name = self.get_object_name_by_view_class_name(
             clean_suffixes=['APIView', 'View', 'ViewSet']
