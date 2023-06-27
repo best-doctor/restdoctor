@@ -26,6 +26,7 @@ from restdoctor.rest_framework.schema.utils import (
     get_action_code_schemas_from_map,
     get_action_map_kwargs,
     normalize_action_schema,
+    get_app_prefix
 )
 from restdoctor.rest_framework.serializers import EmptySerializer
 from restdoctor.rest_framework.views import SerializerClassMapApiView
@@ -174,6 +175,7 @@ class RestDoctorSchema(ViewSchemaBase, AutoSchema):
 
         # Try to deduce the ID from the view's model
         model = getattr(getattr(self.view, 'queryset', None), 'model', None)
+
         if model is not None:
             return model.__name__
 
@@ -184,7 +186,7 @@ class RestDoctorSchema(ViewSchemaBase, AutoSchema):
                 object_name = serializer_class.__name__
                 if object_name.endswith('Serializer'):
                     object_name = object_name[:-10]
-                return object_name
+                return f'{object_name}'
 
         object_name = self.get_object_name_by_view_class_name(
             clean_suffixes=['APIView', 'View', 'ViewSet']
@@ -204,6 +206,7 @@ class RestDoctorSchema(ViewSchemaBase, AutoSchema):
         if schema_operation_id_map and action_name in schema_operation_id_map:
             return schema_operation_id_map[action_name]
 
+        app_prefix = get_app_prefix(module_path=self.view.__module__)
         object_name = self.get_object_name(path, method, action_name)
 
         if action_name == 'list' and not object_name.endswith(
@@ -211,7 +214,7 @@ class RestDoctorSchema(ViewSchemaBase, AutoSchema):
         ):  # listThings instead of listThing
             object_name += 's'
 
-        return action_name + object_name
+        return app_prefix + '__' + action_name + '__' + object_name
 
     def get_pagination_parameters(self, path: str, method: str) -> typing.List[OpenAPISchema]:
         if not is_list_view(path, method, self.view):

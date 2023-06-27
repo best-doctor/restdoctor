@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import typing
 from urllib.parse import urljoin
 
@@ -18,7 +19,7 @@ if typing.TYPE_CHECKING:
     from restdoctor.rest_framework.custom_types import Handler
     from restdoctor.rest_framework.schema.custom_types import OpenAPISchema
 
-
+log = logging.getLogger(__name__)
 class RefsSchemaGenerator(SchemaGenerator):
     openapi_version = None
 
@@ -66,6 +67,8 @@ class RefsSchemaGenerator(SchemaGenerator):
         result: OpenAPISchema = {}
 
         paths, view_endpoints = self._get_paths_and_endpoints(request)
+        # with open('sc.txt', 'a') as file:
+        #     file.write(f'{paths, view_endpoints}')
 
         if not paths:
             return None
@@ -97,7 +100,6 @@ class RefsSchemaGenerator(SchemaGenerator):
 
             result.setdefault(path, {})
             result[path][method.lower()] = operation
-
         return result
 
     def create_view(
@@ -142,7 +144,6 @@ class RefsSchemaGenerator(SchemaGenerator):
         components = self.local_refs_registry.get_components()
         if components:
             schema['components'] = components
-
         return schema
 
     def get_effective_api_format(self, api_format: str | None = None) -> str | None:
@@ -182,7 +183,6 @@ class RefsSchemaGenerator(SchemaGenerator):
 
         if effective_api_format:
             content_type = f'{content_type}.{effective_api_format}'
-
         return content_type
 
 

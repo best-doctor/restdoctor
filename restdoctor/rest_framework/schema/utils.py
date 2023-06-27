@@ -4,7 +4,7 @@ import typing
 
 from django.core.exceptions import ImproperlyConfigured
 
-from restdoctor.rest_framework.schema.constants import ACTION_CODES_MAP
+from restdoctor.rest_framework.schema.constants import ACTION_CODES_MAP, APPLICATION_FOLDERS
 
 if typing.TYPE_CHECKING:
     from rest_framework.generics import GenericAPIView
@@ -68,3 +68,13 @@ def get_action_code_schemas_from_map(
 
     for code, action_schema in action_codes.items():
         yield code, action_schema
+
+
+def get_app_prefix(*, module_path: str):
+    splitted_path = module_path.split('.')
+
+    for idx, path_part in enumerate(splitted_path):
+        if path_part not in APPLICATION_FOLDERS:
+            break
+
+    return '_'.join(splitted_path[0:idx + 1])

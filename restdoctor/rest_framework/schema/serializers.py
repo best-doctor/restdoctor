@@ -14,6 +14,7 @@ from restdoctor.rest_framework.schema.custom_types import (
     ViewSchemaBase,
 )
 from restdoctor.rest_framework.serializers import PydanticSerializer
+from restdoctor.rest_framework.schema.utils import get_app_prefix
 
 OPENAPI_REF_PREFIX = '#/components/schemas/'
 
@@ -90,7 +91,7 @@ class SerializerSchema(SerializerSchemaBase):
         read_only: bool = True,
         required: bool = True,
     ) -> str:
-        serializer_module_name = serializer.__module__.split('.')[0]
+        serializer_module_name = get_app_prefix(module_path=serializer.__module__)
         serializer_class_name = serializer.__class__.__name__
 
         suffixes = []
@@ -105,7 +106,7 @@ class SerializerSchema(SerializerSchemaBase):
 
         if serializer_class_name.endswith('Serializer'):
             serializer_class_name = serializer_class_name[:-10]
-        return f'{OPENAPI_REF_PREFIX}{serializer_module_name}_{serializer_class_name}{suffix}'
+        return f'{OPENAPI_REF_PREFIX}{serializer_module_name}__{serializer_class_name}{suffix}'
 
     def get_pydantic_ref_name(self, serializer_class_name: str) -> str:
         if serializer_class_name.endswith('Serializer'):

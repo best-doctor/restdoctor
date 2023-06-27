@@ -44,3 +44,5 @@ ACTION_CODES_MAP: ActionCodesMap = {
         '400': None,
     },
 }
+
+APPLICATION_FOLDERS = ['apps']
