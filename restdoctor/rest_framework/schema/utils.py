@@ -1,16 +1,22 @@
 from __future__ import annotations
+
 import functools
 import typing
 
+from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 
-from restdoctor.rest_framework.schema.constants import ACTION_CODES_MAP, APPLICATION_FOLDERS
+from restdoctor.rest_framework.schema.constants import ACTION_CODES_MAP
 
 if typing.TYPE_CHECKING:
     from rest_framework.generics import GenericAPIView
+
     from restdoctor.rest_framework.custom_types import Action
     from restdoctor.rest_framework.schema.custom_types import (
-        ActionDescription, CodeActionSchemaTuple, ResponseCode, OpenAPISchema,
+        ActionDescription,
+        CodeActionSchemaTuple,
+        OpenAPISchema,
+        ResponseCode,
     )
 
     ActionSchemaTuple = typing.Tuple[ActionDescription, typing.Optional[OpenAPISchema]]
@@ -38,33 +44,28 @@ def normalize_action_schema(code: str, action_schema: ActionSchema) -> CodeActio
 
 
 def get_action_map_kwargs(
-    action: str, action_codes_map: typing.Optional[ActionCodesMap],
+    action: str, action_codes_map: typing.Optional[ActionCodesMap]
 ) -> typing.List[typing.Tuple[str, ActionCodesMap]]:
     kwargs_variants = []
     kwargs_use_defaults = True
     if isinstance(action_codes_map, dict):
-        kwargs_variants.extend([
-            (action, action_codes_map),
-            ('default', action_codes_map),
-        ])
+        kwargs_variants.extend([(action, action_codes_map), ('default', action_codes_map)])
         if action_codes_map.get('default', {}) is None:
             kwargs_use_defaults = False
     if kwargs_use_defaults:
-        kwargs_variants.extend([
-            (action, ACTION_CODES_MAP),
-            ('default', ACTION_CODES_MAP),
-        ])
+        kwargs_variants.extend([(action, ACTION_CODES_MAP), ('default', ACTION_CODES_MAP)])
     return kwargs_variants
 
 
 def get_action_code_schemas_from_map(
-    action: str, action_codes_map: ActionCodesMap,
+    action: str, action_codes_map: ActionCodesMap
 ) -> typing.Iterator[typing.Tuple[str, OptionalActionSchema]]:
     action_codes = action_codes_map.get(action, {})
 
     if isinstance(action_codes, set):
         raise ImproperlyConfigured(
-            f'schema_action_codes_map item should be dict for action {action}: {action_codes}')
+            f'schema_action_codes_map item should be dict for action {action}: {action_codes}'
+        )
 
     for code, action_schema in action_codes.items():
         yield code, action_schema
@@ -73,8 +74,8 @@ def get_action_code_schemas_from_map(
 def get_app_prefix(*, module_path: str) -> str:
     splitted_path = module_path.split('.')
 
-    for idx, path_part in enumerate(splitted_path):
-        if path_part not in APPLICATION_FOLDERS:
+    for _idx, path_part in enumerate(splitted_path):
+        if path_part not in settings.APPLICATION_FOLDERS:
             break
 
-    return '_'.join(splitted_path[0:idx + 1])
+    return '_'.join(splitted_path[0 : _idx + 1])
