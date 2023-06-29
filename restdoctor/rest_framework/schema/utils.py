@@ -70,7 +70,7 @@ def get_action_code_schemas_from_map(
         yield code, action_schema
 
 
-def get_app_prefix(*, module_path: str):
+def get_app_prefix(*, module_path: str) -> str:
     splitted_path = module_path.split('.')
 
     for idx, path_part in enumerate(splitted_path):
