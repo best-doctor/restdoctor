@@ -216,7 +216,7 @@ class RestDoctorSchema(ViewSchemaBase, AutoSchema):
             app_prefix = get_app_prefix(module_path=self.view.__module__)
             return f'{app_prefix}__{action_name}__{object_name}'
 
-        return f'{action_name}__{object_name}'
+        return action_name + object_name
 
     def get_pagination_parameters(self, path: str, method: str) -> typing.List[OpenAPISchema]:
         if not is_list_view(path, method, self.view):
