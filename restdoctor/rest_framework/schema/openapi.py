@@ -25,6 +25,7 @@ from restdoctor.rest_framework.schema.utils import (
     get_action,
     get_action_code_schemas_from_map,
     get_action_map_kwargs,
+    get_app_prefix,
     normalize_action_schema,
 )
 from restdoctor.rest_framework.serializers import EmptySerializer
@@ -210,6 +211,10 @@ class RestDoctorSchema(ViewSchemaBase, AutoSchema):
             's'
         ):  # listThings instead of listThing
             object_name += 's'
+
+        if settings.USE_APP_PREFIX_FOR_SCHEMA_OPERATION_IDS:
+            app_prefix = get_app_prefix(module_path=self.view.__module__)
+            return f'{app_prefix}__{action_name}__{object_name}'
 
         return action_name + object_name
 

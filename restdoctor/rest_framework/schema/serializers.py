@@ -3,6 +3,7 @@ from __future__ import annotations
 import copy
 import typing
 
+from django.conf import settings
 from django.utils.encoding import force_str
 from pydantic.schema import schema as pydantic_schema
 from rest_framework.fields import HiddenField
@@ -13,6 +14,7 @@ from restdoctor.rest_framework.schema.custom_types import (
     SerializerSchemaBase,
     ViewSchemaBase,
 )
+from restdoctor.rest_framework.schema.utils import get_app_prefix
 from restdoctor.rest_framework.serializers import PydanticSerializer
 
 OPENAPI_REF_PREFIX = '#/components/schemas/'
@@ -105,6 +107,11 @@ class SerializerSchema(SerializerSchemaBase):
 
         if serializer_class_name.endswith('Serializer'):
             serializer_class_name = serializer_class_name[:-10]
+
+        if settings.USE_APP_PREFIX_FOR_SCHEMA_REFS:
+            serializer_app_prefix = get_app_prefix(module_path=serializer.__module__)
+            return f'{OPENAPI_REF_PREFIX}{serializer_app_prefix}_{serializer_class_name}{suffix}'
+
         return f'{OPENAPI_REF_PREFIX}{serializer_module_name}_{serializer_class_name}{suffix}'
 
     def get_pydantic_ref_name(self, serializer_class_name: str) -> str:
