@@ -26,7 +26,6 @@ from tests.test_unit.conftest import (
     ],
 )
 def test__enum_representer(test_enum_value, expected_result, expected_type):
-
     result = enum_representer(Dumper(stream=io.StringIO()), test_enum_value)
 
     assert result.value == expected_result
