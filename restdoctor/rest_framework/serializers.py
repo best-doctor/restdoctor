@@ -1,7 +1,11 @@
 from __future__ import annotations
 
 import inspect
+import types
 import typing
+from collections import deque
+
+from django.http import QueryDict
 
 if typing.TYPE_CHECKING:
     from restdoctor.rest_framework.custom_types import ModelObject, GenericRepresentation
@@ -138,8 +142,11 @@ class PydanticSerializer(typing.Generic[TPydanticModel], BaseDRFSerializer):
         data: dict[str, typing.Any] | empty = empty,
         **kwargs: dict[str, typing.Any],
     ):
+        if isinstance(data, QueryDict):
+            data = self._query_dict_to_dict(data=data)
         self._pydantic_instance: TPydanticModel | None = None
         self._setup_create_update_methods()
+
         super().__init__(instance=instance, data=data, **kwargs)
 
     @property
@@ -157,6 +164,26 @@ class PydanticSerializer(typing.Generic[TPydanticModel], BaseDRFSerializer):
     @property
     def pydantic_use_aliases(self) -> bool:
         return getattr(self.Meta, 'pydantic_use_aliases', False)
+
+    @classmethod
+    def _query_dict_to_dict(cls, data: QueryDict) -> dict:
+        result_dict = {}
+        for key, value in data.lists():
+            if cls._is_sequence_field(field_name=key):
+                result_dict[key] = value
+            else:
+                result_dict[key] = value[-1]
+        return result_dict
+
+    @classmethod
+    def _is_sequence_field(cls, field_name: str) -> bool:
+        pydantic_model = cls._get_pydantic_model()
+        type_of_field = pydantic_model.__fields__[field_name].outer_type_
+        # list[str] != list
+        # for solve this using "get_origin"
+        if type(type_of_field) is types.GenericAlias:  # type: ignore
+            type_of_field = typing.get_origin(type_of_field)
+        return type_of_field in (list, tuple, deque, set, frozenset)
 
     @classmethod
     def _get_pydantic_model(cls) -> typing.Type[TPydanticModel]:

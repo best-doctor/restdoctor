@@ -2,10 +2,11 @@ from __future__ import annotations
 
 import datetime
 import typing
+from unittest.mock import Mock
 
 import pytest
 from django.db import models
-from pydantic import BaseModel, Field, StrictInt, StrictStr
+from pydantic import BaseModel, Field, Json, StrictInt, StrictStr
 
 from restdoctor.rest_framework.serializers import PydanticSerializer
 
@@ -17,6 +18,20 @@ class PydanticTestModel(BaseModel):
     created_at: datetime.datetime = Field(default_factory=datetime.datetime.utcnow)
     field_a: StrictStr
     field_b: StrictInt
+
+
+class PydanticWithQueryParamsTestModel(BaseModel):
+    any_int: int
+    any_str: str
+    any_json: Json
+    any_list: list
+    any_str_list: list[str]
+    any_bool: bool
+
+
+class PydanticWithQueryParamsShortTestModel(BaseModel):
+    any_int: int
+    any_str: str
 
 
 class PydanticObjectTestModel(BaseModel):
@@ -46,6 +61,16 @@ class DjangoTestModel(models.Model):
 class TestPydanticSerializer(PydanticSerializer):
     class Meta:
         pydantic_model = PydanticTestModel
+
+
+class TestPydanticQuerySerializer(PydanticSerializer):
+    class Meta:
+        pydantic_model = PydanticWithQueryParamsTestModel
+
+
+class TestPydanticShortQuerySerializer(PydanticSerializer):
+    class Meta:
+        pydantic_model = PydanticWithQueryParamsShortTestModel
 
 
 class TestPydanticSerializerWithAliases(PydanticSerializer):
@@ -84,6 +109,10 @@ def pydantic_test_model() -> PydanticTestModel:
     return PydanticTestModel
 
 
+def pydantic_test_with_query_model() -> PydanticWithQueryParamsTestModel:
+    return PydanticWithQueryParamsTestModel
+
+
 @pytest.fixture()
 def pydantic_test_model_with_aliases() -> PydanticTestModelWithAliases:
     return PydanticTestModelWithAliases
@@ -92,6 +121,11 @@ def pydantic_test_model_with_aliases() -> PydanticTestModelWithAliases:
 @pytest.fixture()
 def pydantic_model_test_serializer() -> TestPydanticSerializer:
     return TestPydanticSerializer
+
+
+@pytest.fixture()
+def pydantic_test_query_serializer() -> PydanticWithQueryParamsTestModel:
+    return TestPydanticQuerySerializer
 
 
 @pytest.fixture()
@@ -151,6 +185,18 @@ def pydantic_test_model_data() -> dict[str, str | int]:
 
 
 @pytest.fixture()
+def pydantic_test_query_data() -> dict:
+    return {
+        'any_int': 10,
+        'any_str': 'hi',
+        'any_json': '{"foo": "bar"}',
+        'any_list': ['1', '2'],
+        'any_bool': True,
+        'any_str_list': ['one'],
+    }
+
+
+@pytest.fixture()
 def pydantic_test_model_with_aliases_data(pydantic_test_model_data) -> dict[str, str | int]:
     return {**pydantic_test_model_data, 'type': 'test', 'object': {'id': 1}}
 
@@ -160,6 +206,13 @@ def serialized_pydantic_test_model_data(
     pydantic_test_model_data, pydantic_test_model
 ) -> dict[str, str | datetime.datetime]:
     return pydantic_test_model(**pydantic_test_model_data).dict()
+
+
+@pytest.fixture()
+def serialized_pydantic_with_query_test_model_data(
+    pydantic_test_query_data,
+) -> dict[str, str | datetime.datetime]:
+    return PydanticWithQueryParamsTestModel(**pydantic_test_query_data).dict()
 
 
 @pytest.fixture()
@@ -176,3 +229,19 @@ def pydantic_model_serializer_with_sensitive_data() -> typing.Type[
     PydanticSerializerWithSensitiveData
 ]:
     return PydanticSerializerWithSensitiveData
+
+
+@pytest.fixture()
+def mocked__query_dict_to_dict(mock_for_module) -> Mock:
+    return mock_for_module(
+        module_name='restdoctor.rest_framework.serializers.PydanticSerializer',
+        function_name='_query_dict_to_dict',
+    )
+
+
+@pytest.fixture()
+def mocked__is_sequence_field(mock_for_module) -> Mock:
+    return mock_for_module(
+        module_name='restdoctor.rest_framework.serializers.PydanticSerializer',
+        function_name='_is_sequence_field',
+    )
