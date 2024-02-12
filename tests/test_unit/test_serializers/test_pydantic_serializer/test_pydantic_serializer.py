@@ -6,6 +6,7 @@ import pytest
 from django.core.exceptions import ImproperlyConfigured
 from django.http import QueryDict
 from pydantic import BaseModel
+from pydantic.types import Json
 from rest_framework.serializers import ListSerializer
 
 from restdoctor.rest_framework.serializers import PydanticSerializer
@@ -285,30 +286,48 @@ def test_pydantic_model_serializer__query_dict_to_dict(mocked__is_sequence_field
     serializer = TestPydanticShortQuerySerializer(data=query_dict)
     mocked__is_sequence_field_calls = (call(field_name='any_str'), call(field_name='any_int'))
 
-    test_result = serializer._query_dict_to_dict(data=query_dict)
+    test_result = serializer.query_dict_to_dict(data=query_dict)
 
     assert test_result == {'any_str': 'hi', 'any_int': '5'}
     mocked__is_sequence_field.assert_has_calls(calls=mocked__is_sequence_field_calls)
 
 
 @pytest.mark.parametrize(
-    ('field_name', 'expected_result'),
+    ('field_type', 'expected_result'),
     [
-        ('any_str', False),
-        ('any_int', False),
-        ('any_list', True),
-        ('any_json', False),
-        ('any_bool', False),
-        ('any_str_list', True),
+        (str, False),
+        (int, False),
+        (list, True),
+        (Json, False),
+        (bool, False),
+        (list[str], True),
+        (set[int], True),
+        (tuple[list[int]], True),
     ],
 )
 def test_pydantic_model_serializer__is_sequence_field(
-    pydantic_test_query_serializer, field_name, expected_result
+    pydantic_test_query_serializer, field_type, expected_result
 ):
     query_string = 'any_str=hi&any_int=10&any_list=1&any_json={"foo": "bar"}&any_list=2&any_bool=true&any_str_list=one'
     query_dict = QueryDict(query_string)
     serializer = pydantic_test_query_serializer(data=query_dict)
 
-    test_result = serializer._is_sequence_field(field_name=field_name)
+    test_result = serializer._is_sequence_field(field_type=field_type)
+
+    assert test_result is expected_result
+
+
+@pytest.mark.parametrize(
+    ('field_type', 'expected_result'),
+    [(None, False), (str, True), (bytes, True), (bytearray, True), (dict, False), (object, False)],
+)
+def test_pydantic_model_serializer__is_string_like_field(
+    pydantic_test_query_serializer, field_type, expected_result
+):
+    query_string = 'any_str=hi&any_int=10&any_list=1&any_json={"foo": "bar"}&any_list=2&any_bool=true&any_str_list=one'
+    query_dict = QueryDict(query_string)
+    serializer = pydantic_test_query_serializer(data=query_dict)
+
+    test_result = serializer._is_string_like_field(field_type=field_type)
 
     assert test_result is expected_result
