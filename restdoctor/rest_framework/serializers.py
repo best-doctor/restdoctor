@@ -233,7 +233,7 @@ class PydanticSerializer(typing.Generic[TPydanticModel], BaseDRFSerializer):
         to_dict: dict[str, typing.Any] = {}
         for key, orig_value in data.items():
             field_key = next(
-                (name for (name, inf) in model_fields.items() if inf.alias == key), key
+                (name for (name, field_obj) in model_fields.items() if field_obj.alias == key), key
             )
             if field_key not in model_fields:
                 to_dict[key] = orig_value

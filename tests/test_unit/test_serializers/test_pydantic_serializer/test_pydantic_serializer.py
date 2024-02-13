@@ -7,12 +7,10 @@ from django.core.exceptions import ImproperlyConfigured
 from django.http import QueryDict
 from pydantic import BaseModel
 from pydantic.types import Json
+from rest_framework.exceptions import ValidationError
 from rest_framework.serializers import ListSerializer
 
 from restdoctor.rest_framework.serializers import PydanticSerializer
-from tests.test_unit.test_serializers.test_pydantic_serializer.conftest import (
-    TestPydanticShortQuerySerializer,
-)
 
 
 def test_pydantic_serializer_without_model_error():
@@ -103,17 +101,29 @@ def test_pydantic_model_serializer_is_valid_success(
 
 
 def test_pydantic_model_serializer_is_valid_success_case_with_query_params(
-    pydantic_test_query_serializer, serialized_pydantic_with_query_test_model_data
+    pydantic_test_query_serializer, serialized_pydantic_test_with_query
 ):
-    query_string = 'any_str=hi&any_int=10&any_list=1&any_json={"foo": "bar"}&any_list=2&any_bool=true&any_str_list=one'
+    query_string = 'any_str=hi&my_int=10&any_list=1&any_json={"foo": "bar"}&any_list=2&any_bool=true&any_str_list=one'
     query_dict = QueryDict(query_string)
     serializer = pydantic_test_query_serializer(data=query_dict)
 
-    serializer_is_valid = serializer.is_valid()
+    serializer_is_valid = serializer.is_valid(raise_exception=True)
 
     assert serializer_is_valid is True
-    assert serializer.validated_data == serialized_pydantic_with_query_test_model_data
+    assert serializer.validated_data == serialized_pydantic_test_with_query
     assert serializer.errors == {}
+
+
+def test_pydantic_model_serializer_is_valid_with_query_params__error_case_wrong_alias(
+    pydantic_test_query_serializer,
+):
+    query_string = 'any_str=hi&any_int=10&any_list=1&any_json={"foo": "bar"}&any_list=2&any_bool=true&any_str_list=one'
+    query_dict = QueryDict(query_string)
+
+    serializer = pydantic_test_query_serializer(data=query_dict)
+
+    with pytest.raises(expected_exception=ValidationError, match='field required'):
+        serializer.is_valid(raise_exception=True)
 
 
 def test_pydantic_model_serializer_is_valid_success_with_aliases(
@@ -279,12 +289,14 @@ def test_pydantic_django_model_serializer_update_success(
     model_instance.save.assert_called_once()
 
 
-def test_pydantic_model_serializer__query_dict_to_dict(mocked__is_sequence_field):
+def test_pydantic_model_serializer__query_dict_to_dict(
+    mocked__is_sequence_field, pydantic_shot_test_query_serializer
+):
     query_string = 'any_str=hi&any_int=5'
     query_dict = QueryDict(query_string)
     mocked__is_sequence_field.return_value = False
-    serializer = TestPydanticShortQuerySerializer(data=query_dict)
-    mocked__is_sequence_field_calls = (call(field_name='any_str'), call(field_name='any_int'))
+    serializer = pydantic_shot_test_query_serializer(data=query_dict)
+    mocked__is_sequence_field_calls = (call(field_type=str), call(field_type=int))
 
     test_result = serializer.query_dict_to_dict(data=query_dict)
 

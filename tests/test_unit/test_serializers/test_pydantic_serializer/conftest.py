@@ -21,8 +21,8 @@ class PydanticTestModel(BaseModel):
 
 
 class PydanticWithQueryParamsTestModel(BaseModel):
-    any_int: int
-    any_str: str
+    any_int: int = Field(alias='my_int')
+    any_str: str = Field(alias='any_str')
     any_json: Json
     any_list: list
     any_str_list: list[str]
@@ -109,7 +109,8 @@ def pydantic_test_model() -> PydanticTestModel:
     return PydanticTestModel
 
 
-def pydantic_test_with_query_model() -> PydanticWithQueryParamsTestModel:
+@pytest.fixture()
+def pydantic_test_with_query_model() -> type(PydanticWithQueryParamsTestModel):
     return PydanticWithQueryParamsTestModel
 
 
@@ -124,8 +125,13 @@ def pydantic_model_test_serializer() -> TestPydanticSerializer:
 
 
 @pytest.fixture()
-def pydantic_test_query_serializer() -> PydanticWithQueryParamsTestModel:
+def pydantic_test_query_serializer() -> type(TestPydanticQuerySerializer):
     return TestPydanticQuerySerializer
+
+
+@pytest.fixture()
+def pydantic_shot_test_query_serializer() -> type(TestPydanticShortQuerySerializer):
+    return TestPydanticShortQuerySerializer
 
 
 @pytest.fixture()
@@ -187,7 +193,7 @@ def pydantic_test_model_data() -> dict[str, str | int]:
 @pytest.fixture()
 def pydantic_test_query_data() -> dict:
     return {
-        'any_int': 10,
+        'my_int': 10,
         'any_str': 'hi',
         'any_json': '{"foo": "bar"}',
         'any_list': ['1', '2'],
@@ -209,10 +215,10 @@ def serialized_pydantic_test_model_data(
 
 
 @pytest.fixture()
-def serialized_pydantic_with_query_test_model_data(
-    pydantic_test_query_data,
+def serialized_pydantic_test_with_query(
+    pydantic_test_query_data, pydantic_test_with_query_model
 ) -> dict[str, str | datetime.datetime]:
-    return PydanticWithQueryParamsTestModel(**pydantic_test_query_data).dict()
+    return pydantic_test_with_query_model(**pydantic_test_query_data).dict()
 
 
 @pytest.fixture()
@@ -235,7 +241,7 @@ def pydantic_model_serializer_with_sensitive_data() -> typing.Type[
 def mocked__query_dict_to_dict(mock_for_module) -> Mock:
     return mock_for_module(
         module_name='restdoctor.rest_framework.serializers.PydanticSerializer',
-        function_name='_query_dict_to_dict',
+        function_name='query_dict_to_dict',
     )
 
 
