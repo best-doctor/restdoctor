@@ -35,3 +35,10 @@ ResourceModelsMap = ResourceMap[t.Optional[models.Model]]
 GenericRepresentation = t.Dict[str, t.Any]
 
 ModelObject = t.TypeVar('ModelObject', bound=models.Model, covariant=True)
+
+
+class ViewFunctionWithAttrs(t.Protocol):
+    initkwargs: dict[str, t.Any]
+
+    def __call__(self, *args: t.Any, **kwargs: t.Any) -> t.Any:
+        ...

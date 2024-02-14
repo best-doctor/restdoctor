@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import pytest
+from django.test.utils import override_settings
 from rest_framework.fields import Field, FileField
 
 from restdoctor.rest_framework.schema.generators import (
@@ -48,3 +49,64 @@ def test_settings_default_openapi_version(
     generator = generator_class()
 
     assert generator.openapi_version == expected_openapi_version
+
+
+@override_settings(API_VERSIONS={'v1': 'tests.stubs.api.v1_schema_urls'})
+@pytest.mark.parametrize(
+    ('accept', 'expected_content_keys'),
+    [
+        (
+            None,
+            {
+                'application/vnd.vendor',
+                'application/vnd.vendor.v1-common',
+                'application/vnd.vendor.v1-extended',
+            },
+        ),
+        ('application/vnd.vendor.v1-common', {'application/vnd.vendor.v1-common'}),
+        ('application/vnd.vendor.v1-extended', {'application/vnd.vendor.v1-extended'}),
+    ],
+)
+def test__generator__viewset_with_accept(accept, expected_content_keys):
+    generator = RefsSchemaGenerator(urlconf='tests.stubs.api.v1_schema_urls', accept=accept)
+    schema = generator.get_schema()
+    result_content_keys = set(
+        schema['paths']['/api/mymodel/']['get']['responses']['200']['content'].keys()
+    )
+
+    assert result_content_keys == expected_content_keys
+
+
+@override_settings(API_VERSIONS={'v1': 'tests.stubs.api.v1_schema_urls'})
+def test__generator__view_without_accept():
+    generator = RefsSchemaGenerator(urlconf='tests.stubs.api.v1_schema_urls', accept=None)
+    schema = generator.get_schema()
+
+    result_content_keys = set(
+        schema['paths']['/api/mymodels/']['get']['responses']['200']['content'].keys()
+    )
+
+    assert result_content_keys == {'application/vnd.vendor', 'application/vnd.vendor.v1-extended'}
+
+
+@override_settings(API_VERSIONS={'v1': 'tests.stubs.api.v1_schema_urls'})
+def test__generator__view_with_common_resource():
+    generator = RefsSchemaGenerator(
+        urlconf='tests.stubs.api.v1_schema_urls', accept='application/vnd.vendor.v1-common'
+    )
+    schema = generator.get_schema()
+
+    assert '/api/mymodels/' not in set(schema['paths'].keys())
+
+
+@override_settings(API_VERSIONS={'v1': 'tests.stubs.api.v1_schema_urls'})
+def test__generator__view_with_extended_resource():
+    generator = RefsSchemaGenerator(
+        urlconf='tests.stubs.api.v1_schema_urls', accept='application/vnd.vendor.v1-extended'
+    )
+    schema = generator.get_schema()
+    result_content_keys = set(
+        schema['paths']['/api/mymodels/']['get']['responses']['200']['content'].keys()
+    )
+
+    assert result_content_keys == {'application/vnd.vendor.v1-extended'}

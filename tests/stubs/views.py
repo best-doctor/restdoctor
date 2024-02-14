@@ -1,16 +1,22 @@
 from __future__ import annotations
+
 import typing
 
 from rest_framework.response import Response
 
-from restdoctor.rest_framework.resources import ResourceViewSet
-from restdoctor.rest_framework.views import GenericAPIView
-from restdoctor.rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
+from restdoctor.rest_framework.resources import ResourceView, ResourceViewSet
+from restdoctor.rest_framework.views import GenericAPIView, ListAPIView
+from restdoctor.rest_framework.viewsets import ModelViewSet
 from tests.stubs.models import MyModel
-from tests.stubs.serializers import BaseObjectSerializer, MyModelSerializer, MyModelExtendedSerializer
+from tests.stubs.serializers import (
+    BaseObjectSerializer,
+    MyModelExtendedSerializer,
+    MyModelSerializer,
+)
 
 if typing.TYPE_CHECKING:
     from rest_framework.request import Request
+
     from restdoctor.rest_framework.custom_types import Parsers
 
 
@@ -25,6 +31,19 @@ class EmptyView(GenericAPIView):
         return Response({'data': None})
 
 
+class MyModelExtendedAPIView(ListAPIView):
+    serializer_class = MyModelSerializer
+    queryset = MyModel.objects.all()
+
+
+class MyModelResourceView(ResourceView):
+    resource_views_map = {'extended': MyModelExtendedAPIView}
+    resource_actions_map = {'extended': ['list']}
+    schema_operation_id_map = {
+        'list': 'listMyModelViewResources'  # переопределено, чтобы id не пересекался с MyModelResourceViewSet
+    }
+
+
 class MyModelViewSet(ModelViewSet):
     serializer_class = MyModelSerializer
     queryset = MyModel.objects.all()
@@ -36,7 +55,4 @@ class MyModelExtendedViewSet(ModelViewSet):
 
 
 class MyModelResourceViewSet(ResourceViewSet):
-    resource_views_map = {
-        'common': MyModelViewSet,
-        'extended': MyModelExtendedViewSet,
-    }
+    resource_views_map = {'common': MyModelViewSet, 'extended': MyModelExtendedViewSet}
