@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import enum
 import typing
 from urllib.parse import urljoin
 
+import yaml
 from django.conf import settings
 from rest_framework.generics import GenericAPIView
 from rest_framework.request import Request
@@ -14,10 +16,14 @@ from restdoctor.rest_framework.schema.openapi import RestDoctorSchema
 from restdoctor.rest_framework.schema.refs_registry import LocalRefsRegistry
 from restdoctor.utils.api_format import get_available_format
 from restdoctor.utils.media_type import parse_accept
+from restdoctor.utils.yaml_utils import enum_representer
 
 if typing.TYPE_CHECKING:
     from restdoctor.rest_framework.custom_types import Handler, ViewFunctionWithAttrs
     from restdoctor.rest_framework.schema.custom_types import OpenAPISchema
+
+
+yaml.add_multi_representer(enum.Enum, enum_representer)
 
 
 class RestDoctorEndpointEnumerator(EndpointEnumerator):

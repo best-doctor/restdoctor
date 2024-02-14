@@ -47,6 +47,7 @@ repos:
     - id: mypy
       entry: mypy .
       pass_filenames: false
+      additional_dependencies: ['types-PyYAML']
 
 - repo: https://github.com/best-doctor/pre-commit-hooks
   rev: 'v1.0.0'

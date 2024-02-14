@@ -26,6 +26,7 @@ flake8-fine-pytest==1.0.3
 
 # mypy stuff
 mypy==0.971
+types-PyYAML==6.0.12.12
 
 # pytest stuff
 pytest==7.1.3
