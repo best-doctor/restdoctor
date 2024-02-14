@@ -105,7 +105,7 @@ class PydanticSerializerWithSensitiveData(PydanticSerializer):
 
 
 @pytest.fixture()
-def pydantic_test_model() -> PydanticTestModel:
+def pydantic_test_model() -> type(PydanticSerializer):
     return PydanticTestModel
 
 
@@ -115,37 +115,37 @@ def pydantic_test_with_query_model() -> type(PydanticWithQueryParamsTestModel):
 
 
 @pytest.fixture()
-def pydantic_test_model_with_aliases() -> PydanticTestModelWithAliases:
+def pydantic_test_model_with_aliases() -> type(PydanticSerializer):
     return PydanticTestModelWithAliases
 
 
 @pytest.fixture()
-def pydantic_model_test_serializer() -> TestPydanticSerializer:
+def pydantic_model_test_serializer() -> type(PydanticSerializer):
     return TestPydanticSerializer
 
 
 @pytest.fixture()
-def pydantic_test_query_serializer() -> type(TestPydanticQuerySerializer):
+def pydantic_test_query_serializer() -> type(PydanticSerializer):
     return TestPydanticQuerySerializer
 
 
 @pytest.fixture()
-def pydantic_shot_test_query_serializer() -> type(TestPydanticShortQuerySerializer):
+def pydantic_shot_test_query_serializer() -> type(PydanticSerializer):
     return TestPydanticShortQuerySerializer
 
 
 @pytest.fixture()
-def pydantic_model_with_aliases_test_serializer() -> TestPydanticSerializer:
+def pydantic_model_with_aliases_test_serializer() -> type(PydanticSerializer):
     return TestPydanticSerializerWithAliases
 
 
 @pytest.fixture()
-def pydantic_model_test_serializer_deprecated() -> TestPydanticSerializer:
+def pydantic_model_test_serializer_deprecated() -> type(PydanticSerializer):
     return TestPydanticSerializerDeprecated
 
 
 @pytest.fixture()
-def pydantic_model_with_aliases_test_serializer_deprecated() -> TestPydanticSerializer:
+def pydantic_model_with_aliases_test_serializer_deprecated() -> type(PydanticSerializer):
     return TestPydanticSerializerWithAliasesDeprecated
 
 
@@ -159,7 +159,7 @@ def django_test_model(mocker) -> DjangoTestModel:
 @pytest.fixture()
 def pydantic_django_model_test_serializer(
     pydantic_test_model: BaseModel, django_test_model: models.Model
-) -> PydanticSerializer:
+) -> type(PydanticSerializer):
     class TestPydanticDjangoModelSerializer(PydanticSerializer):
         class Meta:
             model = django_test_model
@@ -171,7 +171,7 @@ def pydantic_django_model_test_serializer(
 @pytest.fixture()
 def pydantic_django_model_test_serializer_deprecated(
     pydantic_test_model: BaseModel, django_test_model: models.Model
-) -> PydanticSerializer:
+) -> type(PydanticSerializer):
     class TestPydanticDjangoModelSerializer(PydanticSerializer):
         class Meta:
             model = django_test_model
