@@ -110,7 +110,7 @@ def pydantic_test_model() -> typing.Type[PydanticSerializer]:
 
 
 @pytest.fixture()
-def pydantic_test_with_query_model() -> typing.Type[PydanticWithQueryParamsTestModel]:
+def pydantic_test_with_query_model() -> typing.Type[PydanticSerializer]:
     return PydanticWithQueryParamsTestModel
 
 
