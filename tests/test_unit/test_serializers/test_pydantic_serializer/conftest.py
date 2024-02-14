@@ -105,47 +105,47 @@ class PydanticSerializerWithSensitiveData(PydanticSerializer):
 
 
 @pytest.fixture()
-def pydantic_test_model() -> type(PydanticSerializer):
+def pydantic_test_model() -> typing.Type[PydanticSerializer]:
     return PydanticTestModel
 
 
 @pytest.fixture()
-def pydantic_test_with_query_model() -> type(PydanticWithQueryParamsTestModel):
+def pydantic_test_with_query_model() -> typing.Type[PydanticWithQueryParamsTestModel]:
     return PydanticWithQueryParamsTestModel
 
 
 @pytest.fixture()
-def pydantic_test_model_with_aliases() -> type(PydanticSerializer):
+def pydantic_test_model_with_aliases() -> typing.Type[PydanticSerializer]:
     return PydanticTestModelWithAliases
 
 
 @pytest.fixture()
-def pydantic_model_test_serializer() -> type(PydanticSerializer):
+def pydantic_model_test_serializer() -> typing.Type[PydanticSerializer]:
     return TestPydanticSerializer
 
 
 @pytest.fixture()
-def pydantic_test_query_serializer() -> type(PydanticSerializer):
+def pydantic_test_query_serializer() -> typing.Type[PydanticSerializer]:
     return TestPydanticQuerySerializer
 
 
 @pytest.fixture()
-def pydantic_shot_test_query_serializer() -> type(PydanticSerializer):
+def pydantic_shot_test_query_serializer() -> typing.Type[PydanticSerializer]:
     return TestPydanticShortQuerySerializer
 
 
 @pytest.fixture()
-def pydantic_model_with_aliases_test_serializer() -> type(PydanticSerializer):
+def pydantic_model_with_aliases_test_serializer() -> typing.Type[PydanticSerializer]:
     return TestPydanticSerializerWithAliases
 
 
 @pytest.fixture()
-def pydantic_model_test_serializer_deprecated() -> type(PydanticSerializer):
+def pydantic_model_test_serializer_deprecated() -> typing.Type[PydanticSerializer]:
     return TestPydanticSerializerDeprecated
 
 
 @pytest.fixture()
-def pydantic_model_with_aliases_test_serializer_deprecated() -> type(PydanticSerializer):
+def pydantic_model_with_aliases_test_serializer_deprecated() -> typing.Type[PydanticSerializer]:
     return TestPydanticSerializerWithAliasesDeprecated
 
 
