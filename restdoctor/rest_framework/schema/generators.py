@@ -27,7 +27,7 @@ yaml.add_multi_representer(enum.Enum, enum_representer)
 
 
 class RestDoctorEndpointEnumerator(EndpointEnumerator):
-    def __init__(self, patterns: str, urlconf: str, api_resource: str | None = None) -> None:
+    def __init__(self, patterns: str, urlconf: str, api_resource: typing.Optional[str]) -> None:
         self.api_resource = api_resource
         super().__init__(patterns, urlconf)
 
