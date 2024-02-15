@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import enum
 from unittest.mock import Mock
 
 import pytest
+from django.db.models import TextChoices
 from pytest_factoryboy import register
 
 from restdoctor.rest_framework.pagination import (
@@ -105,6 +107,26 @@ def resource_view_dispatch(mocker, resource_class):
 @pytest.fixture()
 def get_discriminant_spy(mocker):
     return mocker.spy(ResourceBase, 'get_discriminant')
+
+
+class TestStringEnum(enum.Enum):
+    TEST = 'test'
+
+
+class TestIntEnum(enum.Enum):
+    TEST = 1
+
+
+class TestBoolEnum(enum.Enum):
+    TEST = True
+
+
+class TestComplexEnum(enum.Enum):
+    TEST = type('Class', (), {})
+
+
+class TestTextChoices(TextChoices):
+    TEST = 'test', 'test'
 
 
 @pytest.fixture()
