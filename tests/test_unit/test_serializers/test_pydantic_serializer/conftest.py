@@ -159,7 +159,7 @@ def django_test_model(mocker) -> DjangoTestModel:
 @pytest.fixture()
 def pydantic_django_model_test_serializer(
     pydantic_test_model: BaseModel, django_test_model: models.Model
-) -> type(PydanticSerializer):
+) -> typing.Type[PydanticSerializer]:
     class TestPydanticDjangoModelSerializer(PydanticSerializer):
         class Meta:
             model = django_test_model
@@ -171,7 +171,7 @@ def pydantic_django_model_test_serializer(
 @pytest.fixture()
 def pydantic_django_model_test_serializer_deprecated(
     pydantic_test_model: BaseModel, django_test_model: models.Model
-) -> type(PydanticSerializer):
+) -> typing.Type[PydanticSerializer]:
     class TestPydanticDjangoModelSerializer(PydanticSerializer):
         class Meta:
             model = django_test_model
