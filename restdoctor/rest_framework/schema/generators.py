@@ -8,6 +8,7 @@ import yaml
 from django.conf import settings
 from rest_framework.generics import GenericAPIView
 from rest_framework.request import Request
+from rest_framework.schemas.generators import EndpointEnumerator
 from semver import VersionInfo
 
 from restdoctor.rest_framework.schema.custom_types import SchemaGenerator
@@ -18,14 +19,33 @@ from restdoctor.utils.media_type import parse_accept
 from restdoctor.utils.yaml_utils import enum_representer
 
 if typing.TYPE_CHECKING:
-    from restdoctor.rest_framework.custom_types import Handler
+    from restdoctor.rest_framework.custom_types import Handler, ViewFunctionWithAttrs
     from restdoctor.rest_framework.schema.custom_types import OpenAPISchema
 
 
 yaml.add_multi_representer(enum.Enum, enum_representer)
 
 
+class RestDoctorEndpointEnumerator(EndpointEnumerator):
+    def __init__(self, patterns: str, urlconf: str, api_resource: typing.Optional[str]) -> None:
+        self.api_resource = api_resource
+        super().__init__(patterns, urlconf)
+
+    def should_include_endpoint(self, path: str, callback: ViewFunctionWithAttrs) -> bool:
+        if not super().should_include_endpoint(path, callback):
+            return False
+
+        if self.api_resource is not None:
+            resources = callback.initkwargs.get('resource_handlers_map', {}).keys()
+            if self.api_resource not in resources:
+                return False
+
+        return True
+
+
 class RefsSchemaGenerator(SchemaGenerator):
+    endpoints: list[tuple[str, typing.Any, typing.Any]]
+    endpoint_inspector_cls = RestDoctorEndpointEnumerator
     openapi_version = None
 
     def __init__(self, *args: typing.Any, **kwargs: typing.Any) -> None:
@@ -190,6 +210,11 @@ class RefsSchemaGenerator(SchemaGenerator):
             content_type = f'{content_type}.{effective_api_format}'
 
         return content_type
+
+    def _initialise_endpoints(self) -> None:
+        if self.endpoints is None:
+            inspector = self.endpoint_inspector_cls(self.patterns, self.urlconf, self.api_resource)
+            self.endpoints = inspector.get_api_endpoints()
 
 
 class RefsSchemaGenerator30(RefsSchemaGenerator):
