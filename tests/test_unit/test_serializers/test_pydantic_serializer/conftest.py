@@ -25,7 +25,7 @@ class PydanticWithQueryParamsTestModel(BaseModel):
     any_str: str = Field(alias='any_str')
     any_json: Json
     any_list: list
-    any_str_list: list[str]
+    any_str_list: typing.List[str]
     any_bool: bool
 
 

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import collections
 import inspect
-import types
 import typing
 
 from django.http import QueryDict
@@ -167,13 +166,9 @@ class PydanticSerializer(typing.Generic[TPydanticModel], BaseDRFSerializer):
 
     @classmethod
     def _is_sequence_field(cls, field_type: type | None) -> bool:
-
-        # for example get_origin(list) = None
-        # to solve this, this condition is used
-        if field_type is not None and isinstance(field_type, types.GenericAlias):  # type: ignore
-            field_type = typing.get_origin(field_type)
-
-        return field_type in (list, tuple, collections.deque, set, frozenset)
+        if not (origin := typing.get_origin(field_type)):
+            origin = field_type
+        return origin in (list, tuple, collections.deque, set, frozenset)
 
     @classmethod
     def _is_string_like_field(cls, field_type: type | None) -> bool:
