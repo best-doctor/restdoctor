@@ -1,7 +1,11 @@
 from __future__ import annotations
 
+import collections
 import inspect
+import types
 import typing
+
+from django.http import QueryDict
 
 if typing.TYPE_CHECKING:
     from restdoctor.rest_framework.custom_types import ModelObject, GenericRepresentation
@@ -138,8 +142,11 @@ class PydanticSerializer(typing.Generic[TPydanticModel], BaseDRFSerializer):
         data: dict[str, typing.Any] | empty = empty,
         **kwargs: dict[str, typing.Any],
     ):
+        if isinstance(data, QueryDict):
+            data = self.query_dict_to_dict(data=data)
         self._pydantic_instance: TPydanticModel | None = None
         self._setup_create_update_methods()
+
         super().__init__(instance=instance, data=data, **kwargs)
 
     @property
@@ -157,6 +164,25 @@ class PydanticSerializer(typing.Generic[TPydanticModel], BaseDRFSerializer):
     @property
     def pydantic_use_aliases(self) -> bool:
         return getattr(self.Meta, 'pydantic_use_aliases', False)
+
+    @classmethod
+    def _is_sequence_field(cls, field_type: type | None) -> bool:
+
+        # for example get_origin(list) = None
+        # to solve this, this condition is used
+        if field_type is not None and isinstance(field_type, types.GenericAlias):  # type: ignore
+            field_type = typing.get_origin(field_type)
+
+        return field_type in (list, tuple, collections.deque, set, frozenset)
+
+    @classmethod
+    def _is_string_like_field(cls, field_type: type | None) -> bool:
+        if not field_type:
+            return False
+        try:
+            return issubclass(field_type, (str, bytes, bytearray))
+        except TypeError:
+            return False
 
     @classmethod
     def _get_pydantic_model(cls) -> typing.Type[TPydanticModel]:
@@ -200,6 +226,27 @@ class PydanticSerializer(typing.Generic[TPydanticModel], BaseDRFSerializer):
             raise ImproperlyConfigured(
                 'pydantic_model.Config.orm_mode must be True for this serializer'
             )
+
+    def query_dict_to_dict(self, data: QueryDict) -> dict:
+        model_class = self.pydantic_model_class
+        model_fields = model_class.__fields__
+        to_dict: dict[str, typing.Any] = {}
+        for key, orig_value in data.items():
+            field_key = next(
+                (name for (name, field_obj) in model_fields.items() if field_obj.alias == key), key
+            )
+            if field_key not in model_fields:
+                to_dict[key] = orig_value
+                continue
+            field_type = model_fields[field_key].annotation
+            if orig_value in ('', b'') and not self._is_string_like_field(field_type=field_type):
+                continue
+            if self._is_sequence_field(field_type=field_type):
+                to_dict[key] = data.getlist(key)
+            else:
+                to_dict[key] = data.get(key)
+
+        return to_dict
 
     def get_fields(self) -> dict[str, None]:
         return {field_name: None for field_name in self.pydantic_model_class.__fields__.keys()}
