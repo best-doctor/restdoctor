@@ -1,18 +1,16 @@
 from __future__ import annotations
 
-import re
 import contextlib
-from typing import Optional, Dict
+import re
+from typing import Dict, Optional
 
 from django.conf import settings
-from django.core.exceptions import (
-    ObjectDoesNotExist,
-    ValidationError as DjangoValidationError,
-    ImproperlyConfigured,
-)
+from django.core.exceptions import ImproperlyConfigured, ObjectDoesNotExist
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db.models import Model, QuerySet
 from django.http import Http404
-from rest_framework.generics import GenericAPIView as BaseGenericAPIView, get_object_or_404
+from rest_framework.generics import GenericAPIView as BaseGenericAPIView
+from rest_framework.generics import get_object_or_404
 
 from restdoctor.rest_framework.mixins import NegotiatedMixin
 
@@ -36,6 +34,7 @@ class GenericAPIView(NegotiatedMixin, BaseGenericAPIView):
                     AttributeError, TypeError, ValueError, DjangoValidationError, ObjectDoesNotExist
                 ):
                     obj = queryset.get(**filter_kwargs)
+                    break
 
         if obj is None:
             raise Http404
