@@ -144,9 +144,9 @@ flake8-adjustable-complexity==0.0.6 \
     --hash=sha256:3a0adc2a957370cf8878fc255b111244b77ae48f9944fc67db6935388dbd1b15 \
     --hash=sha256:6c84d22aba91b6ccea2cd9d240f76e1cc973232322e64d89f07d803fcd547042
     # via -r requirements-dev.in
-flake8-annotations-complexity==0.0.7 \
-    --hash=sha256:2ecd93375e3dee0d4e11e476087a52fa985c47bc049015ff04a9de38fc0c4dfd \
-    --hash=sha256:a1410f5b964927032471ce99932d1670d28ea323b50400b45cc14575be070508
+flake8-annotations-complexity==0.0.8 \
+    --hash=sha256:44e299dac0ab64f3af4b478fac7feb635c113a606036de8b39dadab3531da7ed \
+    --hash=sha256:8914e76e31672c4063c928b0a250db6b935a16d1799de10457958a71d11bb665
     # via -r requirements-dev.in
 flake8-broken-line==0.5.0 \
     --hash=sha256:7c98de9dd1385b71e888709c7f2aee3f0514107ecb5875bc95d0c03392191c97 \
