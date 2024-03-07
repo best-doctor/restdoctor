@@ -63,15 +63,15 @@ class ListModelMixin(BaseListModelMixin):
         meta = self.get_meta_serializer_data()
         page = self.paginate_queryset(queryset)
         if page is not None:
-            self.perform_list(page)
-            serializer = self.get_serializer(page, many=True)
+            prepare_page = self.perform_list(page, request_data=request_serializer.validated_data)
+            serializer = self.get_serializer(prepare_page, many=True)
             response = self.get_paginated_response(serializer.data)
             response.meta.update(meta)
             return response
 
-        self.perform_list(queryset)
+        prepare_data = self.perform_list(queryset, request_data=request_serializer.validated_data)
 
-        serializer = self.get_serializer(queryset, many=True)
+        serializer = self.get_serializer(prepare_data, many=True)
         return ResponseWithMeta(data=serializer.data, meta=meta)
 
     def get_collection(
@@ -79,8 +79,10 @@ class ListModelMixin(BaseListModelMixin):
     ) -> typing.Union[typing.List, QuerySet]:
         return self.filter_queryset(self.get_queryset())
 
-    def perform_list(self, data: typing.Union[typing.List, QuerySet]) -> None:
-        pass
+    def perform_list(
+        self, data: typing.Union[typing.List, QuerySet], request_data: dict = None
+    ) -> typing.Union[typing.List, QuerySet]:
+        return data
 
     def get_meta_data(self) -> typing.Dict[str, typing.Any]:
         return {}
@@ -100,6 +102,7 @@ class RetrieveModelMixin(BaseRetrieveModelMixin):
         request_serializer.is_valid(raise_exception=True)
 
         item = self.get_item(request_serializer)
+        item = self.perform_retrieve(item)
 
         serializer = self.get_serializer(item)
         return Response(serializer.data)
@@ -111,6 +114,11 @@ class RetrieveModelMixin(BaseRetrieveModelMixin):
 
     def get_serializer(self, *args: typing.Any, **kwargs: typing.Any) -> BaseSerializer:
         return self.get_response_serializer(*args, **kwargs)
+
+    def perform_retrieve(
+        self, item: typing.Union[dict, ModelObject]
+    ) -> typing.Union[dict, ModelObject]:
+        return item
 
 
 class UpdateModelMixin(BaseUpdateModelMixin):
