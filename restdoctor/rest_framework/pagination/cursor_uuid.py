@@ -2,16 +2,18 @@ from __future__ import annotations
 
 import contextlib
 import typing
-import uuid
+from typing import Any
 
 from django.core.exceptions import ObjectDoesNotExist
 from rest_framework.pagination import BasePagination
-from rest_framework.utils.urls import replace_query_param, remove_query_param
+from rest_framework.utils.urls import remove_query_param, replace_query_param
 
 from restdoctor.constants import DEFAULT_MAX_PAGE_SIZE, DEFAULT_PAGE_SIZE
 from restdoctor.rest_framework.pagination.mixins import SerializerClassPaginationMixin
 from restdoctor.rest_framework.pagination.serializers import (
-    CursorUUIDRequestSerializer, CursorUUIDResponseSerializer, CursorUUIDUncountedResponseSerializer,
+    CursorUUIDRequestSerializer,
+    CursorUUIDResponseSerializer,
+    CursorUUIDUncountedResponseSerializer,
 )
 from restdoctor.rest_framework.response import ResponseWithMeta
 
@@ -33,21 +35,20 @@ def get_order(default_order: str, serializer_keys: typing.Sequence[str]) -> str:
 
 def get_cursor(
     queryset: QuerySet,
-    after_uuid: uuid.UUID = None,
-    before_uuid: uuid.UUID = None,
+    after_value: Any = None,
+    before_value: Any = None,
     default_order: str = None,
+    cursor_field_name: str = 'uuid',
 ) -> typing.Tuple[typing.Any, str]:
     cursor_obj = None
-    if after_uuid is not None:
-        with contextlib.suppress(ObjectDoesNotExist):
-            cursor_obj = queryset.get(uuid=after_uuid)
+    order = default_order or ''
+    with contextlib.suppress(ObjectDoesNotExist):
+        if after_value is not None:
+            cursor_obj = queryset.get(**{cursor_field_name: after_value})
             order = 'after'
-    elif before_uuid is not None:
-        with contextlib.suppress(ObjectDoesNotExist):
-            cursor_obj = queryset.get(uuid=before_uuid)
+        elif before_value is not None:
+            cursor_obj = queryset.get(**{cursor_field_name: before_value})
             order = 'before'
-    if cursor_obj is None:
-        order = default_order or ''
     return cursor_obj, order
 
 
@@ -64,9 +65,7 @@ class CursorUUIDPagination(SerializerClassPaginationMixin, BasePagination):
 
     serializer_class_map = {
         'default': CursorUUIDRequestSerializer,
-        'pagination': {
-            'response': CursorUUIDResponseSerializer,
-        },
+        'pagination': {'response': CursorUUIDResponseSerializer},
     }
 
     max_page_size = DEFAULT_MAX_PAGE_SIZE
@@ -79,13 +78,15 @@ class CursorUUIDPagination(SerializerClassPaginationMixin, BasePagination):
             return {lookup_keyword: getattr(self.cursor_obj, self.lookup_by_field)}
 
     def paginate_queryset(
-        self, queryset: QuerySet, request: Request, view: APIView = None,
+        self, queryset: QuerySet, request: Request, view: APIView = None
     ) -> OptionalList:
         serializer_class = self.get_request_serializer_class()
         serializer = serializer_class(data=request.query_params, max_per_page=self.max_page_size)
         serializer.is_valid(raise_exception=True)
 
-        self.per_page = serializer.validated_data.get(self.page_size_query_param, self.default_page_size)
+        self.per_page = serializer.validated_data.get(
+            self.page_size_query_param, self.default_page_size
+        )
 
         after_uuid = serializer.validated_data.get(self.after_query_param)
         before_uuid = serializer.validated_data.get(self.before_query_param)
@@ -119,10 +120,7 @@ class CursorUUIDPagination(SerializerClassPaginationMixin, BasePagination):
             del paginated[-1]
 
         if paginated:
-            self.page_boundaries = (
-                paginated[0].uuid,
-                paginated[-1].uuid,
-            )
+            self.page_boundaries = (paginated[0].uuid, paginated[-1].uuid)
         elif self.cursor_obj:
             self.page_boundaries = (self.cursor_obj.uuid, self.cursor_obj.uuid)
         else:
@@ -135,7 +133,9 @@ class CursorUUIDPagination(SerializerClassPaginationMixin, BasePagination):
         url_tmpl = replace_query_param(url_tmpl, self.page_size_query_param, self.per_page)
         return url_tmpl
 
-    def get_page_link(self, after: typing.Any = None, before: typing.Any = None) -> typing.Optional[str]:
+    def get_page_link(
+        self, after: typing.Any = None, before: typing.Any = None
+    ) -> typing.Optional[str]:
         if after is not None:
             base_url = remove_query_param(self.base_url, self.before_query_param)
             return replace_query_param(base_url, self.after_query_param, after)
@@ -144,10 +144,7 @@ class CursorUUIDPagination(SerializerClassPaginationMixin, BasePagination):
             return replace_query_param(base_url, self.before_query_param, before)
 
     def get_paginated_response(self, data: typing.Sequence[typing.Any]) -> ResponseWithMeta:
-        meta = {
-            self.page_size_query_param: self.per_page,
-            'has_next': self.has_next,
-        }
+        meta = {self.page_size_query_param: self.per_page, 'has_next': self.has_next}
         cursor_uuid = None
         if self.cursor_obj:
             cursor_uuid = self.cursor_obj.uuid
@@ -161,8 +158,12 @@ class CursorUUIDPagination(SerializerClassPaginationMixin, BasePagination):
         if self.order == 'after':
             after_idx, before_idx = 1, 0
 
-        meta['after_url'] = self.get_page_link(**{self.after_query_param: self.page_boundaries[after_idx] or ''})
-        meta['before_url'] = self.get_page_link(**{self.before_query_param: self.page_boundaries[before_idx] or ''})
+        meta['after_url'] = self.get_page_link(
+            **{self.after_query_param: self.page_boundaries[after_idx] or ''}
+        )
+        meta['before_url'] = self.get_page_link(
+            **{self.before_query_param: self.page_boundaries[before_idx] or ''}
+        )
 
         return ResponseWithMeta(data=data, meta=meta)
 
@@ -172,7 +173,5 @@ class CursorUUIDUncountedPagination(CursorUUIDPagination):
 
     serializer_class_map = {
         'default': CursorUUIDRequestSerializer,
-        'pagination': {
-            'response': CursorUUIDUncountedResponseSerializer,
-        },
+        'pagination': {'response': CursorUUIDUncountedResponseSerializer},
     }

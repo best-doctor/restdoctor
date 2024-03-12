@@ -50,11 +50,14 @@ class GenericAPIView(NegotiatedMixin, BaseGenericAPIView):
         # Perform the lookup filtering.
         lookup_url_kwarg = self.lookup_url_kwarg or self.lookup_field
 
-        assert lookup_url_kwarg in self.kwargs, (
-            'Expected view %s to be called with a URL keyword argument '
-            'named "%s". Fix your URL conf, or set the `.lookup_field` '
-            'attribute on the view correctly.' % (self.__class__.__name__, lookup_url_kwarg)
-        )
+        if lookup_url_kwarg not in self.kwargs:
+            raise ImproperlyConfigured(
+                (
+                    f'Expected view {self.__class__.__name__} to be called with a URL keyword argument '
+                    f'named "{lookup_url_kwarg}". Fix your URL conf, or set the `.lookup_field` '
+                    'attribute on the view correctly.'
+                )
+            )
 
         filter_kwargs = {self.lookup_field: self.kwargs[lookup_url_kwarg]}
         obj = get_object_or_404(queryset, **filter_kwargs)
@@ -82,8 +85,9 @@ class GenericAPIView(NegotiatedMixin, BaseGenericAPIView):
                 )
             )
 
-    def _get_queryset_for_object(self) -> QuerySet:
-        qs = self.get_queryset()
+    def _get_queryset_for_object(self, queryset: QuerySet | None = None) -> QuerySet:
+        if queryset is None:
+            queryset = self.get_queryset()
         if settings.API_IGNORE_FILTER_PARAMS_FOR_DETAIL:
-            return qs
-        return self.filter_queryset(qs)
+            return queryset
+        return self.filter_queryset(queryset)
