@@ -144,9 +144,9 @@ flake8-adjustable-complexity==0.0.6 \
     --hash=sha256:3a0adc2a957370cf8878fc255b111244b77ae48f9944fc67db6935388dbd1b15 \
     --hash=sha256:6c84d22aba91b6ccea2cd9d240f76e1cc973232322e64d89f07d803fcd547042
     # via -r requirements-dev.in
-flake8-annotations-complexity==0.0.7 \
-    --hash=sha256:2ecd93375e3dee0d4e11e476087a52fa985c47bc049015ff04a9de38fc0c4dfd \
-    --hash=sha256:a1410f5b964927032471ce99932d1670d28ea323b50400b45cc14575be070508
+flake8-annotations-complexity==0.0.8 \
+    --hash=sha256:44e299dac0ab64f3af4b478fac7feb635c113a606036de8b39dadab3531da7ed \
+    --hash=sha256:8914e76e31672c4063c928b0a250db6b935a16d1799de10457958a71d11bb665
     # via -r requirements-dev.in
 flake8-broken-line==0.5.0 \
     --hash=sha256:7c98de9dd1385b71e888709c7f2aee3f0514107ecb5875bc95d0c03392191c97 \
@@ -365,9 +365,9 @@ pytest-mock==3.12.0 \
     --hash=sha256:0972719a7263072da3a21c7f4773069bcc7486027d7e8e1f81d98a47e701bc4f \
     --hash=sha256:31a40f038c22cad32287bb43932054451ff5583ff094bca6f675df2f8bc1a6e9
     # via -r requirements-dev.in
-pytest-randomly==3.12.0 \
-    --hash=sha256:d60c2db71ac319aee0fc6c4110a7597d611a8b94a5590918bfa8583f00caccb2 \
-    --hash=sha256:f4f2e803daf5d1ba036cc22bf4fe9dbbf99389ec56b00e5cba732fb5c1d07fdd
+pytest-randomly==3.15.0 \
+    --hash=sha256:0516f4344b29f4e9cdae8bce31c4aeebf59d0b9ef05927c33354ff3859eeeca6 \
+    --hash=sha256:b908529648667ba5e54723088edd6f82252f540cc340d748d1fa985539687047
     # via -r requirements-dev.in
 pytest-socket==0.5.1 \
     --hash=sha256:7c4b81dc6a51cbc0093f11791de00ff4a15ac698f5da96879a80f5d9ad4179b6 \
