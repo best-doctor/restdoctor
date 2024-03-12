@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import contextlib
 import typing
-from typing import Any
 
 from django.core.exceptions import ObjectDoesNotExist
 from rest_framework.pagination import BasePagination
@@ -35,8 +34,8 @@ def get_order(default_order: str, serializer_keys: typing.Sequence[str]) -> str:
 
 def get_cursor(
     queryset: QuerySet,
-    after_value: Any = None,
-    before_value: Any = None,
+    after_value: typing.Any = None,
+    before_value: typing.Any = None,
     default_order: str = None,
     cursor_field_name: str = 'uuid',
 ) -> typing.Tuple[typing.Any, str]:
