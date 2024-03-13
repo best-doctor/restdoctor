@@ -29,7 +29,7 @@ mypy==0.971
 types-PyYAML==6.0.12.12
 
 # pytest stuff
-pytest==7.1.3
+pytest==8.1.1
 pytest-django==4.5.2
 pytest-factoryboy==2.5.0
 pytest-cov==4.1.0
