@@ -28,7 +28,7 @@ from restdoctor.rest_framework.schema.utils import (
     get_app_prefix,
     normalize_action_schema,
 )
-from restdoctor.rest_framework.serializers import EmptySerializer
+from restdoctor.rest_framework.serializers import EmptySerializer, PydanticSerializer
 from restdoctor.rest_framework.views import SerializerClassMapApiView
 
 if typing.TYPE_CHECKING:
@@ -138,6 +138,9 @@ class RestDoctorSchema(ViewSchemaBase, AutoSchema):
         request_serializer_class = self.view.get_request_serializer_class(use_default=False)
         request_serializer = request_serializer_class()
         if not isinstance(request_serializer, EmptySerializer):
+            if isinstance(request_serializer, PydanticSerializer):
+                return self.serializer_schema.map_pydantic_query_serializer(request_serializer)
+
             for field in request_serializer.fields.values():
                 field_schema = self.field_schema.get_field_schema(field)
                 parameters.append(
