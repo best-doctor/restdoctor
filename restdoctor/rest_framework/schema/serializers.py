@@ -178,3 +178,21 @@ class SerializerSchema(SerializerSchemaBase):
             props.append(prop)
 
         return props
+
+    def map_pydantic_query_serializer(
+        self, serializer: PydanticSerializer
+    ) -> typing.List[OpenAPISchema]:
+        props = []
+        schema_dict = fix_pydantic_title(serializer.pydantic_model_class.schema())
+        required_fields = schema_dict.get('required', [])
+        for field_name, field_schema in schema_dict['properties'].items():
+            props.append(
+                {
+                    'name': field_name,
+                    'in': 'query',
+                    'required': field_name in required_fields,
+                    'schema': field_schema,
+                }
+            )
+
+        return props
