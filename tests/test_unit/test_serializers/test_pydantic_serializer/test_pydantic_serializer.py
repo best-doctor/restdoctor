@@ -1,11 +1,22 @@
 from __future__ import annotations
 
+import sys
+
+from unittest.mock import call
+
 import pytest
 from django.core.exceptions import ImproperlyConfigured
+from django.http import QueryDict
 from pydantic import BaseModel
+from rest_framework.exceptions import ValidationError
 from rest_framework.serializers import ListSerializer
 
 from restdoctor.rest_framework.serializers import PydanticSerializer
+
+if sys.version_info.major == 3 and sys.version_info.minor == 8:
+    from tests.test_unit.test_serializers.test_pydantic_serializer.parameters_38 import PARAMETRIZE_TYPES
+else:
+    from tests.test_unit.test_serializers.test_pydantic_serializer.parameters import PARAMETRIZE_TYPES
 
 
 def test_pydantic_serializer_without_model_error():
@@ -95,6 +106,32 @@ def test_pydantic_model_serializer_is_valid_success(
     assert serializer.errors == {}
 
 
+def test_pydantic_model_serializer_is_valid_success_case_with_query_params(
+    pydantic_test_query_serializer, serialized_pydantic_test_with_query
+):
+    query_string = 'any_str=hi&my_int=10&any_list=1&any_json={"foo": "bar"}&any_list=2&any_bool=true&any_str_list=one'
+    query_dict = QueryDict(query_string)
+    serializer = pydantic_test_query_serializer(data=query_dict)
+
+    serializer_is_valid = serializer.is_valid(raise_exception=True)
+
+    assert serializer_is_valid is True
+    assert serializer.validated_data == serialized_pydantic_test_with_query
+    assert serializer.errors == {}
+
+
+def test_pydantic_model_serializer_is_valid_with_query_params__error_case_wrong_alias(
+    pydantic_test_query_serializer,
+):
+    query_string = 'any_str=hi&any_int=10&any_list=1&any_json={"foo": "bar"}&any_list=2&any_bool=true&any_str_list=one'
+    query_dict = QueryDict(query_string)
+
+    serializer = pydantic_test_query_serializer(data=query_dict)
+
+    with pytest.raises(expected_exception=ValidationError, match='field required'):
+        serializer.is_valid(raise_exception=True)
+
+
 def test_pydantic_model_serializer_is_valid_success_with_aliases(
     pydantic_model_with_aliases_test_serializer,
     pydantic_test_model_with_aliases_data,
@@ -149,6 +186,24 @@ def test_pydantic_django_model_serializer_successful_initialization(
     pydantic_django_model_test_serializer()
 
     assert True  # exception was not thrown
+
+
+def test_pydantic_django_model_serializer_initialization_case_with_out_query_params(
+    pydantic_django_model_test_serializer, mocked__query_dict_to_dict
+):
+    pydantic_django_model_test_serializer()
+
+    mocked__query_dict_to_dict.assert_not_called()
+
+
+def test_pydantic_django_model_serializer_initialization__case_with_query_params(
+    mocked__query_dict_to_dict, pydantic_test_query_serializer
+):
+    query_string = 'any_str=hi&any_int=10&any_list=1&any_json={"foo": "bar"}&any_list=2&any_bool=true&any_str_list=one'
+    query_dict = QueryDict(query_string)
+    pydantic_test_query_serializer(data=query_dict)
+
+    mocked__query_dict_to_dict.assert_called_once_with(data=query_dict)
 
 
 def test_pydantic_django_model_serializer_invalid_fields_subset_error(
@@ -238,3 +293,47 @@ def test_pydantic_django_model_serializer_update_success(
 
     assert model_instance.field_b == serialized_pydantic_test_model_data['field_b']
     model_instance.save.assert_called_once()
+
+
+def test_pydantic_model_serializer__query_dict_to_dict(
+    mocked__is_sequence_field, pydantic_shot_test_query_serializer
+):
+    query_string = 'any_str=hi&any_int=5'
+    query_dict = QueryDict(query_string)
+    mocked__is_sequence_field.return_value = False
+    serializer = pydantic_shot_test_query_serializer(data=query_dict)
+    mocked__is_sequence_field_calls = (call(field_type=str), call(field_type=int))
+
+    test_result = serializer.query_dict_to_dict(data=query_dict)
+
+    assert test_result == {'any_str': 'hi', 'any_int': '5'}
+    mocked__is_sequence_field.assert_has_calls(calls=mocked__is_sequence_field_calls)
+
+
+@pytest.mark.parametrize(('field_type', 'expected_result'), PARAMETRIZE_TYPES)
+def test_pydantic_model_serializer__is_sequence_field(
+    pydantic_test_query_serializer, field_type, expected_result
+):
+    query_string = 'any_str=hi&any_int=10&any_list=1&any_json={"foo": "bar"}&any_list=2&any_bool=true&any_str_list=one'
+    query_dict = QueryDict(query_string)
+    serializer = pydantic_test_query_serializer(data=query_dict)
+
+    test_result = serializer._is_sequence_field(field_type=field_type)
+
+    assert test_result is expected_result
+
+
+@pytest.mark.parametrize(
+    ('field_type', 'expected_result'),
+    [(None, False), (str, True), (bytes, True), (bytearray, True), (dict, False), (object, False)],
+)
+def test_pydantic_model_serializer__is_string_like_field(
+    pydantic_test_query_serializer, field_type, expected_result
+):
+    query_string = 'any_str=hi&any_int=10&any_list=1&any_json={"foo": "bar"}&any_list=2&any_bool=true&any_str_list=one'
+    query_dict = QueryDict(query_string)
+    serializer = pydantic_test_query_serializer(data=query_dict)
+
+    test_result = serializer._is_string_like_field(field_type=field_type)
+
+    assert test_result is expected_result
