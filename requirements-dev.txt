@@ -99,9 +99,7 @@ coverage[toml]==6.4.4 \
     --hash=sha256:fcbe3d9a53e013f8ab88734d7e517eb2cd06b7e689bedf22c0eb68db5e4a0a19 \
     --hash=sha256:fde17bc42e0716c94bf19d92e4c9f5a00c5feb401f5bc01101fdf2a8b7cacf60 \
     --hash=sha256:ff934ced84054b9018665ca3967fc48e1ac99e811f6cc99ea65978e1d384454b
-    # via
-    #   coverage
-    #   pytest-cov
+    # via pytest-cov
 distlib==0.3.6 \
     --hash=sha256:14bad2d9b04d3a36127ac97f30b12a19268f211063d8f8ee4f47108896e11b46 \
     --hash=sha256:f35c4b692542ca110de7ef0bea44d73981caeb34ca0b9b6b2e6d7790dda8f80e
@@ -203,9 +201,9 @@ flake8-print==5.0.0 \
     --hash=sha256:76915a2a389cc1c0879636c219eb909c38501d3a43cc8dae542081c9ba48bdf9 \
     --hash=sha256:84a1a6ea10d7056b804221ac5e62b1cee1aefc897ce16f2e5c42d3046068f5d8
     # via -r requirements-dev.in
-flake8-pytest-style==1.6.0 \
-    --hash=sha256:5fedb371a950e9fe0e0e6bfc854be7d99151271208f34cd2cc517681ece27780 \
-    --hash=sha256:c1175713e9e11b78cd1a035ed0bca0d1e41d09c4af329a952750b61d4194ddac
+flake8-pytest-style==1.7.2 \
+    --hash=sha256:b924197c99b951315949920b0e5547f34900b1844348432e67a44ab191582109 \
+    --hash=sha256:f5d2aa3219163a052dd92226589d45fab8ea027a3269922f0c4029f548ea5cd1
     # via -r requirements-dev.in
 flake8-quotes==3.3.1 \
     --hash=sha256:633adca6fb8a08131536af0d750b44d6985b9aba46f498871e21588c3e6f525a
