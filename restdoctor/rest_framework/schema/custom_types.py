@@ -8,6 +8,8 @@ from rest_framework.schemas.openapi import SchemaGenerator as RestFrameworkSchem
 from rest_framework.serializers import BaseSerializer
 from semver import VersionInfo
 
+from restdoctor.rest_framework.serializers import PydanticSerializer
+
 OpenAPISchema = t.Dict[str, 'OpenAPISchema']  # type: ignore
 OpenAPISchemaParameter = t.Dict[str, t.Any]
 LocalRefs = t.Dict[t.Tuple[str, ...], t.Any]
@@ -66,6 +68,11 @@ class SerializerSchemaProtocol(t.Protocol):
     def map_query_serializer(self, serializer: BaseSerializer) -> t.List[OpenAPISchema]:
         ...
 
+    def map_pydantic_query_serializer(
+        self, serializer: PydanticSerializer
+    ) -> t.List[OpenAPISchema]:
+        ...
+
 
 class FieldSchemaBase:
     view_schema: ViewSchemaBase
@@ -75,7 +82,7 @@ class SerializerSchemaBase:
     view_schema: ViewSchemaBase
 
 
-class ViewSchemaBase(abc.ABC):  # noqa B024
+class ViewSchemaBase(abc.ABC):  # noqa: B024
     generator: t.Optional[SchemaGenerator] = None
     serializer_schema: SerializerSchemaProtocol
     field_schema: FieldSchemaProtocol

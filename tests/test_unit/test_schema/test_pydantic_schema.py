@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import copy
 import datetime
+import typing
+from uuid import UUID
 
 import pytest
 from pydantic import BaseModel, Field, StrictInt, StrictStr
@@ -19,6 +21,13 @@ class PydanticTestModel(BaseModel):
     title: str
 
 
+class PydanticTestQueryModel(BaseModel):
+    boolean_param: typing.Optional[bool] = Field(description='Boolean filter param')
+    string_param: str
+    integer_param: typing.Optional[int]
+    uuid_list_param: typing.Optional[typing.List[UUID]]
+
+
 class PydanticNestedTestModel(BaseModel):
     created_at: datetime.datetime = Field(default_factory=datetime.datetime.utcnow)
     nested_field: PydanticTestModel
@@ -30,6 +39,11 @@ class PydanticTestSerializer(PydanticSerializer):
 
 class NestedPydanticTestSerializer(PydanticSerializer):
     pydantic_model = PydanticNestedTestModel
+
+
+class PydanticTestQuerySerializer(PydanticSerializer):
+    class Meta:
+        pydantic_model = PydanticTestQueryModel
 
 
 @pytest.fixture()
@@ -117,3 +131,41 @@ def test_map_serializer_with_refs_generator_with_nested_serializer_success_case(
         == test_nested_model_schema_without_definitions
     )
     assert schema_generator.local_refs_registry.get_local_ref(nested_ref) == test_model_schema
+
+
+def test__serializer_schema():
+    serializer_schema = RestDoctorSchema().serializer_schema
+    expected_data = [
+        {
+            'in': 'query',
+            'name': 'boolean_param',
+            'required': False,
+            'schema': {'description': 'Boolean filter param', 'type': 'boolean'},
+        },
+        {
+            'in': 'query',
+            'name': 'string_param',
+            'required': True,
+            'schema': {'description': 'String Param', 'type': 'string'},
+        },
+        {
+            'in': 'query',
+            'name': 'integer_param',
+            'required': False,
+            'schema': {'description': 'Integer Param', 'type': 'integer'},
+        },
+        {
+            'in': 'query',
+            'name': 'uuid_list_param',
+            'required': False,
+            'schema': {
+                'description': 'Uuid List Param',
+                'items': {'format': 'uuid', 'type': 'string'},
+                'type': 'array',
+            },
+        },
+    ]
+
+    result = serializer_schema.map_pydantic_query_serializer(PydanticTestQuerySerializer())
+
+    assert result == expected_data
