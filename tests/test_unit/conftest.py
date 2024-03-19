@@ -83,7 +83,7 @@ def resource_viewset_dispatch(mocker, resource_class):
         viewset_class = resource_class(
             resource_discriminator, resource_viewset, base=ResourceViewSet
         )
-        mocked_dispatch = mocker.patch.object(resource_viewset, 'dispatch')
+        mocked_dispatch = mocker.spy(resource_viewset, 'dispatch')
         view_func = viewset_class.as_view(actions=actions)
 
         return view_func, mocked_dispatch
