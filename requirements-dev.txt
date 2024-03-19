@@ -367,9 +367,9 @@ pytest-randomly==3.15.0 \
     --hash=sha256:0516f4344b29f4e9cdae8bce31c4aeebf59d0b9ef05927c33354ff3859eeeca6 \
     --hash=sha256:b908529648667ba5e54723088edd6f82252f540cc340d748d1fa985539687047
     # via -r requirements-dev.in
-pytest-socket==0.5.1 \
-    --hash=sha256:7c4b81dc6a51cbc0093f11791de00ff4a15ac698f5da96879a80f5d9ad4179b6 \
-    --hash=sha256:8726fd47b83b127451532b6d570c5b6c4cd204fca363936509b1f53195de6f4f
+pytest-socket==0.7.0 \
+    --hash=sha256:71ab048cbbcb085c15a4423b73b619a8b35d6a307f46f78ea46be51b1b7e11b3 \
+    --hash=sha256:7e0f4642177d55d317bbd58fc68c6bd9048d6eadb2d46a89307fa9221336ce45
     # via -r requirements-dev.in
 python-dateutil==2.8.2 \
     --hash=sha256:0123cacc1627ae19ddf3c27a5de5bd67ee4586fbdd6440d9748f8abb483d3e86 \
