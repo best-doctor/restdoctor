@@ -9,7 +9,7 @@ from rest_framework.serializers import BaseSerializer, Serializer
 from restdoctor.rest_framework.generics import GenericAPIView
 from restdoctor.rest_framework.resources import ResourceViewSet
 from restdoctor.rest_framework.schema import SchemaWrapper
-from restdoctor.rest_framework.serializers import ModelSerializer
+from restdoctor.rest_framework.serializers import ModelSerializer, EmptySerializer
 from restdoctor.rest_framework.views import RetrieveAPIView
 from restdoctor.rest_framework.viewsets import ListModelViewSet, ModelViewSet, ReadOnlyModelViewSet
 
@@ -125,6 +125,7 @@ class ModelBMixin:
 
 
 class ModelAViewSet(ModelViewSet):
+    serializer_class = EmptySerializer
     queryset = ModelA.objects.none()
 
 
