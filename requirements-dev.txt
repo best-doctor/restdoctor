@@ -187,9 +187,9 @@ flake8-fine-pytest==1.0.3 \
     --hash=sha256:bca248612a4876a74d5bc6ebc935ef2d21abf2029e5067286161cac2c79275c7 \
     --hash=sha256:d3ae2696b8872848b4a4abca03e0af1da7cb0eaa835c3df6ef80b03dc1cfe479
     # via -r requirements-dev.in
-flake8-functions==0.0.7 \
-    --hash=sha256:40584b05d57e5ab185545bcfa08aa0edca52b04646d0df266e2b1667d6437184 \
-    --hash=sha256:f2f75545c2b0df9eeba0ad316e2ac38c101676970b4441300fc07af3226a44f6
+flake8-functions==0.0.8 \
+    --hash=sha256:5446626673a9faecbf389fb411b90bdc87b002c387b72dc097b208e7a58f2a1c \
+    --hash=sha256:e1a88aa634d1aff6973f8c9dd64f30ab2beaac661e52eea96929ccc7ee7f64df
     # via -r requirements-dev.in
 flake8-plugin-utils==1.3.2 \
     --hash=sha256:1fe43e3e9acf3a7c0f6b88f5338cad37044d2f156c43cb6b080b5f9da8a76f06 \
