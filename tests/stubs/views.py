@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import typing
 
+from rest_framework.generics import ListCreateAPIView
 from rest_framework.response import Response
 
 from restdoctor.rest_framework.resources import ResourceView, ResourceViewSet
@@ -56,3 +57,18 @@ class MyModelExtendedViewSet(ModelViewSet):
 
 class MyModelResourceViewSet(ResourceViewSet):
     resource_views_map = {'common': MyModelViewSet, 'extended': MyModelExtendedViewSet}
+
+
+class MyModelListCreateAPIView(ListCreateAPIView):
+    serializer_class = MyModelSerializer
+    queryset = MyModel.objects.all()
+    action_map = {'get': 'list', 'post': 'create'}
+
+
+class WithActionsMapResourceView(ResourceView):
+    resource_views_map = {'extended': MyModelListCreateAPIView, 'common': MyModelListCreateAPIView}
+    resource_actions_map = {'extended': ['list', 'create'], 'common': ['list', 'create']}
+
+
+class WithoutActionsMapResourceView(ResourceView):
+    resource_views_map = {'extended': MyModelListCreateAPIView, 'common': MyModelListCreateAPIView}

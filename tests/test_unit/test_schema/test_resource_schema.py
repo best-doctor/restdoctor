@@ -3,7 +3,8 @@ from __future__ import annotations
 import pytest
 
 from restdoctor.rest_framework.routers import ResourceRouter
-from restdoctor.rest_framework.schema import ResourceSchema
+from restdoctor.rest_framework.schema import RefsSchemaGenerator, ResourceSchema
+from tests.stubs.views import WithActionsMapResourceView, WithoutActionsMapResourceView
 from tests.test_unit.test_schema.stubs import DefaultAnotherResourceViewSet, SingleResourceViewSet
 
 
@@ -127,3 +128,43 @@ def test_query_params_for_viewset_success_case(get_create_view_func, viewset_cla
     parameters = operation.get('parameters', [])
 
     assert parameters != []
+
+
+@pytest.mark.parametrize('view_class', [WithActionsMapResourceView, WithoutActionsMapResourceView])
+def test__get_resources__success__with_actions(view_class):
+    resource_schema = ResourceSchema()
+    view_instance = view_class()
+    view_instance.action_map = {'get': 'list', 'post': 'create'}
+    view_instance.resource_handlers_map = view_instance.get_resource_handlers()
+    resource_schema.view = view_instance
+
+    result = resource_schema.get_resources('get')
+
+    assert result == view_instance.resource_handlers_map
+
+
+@pytest.mark.parametrize('view_class', [WithActionsMapResourceView, WithoutActionsMapResourceView])
+def test__get_resources__success__without_actions(view_class):
+    resource_schema = ResourceSchema()
+    view_instance = view_class()
+    view_instance.action_map = {'get': 'list', 'post': 'create'}
+    view_instance.resource_handlers_map = view_instance.get_resource_handlers()
+    resource_schema.view = view_instance
+
+    result = resource_schema.get_resources('patch')
+
+    assert result == {}
+
+
+@pytest.mark.parametrize('view_class', [WithActionsMapResourceView, WithoutActionsMapResourceView])
+def test__get_resources__success__with_generator_resource(view_class, mocker):
+    mocked_generator = mocker.Mock(spec=RefsSchemaGenerator, api_resource='common')
+    resource_schema = ResourceSchema(generator=mocked_generator)
+    view_instance = view_class()
+    view_instance.action_map = {'get': 'list', 'post': 'create'}
+    view_instance.resource_handlers_map = view_instance.get_resource_handlers()
+    resource_schema.view = view_instance
+
+    result = resource_schema.get_resources('get')
+
+    assert result == {'common': view_instance.resource_handlers_map['common']}

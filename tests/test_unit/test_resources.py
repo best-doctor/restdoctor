@@ -11,6 +11,7 @@ from restdoctor.rest_framework.resources import (
     ResourceViewSet,
     get_queryset_model_map,
 )
+from tests.stubs.views import WithActionsMapResourceView, WithoutActionsMapResourceView
 from tests.test_unit.stubs import (
     ComplexResourceViewSet,
     ModelA,
@@ -22,7 +23,7 @@ from tests.test_unit.stubs import (
 )
 
 
-@pytest.mark.django_db
+@pytest.mark.django_db()
 @pytest.mark.parametrize(
     ('resource_views_map', 'expected_model_map'),
     [
@@ -37,7 +38,7 @@ def test_get_queryset_model_map_success_case(resource_views_map, expected_model_
     assert model_map == expected_model_map
 
 
-@pytest.mark.django_db
+@pytest.mark.django_db()
 @pytest.mark.parametrize(
     ('base_class', 'resource_views_map'),
     [
@@ -61,7 +62,7 @@ def test_check_queryset_models_success_case(base_class, resource_views_map):
     assert result is True
 
 
-@pytest.mark.django_db
+@pytest.mark.django_db()
 @pytest.mark.parametrize(
     ('base_class', 'resource_views_map'),
     [
@@ -76,7 +77,7 @@ def test_check_queryset_models_fail_case(base_class, resource_views_map):
         resource_class.check_queryset_models()
 
 
-@pytest.mark.django_db
+@pytest.mark.django_db()
 def test_resource_viewset_dispatch_no_default_discriminator_fail_case(resource_viewset_dispatch):
     resource_discriminator = 'one'
     view_func, _ = resource_viewset_dispatch(
@@ -89,7 +90,7 @@ def test_resource_viewset_dispatch_no_default_discriminator_fail_case(resource_v
     assert response.status_code == HTTP_404_NOT_FOUND
 
 
-@pytest.mark.django_db
+@pytest.mark.django_db()
 def test_resource_viewset_dispatch_wrong_discriminator_fail_case(resource_viewset_dispatch):
     resource_discriminator = 'one'
     view_func, _ = resource_viewset_dispatch(
@@ -102,7 +103,7 @@ def test_resource_viewset_dispatch_wrong_discriminator_fail_case(resource_viewse
     assert response.status_code == HTTP_404_NOT_FOUND
 
 
-@pytest.mark.django_db
+@pytest.mark.django_db()
 def test_resource_viewset_dispatch_success_case(resource_viewset_dispatch):
     resource_discriminator = 'one'
     view_func, mocked_dispatch = resource_viewset_dispatch(
@@ -115,7 +116,7 @@ def test_resource_viewset_dispatch_success_case(resource_viewset_dispatch):
     assert mocked_dispatch.called_once()
 
 
-@pytest.mark.django_db
+@pytest.mark.django_db()
 def test_resource_view_dispatch_no_default_discriminator_fail_case(resource_view_dispatch):
     resource_discriminator = 'one'
     view_func, _ = resource_view_dispatch(resource_discriminator, ModelAView)
@@ -125,7 +126,7 @@ def test_resource_view_dispatch_no_default_discriminator_fail_case(resource_view
         view_func(request)
 
 
-@pytest.mark.django_db
+@pytest.mark.django_db()
 def test_resource_view_dispatch_wrong_discriminator_fail_case(resource_view_dispatch):
     resource_discriminator = 'one'
     view_func, _ = resource_view_dispatch(resource_discriminator, ModelAView)
@@ -135,7 +136,7 @@ def test_resource_view_dispatch_wrong_discriminator_fail_case(resource_view_disp
         view_func(request)
 
 
-@pytest.mark.django_db
+@pytest.mark.django_db()
 def test_resource_view_dispatch_success_case(resource_view_dispatch):
     resource_discriminator = 'one'
     view_func, mocked_dispatch = resource_view_dispatch(resource_discriminator, ModelAView)
@@ -156,7 +157,7 @@ def test_resource_view_dispatch_success_case(resource_view_dispatch):
         ('application/vnd.vendor.v2', '', 'common'),
     ],
 )
-@pytest.mark.django_db
+@pytest.mark.django_db()
 def test_get_discriminant_for_get_method(
     accept, view_type, expected_discriminant, settings, client, api_prefix, get_discriminant_spy
 ):
@@ -176,7 +177,7 @@ def test_get_discriminant_for_get_method(
         ('application/vnd.vendor.v1-extended', 'extended'),
     ],
 )
-@pytest.mark.django_db
+@pytest.mark.django_db()
 def test_get_discriminant_for_post_method(
     accept, expected_discriminant, settings, client, api_prefix, get_discriminant_spy
 ):
@@ -220,3 +221,10 @@ def test_resource_view_dispatch_complex_case_get(mocker, discriminator, expected
     response = view_func(request)
 
     assert response.status_code == expected_status_code
+
+
+@pytest.mark.parametrize('view_class', [WithActionsMapResourceView, WithoutActionsMapResourceView])
+def test__resource_view__get_resource_actions(view_class):
+    result = view_class.get_resource_actions()
+
+    assert result == {'common': ['list', 'create'], 'extended': ['list', 'create']}
