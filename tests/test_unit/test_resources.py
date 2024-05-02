@@ -104,16 +104,18 @@ def test_resource_viewset_dispatch_wrong_discriminator_fail_case(resource_viewse
 
 
 @pytest.mark.django_db()
-def test_resource_viewset_dispatch_success_case(resource_viewset_dispatch):
+def test_resource_viewset_dispatch_success_case(resource_viewset_dispatch, mocker):
     resource_discriminator = 'one'
+    mocker_get_item = mocker.patch.object(ModelAViewSet, 'get_item')
     view_func, mocked_dispatch = resource_viewset_dispatch(
         resource_discriminator, ModelAViewSet, actions={'get': 'retrieve'}
     )
-    request = RequestFactory().get('/', {'view_type': resource_discriminator})
+    request = RequestFactory().get('/123', {'view_type': resource_discriminator})
 
     view_func(request)
 
-    assert mocked_dispatch.called_once()
+    mocked_dispatch.assert_called_once()
+    mocker_get_item.assert_called_once()
 
 
 @pytest.mark.django_db()
@@ -144,7 +146,7 @@ def test_resource_view_dispatch_success_case(resource_view_dispatch):
 
     view_func(request)
 
-    assert mocked_dispatch.called_once()
+    mocked_dispatch.assert_called_once()
 
 
 @pytest.mark.parametrize(

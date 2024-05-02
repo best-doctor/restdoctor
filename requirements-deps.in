@@ -1,5 +1,5 @@
 django<4.2
-djangorestframework>=3.12
+djangorestframework>=3.13
 djangorestframework-gis==1.0
 django-filter==22.1
 pydantic==1.10.2
