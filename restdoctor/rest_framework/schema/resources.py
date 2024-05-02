@@ -43,10 +43,9 @@ class ResourceSchema(RestDoctorSchema):
 
     def get_resources(self, method: str) -> ResourceHandlersMap:
         action = self.view.action_map.get(method.lower())
+        resource_actions_map = self.view.get_resource_actions()
         filtered_resources = [
-            resource
-            for resource, actions in self.view.resource_actions_map.items()
-            if action in actions
+            resource for resource, actions in resource_actions_map.items() if action in actions
         ]
 
         if self.generator and self.generator.api_resource:

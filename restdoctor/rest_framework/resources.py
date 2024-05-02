@@ -88,6 +88,17 @@ class ResourceBase:
         }
 
     @classmethod
+    def get_resource_actions(cls) -> typing.Dict[str, typing.Any]:
+        if not cls.resource_actions_map:
+            return {
+                resource: list(view.action_map.values())
+                for resource, view in cls.resource_views_map.items()
+                if hasattr(view, 'action_map')
+            }
+
+        return cls.resource_actions_map
+
+    @classmethod
     def as_view(cls, **initkwargs: typing.Any) -> typing.Any:
         cls.check_queryset_models()
         resource_handlers_map = cls.get_resource_handlers(**initkwargs)
