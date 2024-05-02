@@ -101,7 +101,7 @@ def smart_copy(data: SerializerData, no_copy_classes: typing.List) -> Serializer
     if isinstance(data, dict):
         dict_data = {}
         for field_name, field_value in data.items():
-            if any([isinstance(field_value, no_copy_class) for no_copy_class in no_copy_classes]):
+            if any(isinstance(field_value, no_copy_class) for no_copy_class in no_copy_classes):
                 dict_data[field_name] = field_value
             else:
                 dict_data[field_name] = copy.deepcopy(field_value)
