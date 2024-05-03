@@ -88,10 +88,10 @@ class ResourceBase:
         }
 
     @classmethod
-    def get_resource_actions(cls) -> typing.Dict[str, typing.Any]:
+    def get_resource_actions(cls) -> ResourceActionsMap:
         if not cls.resource_actions_map:
             return {
-                resource: list(view.action_map.values())
+                resource: set(view.action_map.values())
                 for resource, view in cls.resource_views_map.items()
                 if hasattr(view, 'action_map')
             }

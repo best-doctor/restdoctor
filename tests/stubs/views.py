@@ -39,7 +39,7 @@ class MyModelExtendedAPIView(ListAPIView):
 
 class MyModelResourceView(ResourceView):
     resource_views_map = {'extended': MyModelExtendedAPIView}
-    resource_actions_map = {'extended': ['list']}
+    resource_actions_map = {'extended': {'list'}}
     schema_operation_id_map = {
         'list': 'listMyModelViewResources'  # переопределено, чтобы id не пересекался с MyModelResourceViewSet
     }
@@ -67,7 +67,7 @@ class MyModelListCreateAPIView(ListCreateAPIView):
 
 class WithActionsMapResourceView(ResourceView):
     resource_views_map = {'extended': MyModelListCreateAPIView, 'common': MyModelListCreateAPIView}
-    resource_actions_map = {'extended': ['list', 'create'], 'common': ['list', 'create']}
+    resource_actions_map = {'extended': {'list', 'create'}, 'common': {'list', 'create'}}
 
 
 class WithoutActionsMapResourceView(ResourceView):

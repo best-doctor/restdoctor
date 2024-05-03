@@ -229,4 +229,4 @@ def test_resource_view_dispatch_complex_case_get(mocker, discriminator, expected
 def test__resource_view__get_resource_actions(view_class):
     result = view_class.get_resource_actions()
 
-    assert result == {'common': ['list', 'create'], 'extended': ['list', 'create']}
+    assert result == {'common': {'list', 'create'}, 'extended': {'list', 'create'}}
