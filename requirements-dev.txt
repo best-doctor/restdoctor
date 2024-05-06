@@ -154,9 +154,9 @@ flake8-broken-line==1.0.0 \
     --hash=sha256:96c964336024a5030dc536a9f6fb02aa679e2d2a6b35b80a558b5136c35832a9 \
     --hash=sha256:e2c6a17f8d9a129e99c1320fce89b33843e2963871025c4c2bb7b8b8d8732a85
     # via -r requirements-dev.in
-flake8-bugbear==23.3.12 \
-    --hash=sha256:beb5c7efcd7ccc2039ef66a77bb8db925e7be3531ff1cb4d0b7030d0e2113d72 \
-    --hash=sha256:e3e7f74c8a49ad3794a7183353026dabd68c74030d5f46571f84c1fb0eb79363
+flake8-bugbear==24.4.26 \
+    --hash=sha256:cb430dd86bc821d79ccc0b030789a9c87a47a369667f12ba06e80f11305e8258 \
+    --hash=sha256:ff8d4ba5719019ebf98e754624c30c05cef0dadcf18a65d91c7567300e52a130
     # via -r requirements-dev.in
 flake8-builtins==1.5.3 \
     --hash=sha256:09998853b2405e98e61d2ff3027c47033adbdc17f9fe44ca58443d876eb00f3b \
