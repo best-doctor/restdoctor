@@ -41,6 +41,6 @@ freezegun==1.2.2
 factory-boy==3.2.1
 typed-ast==1.5.5
 
-pre-commit==2.20.0
+pre-commit==3.7.1
 black==22.8.0
 isort==5.10.1
