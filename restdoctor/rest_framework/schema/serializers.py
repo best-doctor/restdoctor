@@ -183,7 +183,9 @@ class SerializerSchema(SerializerSchemaBase):
         self, serializer: PydanticSerializer
     ) -> typing.List[OpenAPISchema]:
         props = []
-        schema_dict = fix_pydantic_title(serializer.pydantic_model_class.schema())
+        schema_dict = fix_pydantic_title(
+            serializer.pydantic_model_class.schema(ref_template=OPENAPI_REF_PREFIX + '{model}')
+        )
         required_fields = schema_dict.get('required', [])
         for field_name, field_schema in schema_dict['properties'].items():
             props.append(
