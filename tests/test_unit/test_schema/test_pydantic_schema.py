@@ -12,6 +12,7 @@ from restdoctor.rest_framework.schema.generators import RefsSchemaGenerator
 from restdoctor.rest_framework.schema.openapi import RestDoctorSchema
 from restdoctor.rest_framework.schema.serializers import OPENAPI_REF_PREFIX
 from restdoctor.rest_framework.serializers import PydanticSerializer
+from tests.test_unit.conftest import TestTextChoices
 
 
 class PydanticTestModel(BaseModel):
@@ -26,6 +27,7 @@ class PydanticTestQueryModel(BaseModel):
     string_param: str
     integer_param: typing.Optional[int]
     uuid_list_param: typing.Optional[typing.List[UUID]]
+    text_choices_param: TestTextChoices
 
 
 class PydanticNestedTestModel(BaseModel):
@@ -163,6 +165,12 @@ def test__serializer_schema():
                 'items': {'format': 'uuid', 'type': 'string'},
                 'type': 'array',
             },
+        },
+        {
+            'in': 'query',
+            'name': 'text_choices_param',
+            'required': True,
+            'schema': {'$ref': '#/components/schemas/TestTextChoices'},
         },
     ]
 
