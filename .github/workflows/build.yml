@@ -31,9 +31,5 @@ jobs:
           sudo apt-get install -y --no-install-recommends gdal-bin
       - name: Run checks
         run: make style types
-      - name: Run tests and publish coverage
-        uses: paambaati/codeclimate-action@v5.0.0
-        env:
-          CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
-        with:
-          coverageCommand: make coverage
+      - name: Run tests
+        run: make test
