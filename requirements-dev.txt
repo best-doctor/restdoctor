@@ -438,6 +438,10 @@ toml==0.10.2 \
     --hash=sha256:806143ae5bfb6a3c6e736a764057db0e6a0e05e338b5630894a5f779cabb4f9b \
     --hash=sha256:b3bda1d108d5dd99f4a20d24d9c348e91c4db7ab1b749200bded2f839ccbe68f
     # via pre-commit
+tomli==1.1.0 \
+    --hash=sha256:33d7984738f8bb699c9b0a816eb646a8178a69eaa792d258486776a5d21b8ca5 \
+    --hash=sha256:f4a182048010e89cbec0ae4686b21f550a7f2903f665e34a6de58ec15424f919
+    # via -r requirements-dev.in
 typed-ast==1.5.5 \
     --hash=sha256:042eb665ff6bf020dd2243307d11ed626306b82812aba21836096d229fdc6a10 \
     --hash=sha256:045f9930a1550d9352464e5149710d56a2aed23a2ffe78946478f7b5416f1ede \
