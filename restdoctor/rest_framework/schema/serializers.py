@@ -5,7 +5,7 @@ import typing
 
 from django.conf import settings
 from django.utils.encoding import force_str
-from pydantic.schema import schema as pydantic_schema
+from pydantic.v1.schema import schema as pydantic_schema
 from rest_framework.fields import HiddenField
 from rest_framework.serializers import BaseSerializer
 

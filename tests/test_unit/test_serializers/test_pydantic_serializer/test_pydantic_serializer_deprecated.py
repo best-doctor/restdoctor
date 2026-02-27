@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 from django.core.exceptions import ImproperlyConfigured
-from pydantic import BaseModel
+from pydantic.v1 import BaseModel
 from rest_framework.serializers import ListSerializer
 
 

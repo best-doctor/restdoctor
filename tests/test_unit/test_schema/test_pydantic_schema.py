@@ -6,7 +6,7 @@ import typing
 from uuid import UUID
 
 import pytest
-from pydantic import BaseModel, Field, StrictInt, StrictStr
+from pydantic.v1 import BaseModel, Field, StrictInt, StrictStr
 
 from restdoctor.rest_framework.schema.generators import RefsSchemaGenerator
 from restdoctor.rest_framework.schema.openapi import RestDoctorSchema

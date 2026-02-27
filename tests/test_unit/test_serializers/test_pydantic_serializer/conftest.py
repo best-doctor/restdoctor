@@ -6,7 +6,7 @@ from unittest.mock import Mock
 
 import pytest
 from django.db import models
-from pydantic import BaseModel, Field, Json, StrictInt, StrictStr
+from pydantic.v1 import BaseModel, Field, Json, StrictInt, StrictStr
 
 from restdoctor.rest_framework.serializers import PydanticSerializer
 

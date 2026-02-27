@@ -1,22 +1,25 @@
 from __future__ import annotations
 
 import sys
-
 from unittest.mock import call
 
 import pytest
 from django.core.exceptions import ImproperlyConfigured
 from django.http import QueryDict
-from pydantic import BaseModel
+from pydantic.v1 import BaseModel
 from rest_framework.exceptions import ValidationError
 from rest_framework.serializers import ListSerializer
 
 from restdoctor.rest_framework.serializers import PydanticSerializer
 
 if sys.version_info.major == 3 and sys.version_info.minor == 8:
-    from tests.test_unit.test_serializers.test_pydantic_serializer.parameters_38 import PARAMETRIZE_TYPES
+    from tests.test_unit.test_serializers.test_pydantic_serializer.parameters_38 import (
+        PARAMETRIZE_TYPES,
+    )
 else:
-    from tests.test_unit.test_serializers.test_pydantic_serializer.parameters import PARAMETRIZE_TYPES
+    from tests.test_unit.test_serializers.test_pydantic_serializer.parameters import (
+        PARAMETRIZE_TYPES,
+    )
 
 
 def test_pydantic_serializer_without_model_error():
