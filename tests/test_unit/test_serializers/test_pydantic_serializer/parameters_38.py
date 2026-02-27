@@ -2,8 +2,7 @@ from __future__ import annotations
 
 import typing
 
-from pydantic.types import Json
-
+from pydantic.v1.types import Json
 
 PARAMETRIZE_TYPES = [
     (str, False),

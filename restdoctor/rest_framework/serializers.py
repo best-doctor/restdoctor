@@ -11,8 +11,8 @@ if typing.TYPE_CHECKING:
 
 from django.core.exceptions import ImproperlyConfigured
 from django.db.models import Model as DjangoModel
-from pydantic import BaseModel
-from pydantic import ValidationError as PydanticValidationError
+from pydantic.v1 import BaseModel
+from pydantic.v1 import ValidationError as PydanticValidationError
 from rest_framework.exceptions import ValidationError
 from rest_framework.fields import empty
 from rest_framework.serializers import BaseSerializer as BaseDRFSerializer
