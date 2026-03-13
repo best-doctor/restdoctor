@@ -390,15 +390,28 @@ class ListModelMixin(BaseListModelMixin):
 
 ### PydanticSerializer
 
-Для использования сериализатор на основе [pydantic](https://pydantic-docs.helpmanual.io/) необходимо наследовать
+Для использования сериализатор на основе [pydantic](https://docs.pydantic.dev/) (V2) необходимо наследовать
 сериализатор от `PydanticSerializer`, указать в `Meta` `pydantic_model` и `pydantic_use_aliases` (при необходимости).
 
-Параметр `pydantic_use_aliases` позволяет использовать [алиасы pydantic моделей](https://pydantic-docs.helpmanual.io/usage/model_config/#alias-precedence) для сериализации.
-```python
+Параметр `pydantic_use_aliases` позволяет использовать [алиасы pydantic моделей](https://docs.pydantic.dev/latest/concepts/fields/#field-aliases) для сериализации.
 
-class PydanticSerializer(PydanticSerializer):
+Для работы с Django-моделями используйте `model_config = ConfigDict(from_attributes=True)` в pydantic-модели.
+
+```python
+from pydantic import BaseModel, ConfigDict
+from restdoctor.rest_framework.serializers import PydanticSerializer
+
+
+class MyPydanticModel(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    name: str
+    value: int
+
+
+class MyPydanticSerializer(PydanticSerializer):
     class Meta:
-        pydantic_model = PydanticModel
+        pydantic_model = MyPydanticModel
         pydantic_use_aliases = True
 ```
 

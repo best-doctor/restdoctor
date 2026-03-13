@@ -6,14 +6,13 @@ from unittest.mock import Mock
 
 import pytest
 from django.db import models
-from pydantic.v1 import BaseModel, Field, Json, StrictInt, StrictStr
+from pydantic import BaseModel, ConfigDict, Field, Json, StrictInt, StrictStr
 
 from restdoctor.rest_framework.serializers import PydanticSerializer
 
 
 class PydanticTestModel(BaseModel):
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
     created_at: datetime.datetime = Field(default_factory=datetime.datetime.utcnow)
     field_a: StrictStr
@@ -23,7 +22,7 @@ class PydanticTestModel(BaseModel):
 class PydanticWithQueryParamsTestModel(BaseModel):
     any_int: int = Field(alias='my_int')
     any_str: str = Field(alias='any_str')
-    any_json: Json
+    any_json: Json[typing.Any]
     any_list: list
     any_str_list: typing.List[str]
     any_bool: bool
@@ -35,15 +34,13 @@ class PydanticWithQueryParamsShortTestModel(BaseModel):
 
 
 class PydanticObjectTestModel(BaseModel):
-    class Config:
-        allow_population_by_field_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
     object_id: int = Field(alias='id')
 
 
 class PydanticTestModelWithAliases(PydanticTestModel):
-    class Config:
-        allow_population_by_field_name = True
+    model_config = ConfigDict(populate_by_name=True, protected_namespaces=())
 
     object_type: str = Field(alias='type')
     model_object: PydanticObjectTestModel = Field(alias='object')
@@ -211,21 +208,21 @@ def pydantic_test_model_with_aliases_data(pydantic_test_model_data) -> dict[str,
 def serialized_pydantic_test_model_data(
     pydantic_test_model_data, pydantic_test_model
 ) -> dict[str, str | datetime.datetime]:
-    return pydantic_test_model(**pydantic_test_model_data).dict()
+    return pydantic_test_model(**pydantic_test_model_data).model_dump()
 
 
 @pytest.fixture()
 def serialized_pydantic_test_with_query(
     pydantic_test_query_data, pydantic_test_with_query_model
 ) -> dict[str, str | datetime.datetime]:
-    return pydantic_test_with_query_model(**pydantic_test_query_data).dict()
+    return pydantic_test_with_query_model(**pydantic_test_query_data).model_dump()
 
 
 @pytest.fixture()
 def serialized_pydantic_test_model_with_aliases_data(
     pydantic_test_model_with_aliases_data, pydantic_test_model_with_aliases
 ) -> dict[str, str | datetime.datetime]:
-    return pydantic_test_model_with_aliases(**pydantic_test_model_with_aliases_data).dict(
+    return pydantic_test_model_with_aliases(**pydantic_test_model_with_aliases_data).model_dump(
         by_alias=True
     )
 

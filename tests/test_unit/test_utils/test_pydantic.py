@@ -5,20 +5,20 @@ from restdoctor.utils.pydantic import convert_pydantic_errors_to_drf_errors
 
 def test_convert_pydantic_errors_to_drf_errors():
     pydantic_errors = [
-        {'loc': ('created_at',), 'msg': 'invalid datetime format', 'type': 'value_error.datetime'},
-        {'loc': ('field_a',), 'msg': 'str type expected', 'type': 'type_error.str'},
+        {'loc': ('created_at',), 'msg': 'Input should be a valid datetime', 'type': 'datetime_parsing'},
+        {'loc': ('field_a',), 'msg': 'Input should be a valid string', 'type': 'string_type'},
         {
             'loc': ('field_b', 'inner_b'),
-            'msg': 'value is not a valid integer',
-            'type': 'type_error.integer',
+            'msg': 'Input should be a valid integer',
+            'type': 'int_type',
         },
-        {'loc': ('list', 0), 'msg': 'none is not an allowed value'},
+        {'loc': ('list', 0), 'msg': 'Input should not be None', 'type': 'none_not_allowed'},
     ]
     expected_errors = {
-        'created_at': 'invalid datetime format',
-        'field_a': 'str type expected',
-        'field_b.inner_b': 'value is not a valid integer',
-        'list.0': 'none is not an allowed value',
+        'created_at': 'Input should be a valid datetime',
+        'field_a': 'Input should be a valid string',
+        'field_b.inner_b': 'Input should be a valid integer',
+        'list.0': 'Input should not be None',
     }
     drf_errors = convert_pydantic_errors_to_drf_errors(pydantic_errors)
 

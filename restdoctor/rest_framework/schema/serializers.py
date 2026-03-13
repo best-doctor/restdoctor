@@ -5,7 +5,6 @@ import typing
 
 from django.conf import settings
 from django.utils.encoding import force_str
-from pydantic.v1.schema import schema as pydantic_schema
 from rest_framework.fields import HiddenField
 from rest_framework.serializers import BaseSerializer
 
@@ -69,7 +68,7 @@ class SerializerSchema(SerializerSchemaBase):
         required: bool = True,
     ) -> OpenAPISchema:
         if isinstance(serializer, PydanticSerializer):
-            return fix_pydantic_title(serializer.pydantic_model_class.schema())
+            return fix_pydantic_title(serializer.pydantic_model_class.model_json_schema())
 
         properties, required_list = self.map_serializer_fields(
             serializer, include_write_only=write_only, include_read_only=read_only
@@ -122,18 +121,24 @@ class SerializerSchema(SerializerSchemaBase):
 
     def map_pydantic_serializer(self, serializer: PydanticSerializer) -> OpenAPISchema:
         if not self.view_schema.generator:
-            return fix_pydantic_title(serializer.pydantic_model_class.schema())
+            return fix_pydantic_title(serializer.pydantic_model_class.model_json_schema())
 
-        schema = {}
-        ref_repo = pydantic_schema([serializer.pydantic_model_class], ref_prefix=OPENAPI_REF_PREFIX)
-        for class_name, definition in ref_repo['definitions'].items():
+        full_schema = serializer.pydantic_model_class.model_json_schema(
+            ref_template=OPENAPI_REF_PREFIX + '{model}'
+        )
+
+        defs = full_schema.pop('$defs', {})
+        for class_name, definition in defs.items():
             definition = fix_pydantic_title(definition)
             ref = self.get_pydantic_ref_name(class_name)
             self.view_schema.generator.local_refs_registry.put_local_ref(ref, definition)
-            if class_name == serializer.pydantic_model_class.__name__:
-                schema = {'$ref': ref}
 
-        return schema
+        root_schema = fix_pydantic_title(full_schema)
+        root_class_name = serializer.pydantic_model_class.__name__
+        ref = self.get_pydantic_ref_name(root_class_name)
+        self.view_schema.generator.local_refs_registry.put_local_ref(ref, root_schema)
+
+        return {'$ref': ref}
 
     def map_serializer(
         self,
@@ -184,7 +189,9 @@ class SerializerSchema(SerializerSchemaBase):
     ) -> typing.List[OpenAPISchema]:
         props = []
         schema_dict = fix_pydantic_title(
-            serializer.pydantic_model_class.schema(ref_template=OPENAPI_REF_PREFIX + '{model}')
+            serializer.pydantic_model_class.model_json_schema(
+                ref_template=OPENAPI_REF_PREFIX + '{model}'
+            )
         )
         required_fields = schema_dict.get('required', [])
         for field_name, field_schema in schema_dict['properties'].items():

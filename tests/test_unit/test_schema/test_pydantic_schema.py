@@ -6,7 +6,7 @@ import typing
 from uuid import UUID
 
 import pytest
-from pydantic.v1 import BaseModel, Field, StrictInt, StrictStr
+from pydantic import BaseModel, Field, StrictInt, StrictStr
 
 from restdoctor.rest_framework.schema.generators import RefsSchemaGenerator
 from restdoctor.rest_framework.schema.openapi import RestDoctorSchema
@@ -23,10 +23,10 @@ class PydanticTestModel(BaseModel):
 
 
 class PydanticTestQueryModel(BaseModel):
-    boolean_param: typing.Optional[bool] = Field(description='Boolean filter param')
+    boolean_param: typing.Optional[bool] = Field(default=None, description='Boolean filter param')
     string_param: str
-    integer_param: typing.Optional[int]
-    uuid_list_param: typing.Optional[typing.List[UUID]]
+    integer_param: typing.Optional[int] = None
+    uuid_list_param: typing.Optional[typing.List[UUID]] = None
     text_choices_param: TestTextChoices
 
 
@@ -79,8 +79,8 @@ def test_nested_model_schema_without_definitions():
 @pytest.fixture()
 def test_nested_model_schema(test_model_schema, test_nested_model_schema_without_definitions):
     schema = copy.deepcopy(test_nested_model_schema_without_definitions)
-    schema['properties']['nested_field'] = {'$ref': '#/definitions/PydanticTestModel'}
-    schema['definitions'] = {'PydanticTestModel': test_model_schema}
+    schema['properties']['nested_field'] = {'$ref': '#/$defs/PydanticTestModel'}
+    schema['$defs'] = {'PydanticTestModel': test_model_schema}
     return schema
 
 
@@ -142,7 +142,11 @@ def test__serializer_schema():
             'in': 'query',
             'name': 'boolean_param',
             'required': False,
-            'schema': {'description': 'Boolean filter param', 'type': 'boolean'},
+            'schema': {
+                'anyOf': [{'type': 'boolean'}, {'type': 'null'}],
+                'default': None,
+                'description': 'Boolean filter param',
+            },
         },
         {
             'in': 'query',
@@ -154,16 +158,23 @@ def test__serializer_schema():
             'in': 'query',
             'name': 'integer_param',
             'required': False,
-            'schema': {'description': 'Integer Param', 'type': 'integer'},
+            'schema': {
+                'anyOf': [{'type': 'integer'}, {'type': 'null'}],
+                'default': None,
+                'description': 'Integer Param',
+            },
         },
         {
             'in': 'query',
             'name': 'uuid_list_param',
             'required': False,
             'schema': {
+                'anyOf': [
+                    {'items': {'format': 'uuid', 'type': 'string'}, 'type': 'array'},
+                    {'type': 'null'},
+                ],
+                'default': None,
                 'description': 'Uuid List Param',
-                'items': {'format': 'uuid', 'type': 'string'},
-                'type': 'array',
             },
         },
         {
