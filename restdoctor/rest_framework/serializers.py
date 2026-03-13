@@ -11,8 +11,8 @@ if typing.TYPE_CHECKING:
 
 from django.core.exceptions import ImproperlyConfigured
 from django.db.models import Model as DjangoModel
-from pydantic.v1 import BaseModel
-from pydantic.v1 import ValidationError as PydanticValidationError
+from pydantic import BaseModel
+from pydantic import ValidationError as PydanticValidationError
 from rest_framework.exceptions import ValidationError
 from rest_framework.fields import empty
 from rest_framework.serializers import BaseSerializer as BaseDRFSerializer
@@ -200,7 +200,7 @@ class PydanticSerializer(typing.Generic[TPydanticModel], BaseDRFSerializer):
 
     @classmethod
     def _validate_django_model_fields(cls, model: DjangoModel) -> None:
-        pydantic_fields_set = set(cls._get_pydantic_model().__fields__.keys())
+        pydantic_fields_set = set(cls._get_pydantic_model().model_fields.keys())
         model_info = model_meta.get_field_info(model)
         model_fields = list(model_info.fields.keys())
         model_fields.extend(model_info.relations.keys())
@@ -217,23 +217,28 @@ class PydanticSerializer(typing.Generic[TPydanticModel], BaseDRFSerializer):
 
     @classmethod
     def _validate_orm_mode_enabled(cls) -> None:
-        if not getattr(cls._get_pydantic_model().Config, 'orm_mode', False):
+        if not cls._get_pydantic_model().model_config.get('from_attributes', False):
             raise ImproperlyConfigured(
-                'pydantic_model.Config.orm_mode must be True for this serializer'
+                'pydantic_model.model_config "from_attributes" must be True for this serializer'
             )
 
     def query_dict_to_dict(self, data: QueryDict) -> dict:
         model_class = self.pydantic_model_class
-        model_fields = model_class.__fields__
+        pydantic_model_fields = model_class.model_fields
         to_dict: dict[str, typing.Any] = {}
         for key, orig_value in data.items():
             field_key = next(
-                (name for (name, field_obj) in model_fields.items() if field_obj.alias == key), key
+                (
+                    name
+                    for (name, field_obj) in pydantic_model_fields.items()
+                    if field_obj.alias == key
+                ),
+                key,
             )
-            if field_key not in model_fields:
+            if field_key not in pydantic_model_fields:
                 to_dict[key] = orig_value
                 continue
-            field_type = model_fields[field_key].annotation
+            field_type = pydantic_model_fields[field_key].annotation
             if orig_value in ('', b'') and not self._is_string_like_field(field_type=field_type):
                 continue
             if self._is_sequence_field(field_type=field_type):
@@ -244,7 +249,7 @@ class PydanticSerializer(typing.Generic[TPydanticModel], BaseDRFSerializer):
         return to_dict
 
     def get_fields(self) -> dict[str, None]:
-        return {field_name: None for field_name in self.pydantic_model_class.__fields__.keys()}
+        return {field_name: None for field_name in self.pydantic_model_class.model_fields.keys()}
 
     def to_internal_value(self, data: dict[str, typing.Any]) -> TPydanticModel:
         try:
@@ -260,12 +265,12 @@ class PydanticSerializer(typing.Generic[TPydanticModel], BaseDRFSerializer):
         # Типы аргумента instance были выяснены экспериментальным путем
         # в ходе тестирования
         if isinstance(instance, dict):
-            value = self.to_internal_value(instance).dict(by_alias=self.pydantic_use_aliases)
+            value = self.to_internal_value(instance).model_dump(by_alias=self.pydantic_use_aliases)
         elif isinstance(instance, BaseModel):
-            value = instance.dict(by_alias=self.pydantic_use_aliases)
+            value = instance.model_dump(by_alias=self.pydantic_use_aliases)
         elif isinstance(instance, PydanticSerializer):
             instance.is_valid(raise_exception=True)
-            value = instance._pydantic_instance.dict(by_alias=self.pydantic_use_aliases)  # type: ignore
+            value = instance._pydantic_instance.model_dump(by_alias=self.pydantic_use_aliases)  # type: ignore
         elif isinstance(instance, DjangoModel):
             value = self._django_model_to_representation(instance)
         else:
@@ -282,7 +287,7 @@ class PydanticSerializer(typing.Generic[TPydanticModel], BaseDRFSerializer):
             try:
                 pydantic_instance = self.pydantic_model_class(**self.initial_data)
                 self._pydantic_instance = pydantic_instance
-                self._validated_data = pydantic_instance.dict(by_alias=self.pydantic_use_aliases)
+                self._validated_data = pydantic_instance.model_dump(by_alias=self.pydantic_use_aliases)
             except PydanticValidationError as exc:
                 self._validated_data = {}
                 self._errors = convert_pydantic_errors_to_drf_errors(exc.errors())
@@ -296,7 +301,7 @@ class PydanticSerializer(typing.Generic[TPydanticModel], BaseDRFSerializer):
 
     def _django_model_to_representation(self, instance: DjangoModel) -> GenericRepresentation:
         try:
-            value = self.pydantic_model_class.from_orm(instance).dict(
+            value = self.pydantic_model_class.model_validate(instance).model_dump(
                 by_alias=self.pydantic_use_aliases
             )
         except PydanticValidationError as exc:
