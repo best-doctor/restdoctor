@@ -25,7 +25,7 @@ flake8-cognitive-complexity==0.1.0
 flake8-fine-pytest==1.0.3
 
 # mypy stuff
-mypy==0.971
+mypy==1.11.1
 types-PyYAML==6.0.12.12
 
 # pytest stuff
