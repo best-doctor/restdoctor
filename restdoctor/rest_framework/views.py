@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import contextlib
+import os
 import typing
 
 from django.conf import settings
@@ -11,6 +12,7 @@ from restdoctor.rest_framework.generics import GenericAPIView
 from restdoctor.rest_framework.mixins import ListModelMixin, RetrieveModelMixin
 from restdoctor.rest_framework.sensitive_data import clear_sensitive_data
 from restdoctor.rest_framework.signals import bind_extra_request_view_initial_metadata
+from restdoctor.utils.open_telemetry import internal_span
 from restdoctor.utils.permissions import get_permission_classes_from_map
 from restdoctor.utils.serializers import get_serializer_class_from_map
 from restdoctor.utils.structlog import bind_contextvars, get_logger
@@ -28,6 +30,12 @@ if typing.TYPE_CHECKING:
 
 
 logger = get_logger(__name__)
+
+
+def get_current_process() -> typing.Any:
+    import psutil
+
+    return psutil.Process(os.getpid())
 
 
 class SerializerClassMapApiView(GenericAPIView):
@@ -48,9 +56,30 @@ class SerializerClassMapApiView(GenericAPIView):
         return view
 
     def dispatch(self, request: WSGIRequest, *args: typing.Any, **kwargs: typing.Any) -> Response:
-        response = super().dispatch(request, *args, **kwargs)
-        response.serializer = self.get_response_serializer_class()
-        return response
+        if not settings.API_ENABLE_OTEL_RESTDOCTOR_SPANS:
+            response = super().dispatch(request, *args, **kwargs)
+            response.serializer = self.get_response_serializer_class()
+            return response
+
+        process = get_current_process()
+        rss_before = process.memory_info().rss
+        action = self.get_action()
+        view_name = self.__class__.__name__
+
+        with internal_span(module=__name__, view_name=view_name, action=action) as span:
+            try:
+                response = super().dispatch(request, *args, **kwargs)
+                response.serializer = self.get_response_serializer_class()
+                return response
+
+            finally:
+                rss_after = process.memory_info().rss
+
+                span.set_attribute('rss.before', rss_before)
+                span.set_attribute('rss.after', rss_after)
+                span.set_attribute('rss.delta', rss_after - rss_before)
+                span.set_attribute('view', view_name)
+                span.set_attribute('action', action)
 
     def clear_request_data(self, request: Request) -> typing.Optional[SerializerData]:
         request_serializer = self.get_request_serializer_class()

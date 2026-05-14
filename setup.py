@@ -48,5 +48,10 @@ setup(
     license='MIT',
     py_modules=['restdoctor'],
     zip_safe=False,
-    install_requires=['uritemplate==4.1.1', 'semver==2.13.0'],
+    install_requires=[
+        'uritemplate==4.1.1',
+        'semver==2.13.0',
+        'psutil==7.2.2',
+        'opentelemetry-api==1.39.0',
+    ],
 )
