@@ -1,0 +1,24 @@
+restdoctor/app_settings.py
+  h_d9ddfefa08e6d3 24
+requirements-deps.in
+  h_d9ddfefa08e6d3 6
+restdoctor/__init__.py
+  h_d9ddfefa08e6d3 3
+restdoctor/utils/open_telemetry.py
+  h_d9ddfefa08e6d3 1-18
+setup.py
+  h_d9ddfefa08e6d3 53-55
+restdoctor/rest_framework/views.py
+  h_d9ddfefa08e6d3 4,15,35-40,59,63-82
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "92b84560fedebdd31e9078b8ddfb88afacba713c",
+  "prompts": {},
+  "humans": {
+    "h_d9ddfefa08e6d3": {
+      "author": "t.vinnichenko <t.vinnichenko@luchi.ru>"
+    }
+  }
+}
